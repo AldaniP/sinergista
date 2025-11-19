@@ -1,0 +1,9 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Aturan tambahan agar kode lebih bersih
+    prefer_const_constructors: true
+    prefer_final_locals: true
+    avoid_print: true # Gunakan logger, jangan print() sembarangan
+    use_build_context_synchronously: true
