@@ -112,7 +112,7 @@ Agar tidak terjadi **Merge Conflict** antar anggota kelompok, patuhi aturan main
     * *Contoh:* `feature/timer-pomodoro`, `feature/budget-ui`, `fix/login-bug`.
 
 ### 2. Aturan Commit
-Gunakan format standar agar riwayat perubahan mudah dibaca oleh tim:
+Gunakan format standar agar riwayat perubahan mudah dibaca oleh tim (bisa Bahasa Indonesia atau Bahasa Inggris):
 * `feat`: untuk fitur baru (contoh: `feat: menambahkan logika timer pomodoro`).
 * `fix`: untuk perbaikan bug (contoh: `fix: memperbaiki error login google`).
 * `ui`: untuk perubahan tampilan/widget (contoh: `ui: update warna tombol simpan`).
