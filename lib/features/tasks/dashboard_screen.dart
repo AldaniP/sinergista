@@ -193,6 +193,21 @@ class DashboardHome extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
+            // Shortcut Box
+            const Row(
+              children: [
+                Icon(LucideIcons.zap, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Shortcut',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildShortcutBox(context, 'Exam', LucideIcons.graduationCap),
+            const SizedBox(height: 24),
+
             // Today's Tasks
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -929,6 +944,74 @@ class DashboardHome extends StatelessWidget {
                 context,
               ).dividerColor.withValues(alpha: 0.1),
               progressColor: AppColors.primary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShortcutBox(
+    BuildContext context,
+    String label,
+    IconData icon,
+  ) {
+    return InkWell(
+      onTap: () {
+        // Handle shortcut action
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$label shortcut clicked'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary.withValues(alpha: 0.1),
+              AppColors.primary.withValues(alpha: 0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.2),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: AppColors.primary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+            ),
+            Icon(
+              LucideIcons.chevronRight,
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
             ),
           ],
         ),
