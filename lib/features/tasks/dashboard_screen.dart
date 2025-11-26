@@ -8,6 +8,8 @@ import '../profile/profile_screen.dart';
 import 'modules_screen.dart';
 import 'task_list_screen.dart';
 import 'dashboard_task_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/services/supabase_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,37 +20,26 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
+  final _supabaseService = SupabaseService();
+  List<DashboardTask> _tasks = [];
+  bool _isLoading = true;
 
-  final List<DashboardTask> _tasks = [
-    DashboardTask(
-      title: 'Selesaikan laporan bulanan',
-      priority: 'Prioritas Tinggi',
-      priorityColor: AppColors.tagRed,
-      priorityTextColor: AppColors.tagRedText,
-      isCompleted: false,
-    ),
-    DashboardTask(
-      title: 'Meeting dengan tim marketing',
-      priority: 'Sedang',
-      priorityColor: Colors.grey.shade100,
-      priorityTextColor: Colors.black,
-      isCompleted: false,
-    ),
-    DashboardTask(
-      title: 'Review code pull request',
-      priority: 'Sedang',
-      priorityColor: Colors.grey.shade100,
-      priorityTextColor: Colors.black,
-      isCompleted: true,
-    ),
-    DashboardTask(
-      title: 'Beli bahan groceries',
-      priority: 'Rendah',
-      priorityColor: Colors.grey.shade100,
-      priorityTextColor: Colors.black,
-      isCompleted: false,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchTasks();
+  }
+
+  Future<void> _fetchTasks() async {
+    setState(() => _isLoading = true);
+    final tasks = await _supabaseService.getTasks();
+    if (mounted) {
+      setState(() {
+        _tasks = tasks;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,15 +47,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
       DashboardHome(
         onTabChange: (index) => setState(() => _selectedIndex = index),
         tasks: _tasks,
-        onTaskToggle: (task) {
+        isLoading: _isLoading,
+        onTaskToggle: (task) async {
+          if (task.id == null) return;
+          // Optimistic update
           setState(() {
             task.isCompleted = !task.isCompleted;
           });
+          try {
+            await _supabaseService.updateTask(task.id!, task.isCompleted);
+          } catch (e) {
+            // Revert on error
+            setState(() {
+              task.isCompleted = !task.isCompleted;
+            });
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Gagal mengupdate tugas: $e')),
+              );
+            }
+          }
         },
-        onAddTask: (task) {
-          setState(() {
-            _tasks.add(task);
-          });
+        onAddTask: (task) async {
+          try {
+            await _supabaseService.addTask(
+              title: task.title,
+              priority: task.priority,
+              moduleName: task.moduleName,
+            );
+            _fetchTasks(); // Refresh list
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Gagal menyimpan tugas: $e')),
+              );
+            }
+          }
         },
       ),
       const ModulesScreen(),
@@ -112,6 +130,7 @@ class DashboardHome extends StatelessWidget {
   final List<DashboardTask> tasks;
   final Function(DashboardTask) onTaskToggle;
   final Function(DashboardTask) onAddTask;
+  final bool isLoading;
 
   const DashboardHome({
     super.key,
@@ -119,105 +138,96 @@ class DashboardHome extends StatelessWidget {
     required this.tasks,
     required this.onTaskToggle,
     required this.onAddTask,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return StreamBuilder<AuthState>(
+      stream: Supabase.instance.client.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        final user =
+            snapshot.data?.session?.user ??
+            Supabase.instance.client.auth.currentUser;
+        final userName =
+            user?.userMetadata?['full_name']?.split(' ').first ?? 'Pengguna';
+
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Selamat Datang! 👋',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Selamat Datang, $userName! 👋',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Hari ini, Senin, 24 November',
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.7),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Hari ini, Senin, 24 November',
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-                        fontSize: 14,
+                    CircleAvatar(
+                      backgroundColor: Theme.of(context).cardColor,
+                      child: Icon(
+                        LucideIcons.bell,
+                        color: Theme.of(context).iconTheme.color,
                       ),
                     ),
                   ],
                 ),
-                CircleAvatar(
-                  backgroundColor: Theme.of(context).cardColor,
-                  child: Icon(
-                    LucideIcons.bell,
-                    color: Theme.of(context).iconTheme.color,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-            // Stats Row
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    context,
-                    icon: LucideIcons.checkCircle,
-                    value: '12',
-                    label: 'Tugas Selesai',
-                    color: Colors.blue,
-                  ),
+                // Stats Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        icon: LucideIcons.checkCircle,
+                        value: '12',
+                        label: 'Tugas Selesai',
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        icon: LucideIcons.clock,
+                        value: '24h',
+                        label: 'Fokus Minggu Ini',
+                        color: Colors.purple,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatCard(
-                    context,
-                    icon: LucideIcons.clock,
-                    value: '24h',
-                    label: 'Fokus Minggu Ini',
-                    color: Colors.purple,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-            // Shortcut Box
-            const Row(
-              children: [
-                Icon(LucideIcons.zap, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Shortcut',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildShortcutBox(context, 'Exam', LucideIcons.graduationCap),
-            const SizedBox(height: 24),
-
-            // Today's Tasks
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+                // Shortcut Box
                 const Row(
                   children: [
-                    Icon(LucideIcons.target, size: 20),
+                    Icon(LucideIcons.zap, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      'Tugas Hari Ini',
+                      'Shortcut',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -225,169 +235,212 @@ class DashboardHome extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                _buildShortcutBox(context, 'Exam', LucideIcons.graduationCap),
+                const SizedBox(height: 24),
+
+                // Today's Tasks
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${tasks.length} tugas',
-                      style: TextStyle(color: Colors.grey.shade600),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () => _showAddTaskDialog(context),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          LucideIcons.plus,
-                          size: 20,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...tasks.map(
-              (task) => _buildTaskItem(
-                context,
-                task: task,
-                onToggle: () => onTaskToggle(task),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-            // Deadlines
-            const Row(
-              children: [
-                Icon(LucideIcons.alertCircle, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Deadline Mendatang',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildDeadlineItem(
-              context,
-              date: '18',
-              month: 'Nov',
-              title: 'Submission Proposal Klien',
-              subtitle: 'Project Alpha',
-            ),
-            _buildDeadlineItem(
-              context,
-              date: '20',
-              month: 'Nov',
-              title: 'Ujian Midterm',
-              subtitle: 'Matematika',
-            ),
-            _buildDeadlineItem(
-              context,
-              date: '22',
-              month: 'Nov',
-              title: 'Presentasi Q4',
-              subtitle: 'Work',
-            ),
-
-            const SizedBox(height: 24),
-            // Focus CTA
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF5722), Color(0xFFFF8A65)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const Row(
                       children: [
+                        Icon(LucideIcons.target, size: 20),
+                        SizedBox(width: 8),
                         Text(
-                          'Mulai Sesi Fokus',
+                          'Tugas Hari Ini',
                           style: TextStyle(
-                            color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 4),
+                      ],
+                    ),
+                    Row(
+                      children: [
                         Text(
-                          'Tingkatkan produktivitas dengan Pomodoro',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                          '${tasks.length} tugas',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => _showAddTaskDialog(context),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              LucideIcons.plus,
+                              size: 20,
+                              color: AppColors.primary,
+                            ),
+                          ),
                         ),
                       ],
                     ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                if (isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else if (tasks.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Text('Belum ada tugas hari ini'),
+                    ),
+                  )
+                else
+                  ...tasks.map(
+                    (task) => _buildTaskItem(
+                      context,
+                      task: task,
+                      onToggle: () => onTaskToggle(task),
+                    ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () => onTabChange(2), // Switch to Focus tab
-                    icon: const Icon(
-                      LucideIcons.timer,
-                      color: Color(0xFFFF5722),
+
+                const SizedBox(height: 24),
+                // Deadlines
+                const Row(
+                  children: [
+                    Icon(LucideIcons.alertCircle, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Deadline Mendatang',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    label: const Text(
-                      'Mulai',
-                      style: TextStyle(color: Color(0xFFFF5722)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildDeadlineItem(
+                  context,
+                  date: '18',
+                  month: 'Nov',
+                  title: 'Submission Proposal Klien',
+                  subtitle: 'Project Alpha',
+                ),
+                _buildDeadlineItem(
+                  context,
+                  date: '20',
+                  month: 'Nov',
+                  title: 'Ujian Midterm',
+                  subtitle: 'Matematika',
+                ),
+                _buildDeadlineItem(
+                  context,
+                  date: '22',
+                  month: 'Nov',
+                  title: 'Presentasi Q4',
+                  subtitle: 'Work',
+                ),
+
+                const SizedBox(height: 24),
+                // Focus CTA
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF5722), Color(0xFFFF8A65)],
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Mulai Sesi Fokus',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Tingkatkan produktivitas dengan Pomodoro',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => onTabChange(2), // Switch to Focus tab
+                        icon: const Icon(
+                          LucideIcons.timer,
+                          color: Color(0xFFFF5722),
+                        ),
+                        label: const Text(
+                          'Mulai',
+                          style: TextStyle(color: Color(0xFFFF5722)),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+                // Module Progress
+                const Row(
+                  children: [
+                    Icon(LucideIcons.trendingUp, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Progress Modul',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildProgressItem(context, 'Project Alpha', 0.65),
+                _buildProgressItem(context, 'Skripsi', 0.40),
+                _buildProgressItem(context, 'Side Project', 0.80),
+
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => onTabChange(1), // Switch to Modules tab
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Lihat Semua Modul',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-            // Module Progress
-            const Row(
-              children: [
-                Icon(LucideIcons.trendingUp, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Progress Modul',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            _buildProgressItem(context, 'Project Alpha', 0.65),
-            _buildProgressItem(context, 'Skripsi', 0.40),
-            _buildProgressItem(context, 'Side Project', 0.80),
-
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => onTabChange(1), // Switch to Modules tab
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'Lihat Semua Modul',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -951,11 +1004,7 @@ class DashboardHome extends StatelessWidget {
     );
   }
 
-  Widget _buildShortcutBox(
-    BuildContext context,
-    String label,
-    IconData icon,
-  ) {
+  Widget _buildShortcutBox(BuildContext context, String label, IconData icon) {
     return InkWell(
       onTap: () {
         // Handle shortcut action
@@ -992,11 +1041,7 @@ class DashboardHome extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                icon,
-                color: AppColors.primary,
-                size: 24,
-              ),
+              child: Icon(icon, color: AppColors.primary, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -1011,7 +1056,9 @@ class DashboardHome extends StatelessWidget {
             ),
             Icon(
               LucideIcons.chevronRight,
-              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
+              color: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
             ),
           ],
         ),

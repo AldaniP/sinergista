@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/theme_provider.dart';
 import '../gamification/achievement_screen.dart';
 import '../collaboration/connections_screen.dart';
 import '../academic/journal_screen.dart';
 import '../tasks/archive_screen.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,265 +20,298 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _notificationsEnabled = true;
 
+  Future<void> _handleLogout() async {
+    await Supabase.instance.client.auth.signOut();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Profile Header
-            Container(
-              padding: const EdgeInsets.only(
-                top: 60,
-                bottom: 32,
-                left: 20,
-                right: 20,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary,
-                    AppColors.primary.withValues(alpha: 0.8),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Column(
-                children: [
-                  // Avatar
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      LucideIcons.user,
-                      color: Colors.white,
-                      size: 40,
+    return StreamBuilder<AuthState>(
+      stream: Supabase.instance.client.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        final user =
+            snapshot.data?.session?.user ??
+            Supabase.instance.client.auth.currentUser;
+        final isAnonymous = user?.isAnonymous ?? false;
+        final fullName = isAnonymous
+            ? 'Tamu'
+            : (user?.userMetadata?['full_name'] ?? 'Pengguna');
+        final email = isAnonymous
+            ? 'Mode Tamu'
+            : (user?.email ?? 'email@example.com');
+
+        return Scaffold(
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Profile Header
+                Container(
+                  padding: const EdgeInsets.only(
+                    top: 60,
+                    bottom: 32,
+                    left: 20,
+                    right: 20,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withValues(alpha: 0.8),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'John Doe',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'john.doe@email.com',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                  const SizedBox(height: 24),
-                  // Stats
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  child: Column(
                     children: [
-                      _buildStat('24', 'Modul'),
-                      _buildStat('156', 'Tugas Selesai'),
-                      _buildStat('8', 'Kolaborasi'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Menu Items
-            Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  _buildMenuItem(
-                    context,
-                    icon: LucideIcons.award,
-                    title: 'Galeri Achievement',
-                    subtitle: '12 lencana didapat',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AchievementScreen(),
+                      // Avatar
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          shape: BoxShape.circle,
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildMenuItem(
-                    context,
-                    icon: LucideIcons.users,
-                    title: 'Koneksi Pengguna',
-                    subtitle: '8 koneksi',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ConnectionsScreen(),
+                        child: const Icon(
+                          LucideIcons.user,
+                          color: Colors.white,
+                          size: 40,
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildMenuItem(
-                    context,
-                    icon: LucideIcons.bookOpen,
-                    title: 'Modul Jurnal',
-                    subtitle: 'Catatan harian & refleksi',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const JournalScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildMenuItem(
-                    context,
-                    icon: LucideIcons.archive,
-                    title: 'Arsip',
-                    subtitle: 'Modul & tugas selesai',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ArchiveScreen(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Settings Section
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.settings,
-                        size: 20,
-                        color: Theme.of(context).iconTheme.color,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(height: 16),
                       Text(
-                        'Pengaturan',
-                        style: TextStyle(
-                          fontSize: 16,
+                        fullName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        email,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Stats
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildStat('24', 'Modul'),
+                          _buildStat('156', 'Tugas Selesai'),
+                          _buildStat('8', 'Kolaborasi'),
+                        ],
                       ),
                     ],
                   ),
+                ),
 
-                  const SizedBox(height: 20),
-
-                  _buildSettingTile(
-                    context,
-                    icon: LucideIcons.sun,
-                    title: 'Mode Gelap',
-                    subtitle: themeProvider.isDarkMode ? 'Aktif' : 'Nonaktif',
-                    trailing: Switch(
-                      value: themeProvider.isDarkMode,
-                      onChanged: (value) => themeProvider.toggleTheme(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Notifications Toggle
-                  _buildSettingTile(
-                    context,
-                    icon: LucideIcons.bell,
-                    title: 'Notifikasi',
-                    subtitle: 'Push & Email',
-                    trailing: Switch(
-                      value: _notificationsEnabled,
-                      onChanged: (value) {
-                        setState(() => _notificationsEnabled = value);
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Edit Profile
-                  _buildMenuItem(
-                    context,
-                    icon: LucideIcons.user,
-                    title: 'Edit Profil',
-                    subtitle: null,
-                    onTap: () {},
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Logout
-                  InkWell(
-                    onTap: () {},
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 16,
+                // Menu Items
+                Container(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      _buildMenuItem(
+                        context,
+                        icon: LucideIcons.award,
+                        title: 'Galeri Achievement',
+                        subtitle: '12 lencana didapat',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AchievementScreen(),
+                            ),
+                          );
+                        },
                       ),
-                      child: Row(
+                      const SizedBox(height: 12),
+                      _buildMenuItem(
+                        context,
+                        icon: LucideIcons.users,
+                        title: 'Koneksi Pengguna',
+                        subtitle: '8 koneksi',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ConnectionsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildMenuItem(
+                        context,
+                        icon: LucideIcons.bookOpen,
+                        title: 'Modul Jurnal',
+                        subtitle: 'Catatan harian & refleksi',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const JournalScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildMenuItem(
+                        context,
+                        icon: LucideIcons.archive,
+                        title: 'Arsip',
+                        subtitle: 'Modul & tugas selesai',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ArchiveScreen(),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Settings Section
+                      Row(
                         children: [
-                          const Icon(
-                            LucideIcons.logOut,
-                            color: Colors.red,
+                          Icon(
+                            LucideIcons.settings,
                             size: 20,
+                            color: Theme.of(context).iconTheme.color,
                           ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'Keluar',
+                          const SizedBox(width: 8),
+                          Text(
+                            'Pengaturan',
                             style: TextStyle(
-                              color: Colors.red,
                               fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 40),
+                      const SizedBox(height: 20),
 
-                  // Footer
-                  Text(
-                    'Sinergista v1.0.0',
-                    style: TextStyle(
-                      color: Theme.of(
+                      _buildSettingTile(
                         context,
-                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'All-in-One Productivity Planner',
-                    style: TextStyle(
-                      color: Theme.of(
+                        icon: LucideIcons.sun,
+                        title: 'Mode Gelap',
+                        subtitle: themeProvider.isDarkMode
+                            ? 'Aktif'
+                            : 'Nonaktif',
+                        trailing: Switch(
+                          value: themeProvider.isDarkMode,
+                          onChanged: (value) => themeProvider.toggleTheme(),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Notifications Toggle
+                      _buildSettingTile(
                         context,
-                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
-                      fontSize: 12,
-                    ),
+                        icon: LucideIcons.bell,
+                        title: 'Notifikasi',
+                        subtitle: 'Push & Email',
+                        trailing: Switch(
+                          value: _notificationsEnabled,
+                          onChanged: (value) {
+                            setState(() => _notificationsEnabled = value);
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Edit Profile
+                      _buildMenuItem(
+                        context,
+                        icon: LucideIcons.user,
+                        title: 'Edit Profil',
+                        subtitle: null,
+                        onTap: () {},
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Logout
+                      InkWell(
+                        onTap: _handleLogout,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                LucideIcons.logOut,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Keluar',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 40),
+
+                      // Footer
+                      Text(
+                        'Sinergista v1.0.0',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'All-in-One Productivity Planner',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

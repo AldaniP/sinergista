@@ -16,6 +16,8 @@ dependencies:
   provider: ^6.1.1
   lucide_icons: ^0.257.0
   flutter_svg: ^2.0.9
+  supabase_flutter: ^2.10.3
+  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -28,6 +30,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - .env
 
 flutter_launcher_icons:
   android: true
