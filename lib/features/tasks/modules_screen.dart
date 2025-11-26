@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import 'task_list_screen.dart';
 import 'module_model.dart';
 import '../../core/services/supabase_service.dart';
+import 'module_detail_screen.dart';
 
 class ModulesScreen extends StatefulWidget {
   const ModulesScreen({super.key});
@@ -99,6 +100,18 @@ class _ModulesScreenState extends State<ModulesScreen> {
     } catch (e) {
       return DateTime.now();
     }
+  }
+
+  List<Map<String, dynamic>> get _activeCategories {
+    final Map<String, Color> categories = {};
+    for (var module in _modules) {
+      if (!categories.containsKey(module.tagName)) {
+        categories[module.tagName] = module.tagColor;
+      }
+    }
+    return categories.entries
+        .map((e) => {'name': e.key, 'color': e.value})
+        .toList();
   }
 
   void _showSortOptions() {
@@ -221,22 +234,15 @@ class _ModulesScreenState extends State<ModulesScreen> {
                   onPressed: _showSortOptions,
                 ),
                 const SizedBox(width: 8),
+                const SizedBox(width: 8),
                 _buildFilterChip('Semua', _selectedFilter == 'Semua'),
-                _buildFilterChip(
-                  'Pekerjaan',
-                  _selectedFilter == 'Pekerjaan',
-                  color: const Color(0xFFEF5350),
-                ),
-                _buildFilterChip(
-                  'Kuliah',
-                  _selectedFilter == 'Kuliah',
-                  color: const Color(0xFF42A5F5),
-                ),
-                _buildFilterChip(
-                  'Personal',
-                  _selectedFilter == 'Personal',
-                  color: const Color(0xFF66BB6A),
-                ),
+                ..._activeCategories.map((category) {
+                  return _buildFilterChip(
+                    category['name'],
+                    _selectedFilter == category['name'],
+                    color: category['color'],
+                  );
+                }),
               ],
             ),
           ),
@@ -270,6 +276,8 @@ class _ModulesScreenState extends State<ModulesScreen> {
                             dueDate: module.dueDate,
                             tagColor: module.tagColor,
                             tagName: module.tagName,
+                            moduleId: module.id,
+                            onDelete: () => _deleteModule(module.id),
                           ),
                         )
                         .toList(),
@@ -278,9 +286,160 @@ class _ModulesScreenState extends State<ModulesScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => _showTemplateSelection(context),
         backgroundColor: AppColors.primary,
         child: const Icon(LucideIcons.plus, color: Colors.white),
+      ),
+    );
+  }
+
+  void _showTemplateSelection(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        LucideIcons.layoutTemplate,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Pilih Template Modul',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildTemplateOption(
+                  icon: LucideIcons.file,
+                  title: 'Kosong',
+                  description: 'Mulai dari awal tanpa template',
+                  color: Colors.grey,
+                ),
+                _buildTemplateOption(
+                  icon: LucideIcons.checkSquare,
+                  title: 'To-Do List',
+                  description: 'Daftar tugas sederhana',
+                  color: Colors.blue,
+                ),
+                _buildTemplateOption(
+                  icon: LucideIcons.graduationCap,
+                  title: 'Akademik',
+                  description: 'Untuk keperluan sekolah atau kuliah',
+                  color: Colors.orange,
+                ),
+                _buildTemplateOption(
+                  icon: LucideIcons.trendingUp,
+                  title: 'Bisnis',
+                  description: 'Manajemen usaha dan bisnis',
+                  color: Colors.purple,
+                ),
+                _buildTemplateOption(
+                  icon: LucideIcons.briefcase,
+                  title: 'Kerja',
+                  description: 'Proyek dan tugas pekerjaan',
+                  color: Colors.green,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTemplateOption({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+  }) {
+    return InkWell(
+      onTap: () async {
+        Navigator.pop(context);
+        if (title == 'Kosong') {
+          await _showColorSelectionDialog(context);
+        } else {
+          // TODO: Navigate to create module screen with this template
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Memilih template: $title')));
+        }
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              LucideIcons.chevronRight,
+              color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.3),
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -344,6 +503,8 @@ class _ModulesScreenState extends State<ModulesScreen> {
     required String dueDate,
     required Color tagColor,
     required String tagName,
+    String? moduleId,
+    VoidCallback? onDelete,
   }) {
     return GestureDetector(
       onTap: () {
@@ -405,52 +566,75 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     ],
                   ),
                 ),
-                Icon(
-                  LucideIcons.moreVertical,
-                  size: 20,
-                  color: Theme.of(
-                    context,
-                  ).iconTheme.color?.withValues(alpha: 0.5),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Progress',
-                  style: TextStyle(
-                    fontSize: 12,
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    LucideIcons.moreVertical,
+                    size: 20,
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                    ).iconTheme.color?.withValues(alpha: 0.5),
                   ),
-                ),
-                Text(
-                  '${(progress * 100).toInt()}%',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
+                  onSelected: (value) {
+                    if (value == 'delete' && onDelete != null) {
+                      _showDeleteConfirmation(context, title, onDelete);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.trash2, size: 18, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text(
+                            'Hapus Modul',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            LinearPercentIndicator(
-              lineHeight: 6,
-              percent: progress,
-              padding: EdgeInsets.zero,
-              barRadius: const Radius.circular(3),
-              backgroundColor: Theme.of(
-                context,
-              ).dividerColor.withValues(alpha: 0.1),
-              progressColor: Theme.of(context).primaryColor,
-            ),
-
             const SizedBox(height: 16),
+
+            if (taskCount > 0) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Progress',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  Text(
+                    '${(progress * 100).toInt()}%',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              LinearPercentIndicator(
+                lineHeight: 6,
+                percent: progress,
+                padding: EdgeInsets.zero,
+                barRadius: const Radius.circular(3),
+                backgroundColor: Theme.of(
+                  context,
+                ).dividerColor.withValues(alpha: 0.1),
+                progressColor: Theme.of(context).primaryColor,
+              ),
+              const SizedBox(height: 16),
+            ],
             Row(
               children: [
                 Text(
@@ -520,6 +704,245 @@ class _ModulesScreenState extends State<ModulesScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+    BuildContext context,
+    String title,
+    VoidCallback onConfirm,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Modul?'),
+        content: Text('Apakah Anda yakin ingin menghapus modul "$title"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm();
+            },
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteModule(String? id) async {
+    if (id == null) return;
+    try {
+      await _supabaseService.deleteModule(id);
+      _fetchModules(); // Refresh list
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Modul berhasil dihapus')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal menghapus modul: $e')));
+      }
+    }
+  }
+
+  Future<void> _showColorSelectionDialog(BuildContext context) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) =>
+          ColorSelectionDialog(existingCategories: _activeCategories),
+    );
+
+    if (result != null && mounted) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ModuleDetailScreen(
+            categoryName: result['category'],
+            categoryColor: result['color'],
+          ),
+        ),
+      );
+      _fetchModules();
+    }
+  }
+}
+
+class ColorSelectionDialog extends StatefulWidget {
+  final List<Map<String, dynamic>> existingCategories;
+
+  const ColorSelectionDialog({super.key, this.existingCategories = const []});
+
+  @override
+  State<ColorSelectionDialog> createState() => _ColorSelectionDialogState();
+}
+
+class _ColorSelectionDialogState extends State<ColorSelectionDialog> {
+  String? _selectedCategory;
+  Color? _selectedColor;
+  final TextEditingController _newCategoryController = TextEditingController();
+  bool _isCreatingNew = false;
+
+  final Map<String, Color> _categories = {
+    'Pekerjaan': const Color(0xFFEF5350),
+    'Kuliah': const Color(0xFF42A5F5),
+    'Personal': const Color(0xFF66BB6A),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    // Merge existing categories from parent
+    for (var cat in widget.existingCategories) {
+      if (!_categories.containsKey(cat['name'])) {
+        _categories[cat['name']] = cat['color'];
+      }
+    }
+  }
+
+  final List<Color> _availableColors = [
+    const Color(0xFFEF5350), // Red
+    const Color(0xFF42A5F5), // Blue
+    const Color(0xFF66BB6A), // Green
+    const Color(0xFFAB47BC), // Purple
+    const Color(0xFFFFA726), // Orange
+    const Color(0xFF26C6DA), // Cyan
+    const Color(0xFF8D6E63), // Brown
+    const Color(0xFF78909C), // Blue Grey
+  ];
+
+  @override
+  void dispose() {
+    _newCategoryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Pilih Kategori'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!_isCreatingNew) ...[
+              ..._categories.entries.map((entry) {
+                return RadioListTile<String>(
+                  title: Row(
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: entry.value,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(entry.key),
+                    ],
+                  ),
+                  value: entry.key,
+                  groupValue: _selectedCategory,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCategory = value;
+                      _selectedColor = entry.value;
+                    });
+                  },
+                );
+              }),
+              ListTile(
+                leading: const Icon(LucideIcons.plus),
+                title: const Text('Tambah Kategori Baru'),
+                onTap: () {
+                  setState(() {
+                    _isCreatingNew = true;
+                    _selectedCategory = null;
+                    _selectedColor = _availableColors.first;
+                  });
+                },
+              ),
+            ] else ...[
+              TextField(
+                controller: _newCategoryController,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Kategori',
+                  hintText: 'Contoh: Hobi',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Pilih Warna:'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _availableColors.map((color) {
+                  return InkWell(
+                    onTap: () => setState(() => _selectedColor = color),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: _selectedColor == color
+                            ? Border.all(color: Colors.black, width: 2)
+                            : null,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => setState(() => _isCreatingNew = false),
+                child: const Text('Kembali ke Daftar'),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_isCreatingNew) {
+              if (_newCategoryController.text.isNotEmpty &&
+                  _selectedColor != null) {
+                Navigator.pop(context, {
+                  'category': _newCategoryController.text,
+                  'color': _selectedColor,
+                });
+              }
+            } else {
+              if (_selectedCategory != null && _selectedColor != null) {
+                Navigator.pop(context, {
+                  'category': _selectedCategory,
+                  'color': _selectedColor,
+                });
+              }
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Lanjut'),
+        ),
+      ],
     );
   }
 }

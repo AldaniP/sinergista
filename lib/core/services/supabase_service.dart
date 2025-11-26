@@ -17,6 +17,7 @@ class SupabaseService {
       final data = response as List<dynamic>;
       return data.map((json) {
         return Module(
+          id: json['id']?.toString(),
           title: json['title'] ?? 'No Title',
           description: json['description'] ?? '',
           progress: 0.0, // TODO: Calculate progress from tasks
@@ -97,6 +98,46 @@ class SupabaseService {
           .eq('id', id);
     } catch (e) {
       debugPrint('Error updating task: $e');
+      rethrow;
+    }
+  }
+
+  // Delete Module
+  Future<void> deleteModule(String id) async {
+    try {
+      await _client.from('modules').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('Error deleting module: $e');
+      rethrow;
+    }
+  }
+
+  // Add Module
+  Future<void> addModule({
+    required String title,
+    required String description,
+    required String category,
+    required String dueDate,
+  }) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not logged in');
+
+      await _client.from('modules').insert({
+        'user_id': userId,
+        'title': title,
+        'description': description,
+        'category': category,
+        'due_date': dueDate,
+        // 'created_at': DateTime.now().toIso8601String(), // Usually handled by DB default
+      });
+    } on PostgrestException catch (e) {
+      debugPrint(
+        'Postgrest Error adding module: ${e.message} code: ${e.code} details: ${e.details}',
+      );
+      throw 'Database Error: ${e.message}';
+    } catch (e) {
+      debugPrint('Error adding module: $e');
       rethrow;
     }
   }

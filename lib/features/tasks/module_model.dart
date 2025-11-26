@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Module {
+  final String? id;
   final String title;
   final String description;
   final double progress;
@@ -12,6 +13,7 @@ class Module {
   final String tagName;
 
   Module({
+    this.id,
     required this.title,
     required this.description,
     required this.progress,
