@@ -4,6 +4,7 @@ import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../../core/constants/app_colors.dart';
 import 'task_list_screen.dart';
 import 'module_model.dart';
+import '../../core/services/supabase_service.dart';
 
 class ModulesScreen extends StatefulWidget {
   const ModulesScreen({super.key});
@@ -19,41 +20,25 @@ class _ModulesScreenState extends State<ModulesScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  final List<Module> _modules = [
-    Module(
-      title: 'Project Alpha',
-      description: 'Pengembangan aplikasi mobile untuk klien',
-      progress: 0.65,
-      completedCount: 8,
-      taskCount: 12,
-      memberCount: 3,
-      dueDate: '25 Nov 2025',
-      tagColor: const Color(0xFFEF5350), // Red for Work
-      tagName: 'Pekerjaan',
-    ),
-    Module(
-      title: 'Skripsi - AI Research',
-      description: 'Penelitian tentang machine learning',
-      progress: 0.40,
-      completedCount: 8,
-      taskCount: 20,
-      memberCount: 1,
-      dueDate: '15 Des 2025',
-      tagColor: const Color(0xFF42A5F5), // Blue for College
-      tagName: 'Kuliah',
-    ),
-    Module(
-      title: 'Side Project - Blog',
-      description: 'Membuat blog personal dengan Next.js',
-      progress: 0.80,
-      completedCount: 6,
-      taskCount: 8,
-      memberCount: 1,
-      dueDate: '30 Nov 2025',
-      tagColor: const Color(0xFF66BB6A), // Green for Personal
-      tagName: 'Personal',
-    ),
-  ];
+  final SupabaseService _supabaseService = SupabaseService();
+  List<Module> _modules = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchModules();
+  }
+
+  Future<void> _fetchModules() async {
+    final modules = await _supabaseService.getModules();
+    if (mounted) {
+      setState(() {
+        _modules = modules;
+        _isLoading = false;
+      });
+    }
+  }
 
   List<Module> get _filteredModules {
     var filtered = _modules.where((module) {
@@ -257,25 +242,38 @@ class _ModulesScreenState extends State<ModulesScreen> {
           ),
 
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: _filteredModules
-                  .map(
-                    (module) => _buildModuleCard(
-                      context,
-                      title: module.title,
-                      description: module.description,
-                      progress: module.progress,
-                      taskCount: module.taskCount,
-                      completedCount: module.completedCount,
-                      memberCount: module.memberCount,
-                      dueDate: module.dueDate,
-                      tagColor: module.tagColor,
-                      tagName: module.tagName,
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _filteredModules.isEmpty
+                ? Center(
+                    child: Text(
+                      'Belum ada modul',
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                      ),
                     ),
                   )
-                  .toList(),
-            ),
+                : ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: _filteredModules
+                        .map(
+                          (module) => _buildModuleCard(
+                            context,
+                            title: module.title,
+                            description: module.description,
+                            progress: module.progress,
+                            taskCount: module.taskCount,
+                            completedCount: module.completedCount,
+                            memberCount: module.memberCount,
+                            dueDate: module.dueDate,
+                            tagColor: module.tagColor,
+                            tagName: module.tagName,
+                          ),
+                        )
+                        .toList(),
+                  ),
           ),
         ],
       ),

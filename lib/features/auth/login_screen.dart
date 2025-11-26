@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_textfield.dart';
 import '../tasks/dashboard_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,15 +20,71 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  void _handleLogin() async {
+  Future<void> _handleLogin() async {
     setState(() => _isLoading = true);
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      setState(() => _isLoading = false);
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+    try {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Terjadi kesalahan yang tidak terduga'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleGuestLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.auth.signInAnonymously();
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal masuk tamu: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Terjadi kesalahan yang tidak terduga'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -74,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               CustomTextField(
                 label: 'Email',
-                hint: 'nama@email.com',
+                hint: 'nama@gmail.com',
                 controller: _emailController,
                 prefixIcon: const Icon(
                   LucideIcons.mail,
@@ -174,7 +232,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterScreen(),
+                        ),
+                      );
+                    },
                     child: const Text(
                       'Daftar',
                       style: TextStyle(
@@ -184,6 +249,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: _handleGuestLogin,
+                child: const Text(
+                  'Masuk sebagai Tamu',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ),
             ],
           ),
