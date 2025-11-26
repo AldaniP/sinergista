@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Module {
+  final String id;
   final String title;
   final String description;
   final double progress;
@@ -10,8 +11,10 @@ class Module {
   final String dueDate;
   final Color tagColor;
   final String tagName;
+  final List<dynamic>? content; // JSON content for Notion-like editor
 
   Module({
+    required this.id,
     required this.title,
     required this.description,
     required this.progress,
@@ -21,5 +24,6 @@ class Module {
     required this.dueDate,
     required this.tagColor,
     required this.tagName,
+    this.content,
   });
 }

@@ -17,20 +17,82 @@ class SupabaseService {
       final data = response as List<dynamic>;
       return data.map((json) {
         return Module(
+          id: json['id']?.toString() ?? '',
           title: json['title'] ?? 'No Title',
           description: json['description'] ?? '',
-          progress: 0.0, // TODO: Calculate progress from tasks
-          completedCount: 0, // TODO: Count completed tasks
-          taskCount: 0, // TODO: Count total tasks
-          memberCount: 1, // Default to 1 for now
+          progress: (json['progress'] ?? 0).toDouble(),
+          completedCount: json['completed_count'] ?? 0,
+          taskCount: json['task_count'] ?? 0,
+          memberCount: json['member_count'] ?? 1,
           dueDate: _formatDate(json['due_date']),
-          tagColor: _getCategoryColor(json['category']),
-          tagName: json['category'] ?? 'Personal',
+          tagColor: json['tag_color'] != null
+              ? Color(json['tag_color'])
+              : _getCategoryColor(json['tag_name']),
+          tagName: json['tag_name'] ?? 'Personal',
+          content: json['content'],
         );
       }).toList();
     } catch (e) {
       debugPrint('Error fetching modules: $e');
       return [];
+    }
+  }
+
+  // Create Module
+  Future<void> createModule({
+    required String title,
+    required String description,
+    required String tagName,
+    required int tagColor,
+    required DateTime dueDate,
+    List<dynamic>? content,
+  }) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not logged in');
+
+      await _client.from('modules').insert({
+        'user_id': userId,
+        'title': title,
+        'description': description,
+        'tag_name': tagName,
+        'tag_color': tagColor,
+        'due_date': dueDate.toIso8601String(),
+        'progress': 0,
+        'completed_count': 0,
+        'task_count': 0,
+        'member_count': 1,
+        'content': content,
+      });
+    } catch (e) {
+      debugPrint('Error creating module: $e');
+      rethrow;
+    }
+  }
+
+  // Update Module Content
+  Future<void> updateModuleContent(
+    String moduleId,
+    List<dynamic> content,
+  ) async {
+    try {
+      await _client
+          .from('modules')
+          .update({'content': content})
+          .eq('id', moduleId);
+    } catch (e) {
+      debugPrint('Error updating module content: $e');
+      rethrow;
+    }
+  }
+
+  // Delete Module
+  Future<void> deleteModule(String moduleId) async {
+    try {
+      await _client.from('modules').delete().eq('id', moduleId);
+    } catch (e) {
+      debugPrint('Error deleting module: $e');
+      rethrow;
     }
   }
 
@@ -60,11 +122,6 @@ class SupabaseService {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) throw Exception('User not logged in');
 
-      // If moduleName is provided, we need to find its ID.
-      // For simplicity, we'll skip linking module for now or assume moduleName is actually ID if we change UI.
-      // But based on UI, it's a name. We should probably look it up or just store it as text if we didn't normalize.
-      // The schema has module_id.
-      // Let's try to find module ID by name if provided.
       String? moduleId;
       if (moduleName != null) {
         final moduleResponse = await _client
@@ -101,12 +158,41 @@ class SupabaseService {
     }
   }
 
+  // Add Module
+  Future<void> addModule({
+    required String title,
+    required String description,
+    required String category,
+    required String dueDate,
+  }) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not logged in');
+
+      await _client.from('modules').insert({
+        'user_id': userId,
+        'title': title,
+        'description': description,
+        'category': category,
+        'due_date': dueDate,
+        // 'created_at': DateTime.now().toIso8601String(), // Usually handled by DB default
+      });
+    } on PostgrestException catch (e) {
+      debugPrint(
+        'Postgrest Error adding module: ${e.message} code: ${e.code} details: ${e.details}',
+      );
+      throw 'Database Error: ${e.message}';
+    } catch (e) {
+      debugPrint('Error adding module: $e');
+      rethrow;
+    }
+  }
+
   // Helper to format date
   String _formatDate(String? dateStr) {
     if (dateStr == null) return '';
     try {
       final date = DateTime.parse(dateStr);
-      // Simple formatting, can be improved with intl
       final months = [
         'Jan',
         'Feb',
@@ -127,7 +213,7 @@ class SupabaseService {
     }
   }
 
-  // Helper for category colors
+  // Helper for category colors (fallback)
   Color _getCategoryColor(String? category) {
     switch (category) {
       case 'Pekerjaan':

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../../core/constants/app_colors.dart';
-import 'task_list_screen.dart';
+import 'package:uuid/uuid.dart';
 import 'module_model.dart';
 import '../../core/services/supabase_service.dart';
+import 'module_editor_screen.dart';
 
 class ModulesScreen extends StatefulWidget {
   const ModulesScreen({super.key});
@@ -161,6 +162,9 @@ class _ModulesScreenState extends State<ModulesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Extract unique categories from modules
+    final categories = ['Semua', ..._modules.map((m) => m.tagName).toSet()];
+
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
@@ -173,7 +177,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                   hintStyle: TextStyle(
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.5),
                   ),
                 ),
                 style: TextStyle(
@@ -221,22 +225,36 @@ class _ModulesScreenState extends State<ModulesScreen> {
                   onPressed: _showSortOptions,
                 ),
                 const SizedBox(width: 8),
-                _buildFilterChip('Semua', _selectedFilter == 'Semua'),
-                _buildFilterChip(
-                  'Pekerjaan',
-                  _selectedFilter == 'Pekerjaan',
-                  color: const Color(0xFFEF5350),
-                ),
-                _buildFilterChip(
-                  'Kuliah',
-                  _selectedFilter == 'Kuliah',
-                  color: const Color(0xFF42A5F5),
-                ),
-                _buildFilterChip(
-                  'Personal',
-                  _selectedFilter == 'Personal',
-                  color: const Color(0xFF66BB6A),
-                ),
+                ...categories.map((category) {
+                  // Find a color for this category if possible
+                  Color? categoryColor;
+                  if (category != 'Semua') {
+                    final module = _modules.firstWhere(
+                      (m) => m.tagName == category,
+                      orElse: () => Module(
+                        id: '',
+                        title: '',
+                        description: '',
+                        progress: 0,
+                        completedCount: 0,
+                        taskCount: 0,
+                        memberCount: 0,
+                        dueDate: '',
+                        tagColor: Colors.grey,
+                        tagName: '',
+                      ),
+                    );
+                    if (module.tagName.isNotEmpty) {
+                      categoryColor = module.tagColor;
+                    }
+                  }
+
+                  return _buildFilterChip(
+                    category,
+                    _selectedFilter == category,
+                    color: categoryColor,
+                  );
+                }),
               ],
             ),
           ),
@@ -251,7 +269,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                       style: TextStyle(
                         color: Theme.of(
                           context,
-                        ).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                        ).textTheme.bodyMedium?.color?.withOpacity(0.5),
                       ),
                     ),
                   )
@@ -259,18 +277,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     padding: const EdgeInsets.all(20),
                     children: _filteredModules
                         .map(
-                          (module) => _buildModuleCard(
-                            context,
-                            title: module.title,
-                            description: module.description,
-                            progress: module.progress,
-                            taskCount: module.taskCount,
-                            completedCount: module.completedCount,
-                            memberCount: module.memberCount,
-                            dueDate: module.dueDate,
-                            tagColor: module.tagColor,
-                            tagName: module.tagName,
-                          ),
+                          (module) => _buildModuleCard(context, module: module),
                         )
                         .toList(),
                   ),
@@ -278,11 +285,423 @@ class _ModulesScreenState extends State<ModulesScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: _showTemplateSelectionDialog,
         backgroundColor: AppColors.primary,
         child: const Icon(LucideIcons.plus, color: Colors.white),
       ),
     );
+  }
+
+  void _showTemplateSelectionDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Pilih Template',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              _buildTemplateOption(
+                icon: LucideIcons.file,
+                title: 'Kosong',
+                color: Colors.grey,
+                onTap: () => _showCreateModuleDialog(template: 'Kosong'),
+              ),
+              _buildTemplateOption(
+                icon: LucideIcons.graduationCap,
+                title: 'Akademik',
+                color: Colors.blue,
+                onTap: () => _showCreateModuleDialog(template: 'Akademik'),
+              ),
+              _buildTemplateOption(
+                icon: LucideIcons.briefcase,
+                title: 'Pekerjaan',
+                color: Colors.red,
+                onTap: () => _showCreateModuleDialog(template: 'Pekerjaan'),
+              ),
+              _buildTemplateOption(
+                icon: LucideIcons.store,
+                title: 'Bisnis',
+                color: Colors.orange,
+                onTap: () => _showCreateModuleDialog(template: 'Bisnis'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTemplateOption({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: color),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      trailing: const Icon(LucideIcons.chevronRight, size: 20),
+      onTap: () {
+        Navigator.pop(context); // Close bottom sheet
+        onTap();
+      },
+    );
+  }
+
+  void _showCreateModuleDialog({required String template}) {
+    final titleController = TextEditingController();
+    final categoryController = TextEditingController();
+
+    // Pre-fill based on template
+    Color selectedColor = Colors.blue;
+    if (template == 'Akademik') {
+      categoryController.text = 'Kuliah';
+      selectedColor = const Color(0xFF42A5F5);
+    } else if (template == 'Pekerjaan') {
+      categoryController.text = 'Pekerjaan';
+      selectedColor = const Color(0xFFEF5350);
+    } else if (template == 'Bisnis') {
+      categoryController.text = 'Bisnis';
+      selectedColor = Colors.orange;
+    }
+
+    // Get unique existing categories
+    final existingCategories = _modules
+        .map((m) => {'name': m.tagName, 'color': m.tagColor})
+        .toSet()
+        .toList();
+    // Remove duplicates based on name (since color might vary slightly or we just want unique names)
+    final uniqueCategories = <String, Map<String, dynamic>>{};
+    for (var cat in existingCategories) {
+      uniqueCategories[cat['name'] as String] = cat;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Buat Modul Baru'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: InputDecoration(
+                        labelText: 'Nama Modul',
+                        filled: true,
+                        fillColor: Theme.of(
+                          context,
+                        ).inputDecorationTheme.fillColor,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: categoryController,
+                      onChanged: (value) {
+                        setState(() {});
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Buat Kategori',
+                        filled: true,
+                        fillColor: Theme.of(
+                          context,
+                        ).inputDecorationTheme.fillColor,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    if (uniqueCategories.isNotEmpty) ...[
+                      Builder(
+                        builder: (context) {
+                          final filteredCategories = uniqueCategories.values
+                              .where((cat) {
+                                final name = cat['name'] as String;
+                                return name.toLowerCase().contains(
+                                  categoryController.text.toLowerCase(),
+                                );
+                              })
+                              .toList();
+
+                          if (filteredCategories.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Pilih Kategori Ada:',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                children: filteredCategories.map((cat) {
+                                  return ActionChip(
+                                    label: Text(
+                                      cat['name'],
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    backgroundColor: (cat['color'] as Color)
+                                        .withOpacity(0.1),
+                                    side: BorderSide.none,
+                                    onPressed: () {
+                                      setState(() {
+                                        categoryController.text = cat['name'];
+                                        selectedColor = cat['color'];
+                                      });
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Warna Kategori',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildColorOption(
+                            const Color(0xFFEF5350),
+                            selectedColor,
+                            (c) => setState(() => selectedColor = c),
+                          ),
+                          _buildColorOption(
+                            const Color(0xFF42A5F5),
+                            selectedColor,
+                            (c) => setState(() => selectedColor = c),
+                          ),
+                          _buildColorOption(
+                            const Color(0xFF66BB6A),
+                            selectedColor,
+                            (c) => setState(() => selectedColor = c),
+                          ),
+                          _buildColorOption(
+                            Colors.orange,
+                            selectedColor,
+                            (c) => setState(() => selectedColor = c),
+                          ),
+                          _buildColorOption(
+                            Colors.purple,
+                            selectedColor,
+                            (c) => setState(() => selectedColor = c),
+                          ),
+                          _buildColorOption(
+                            Colors.teal,
+                            selectedColor,
+                            (c) => setState(() => selectedColor = c),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (titleController.text.isNotEmpty &&
+                        categoryController.text.isNotEmpty) {
+                      await _createModule(
+                        titleController.text,
+                        categoryController.text,
+                        selectedColor,
+                        template,
+                      );
+                      if (context.mounted) Navigator.pop(context);
+                    }
+                  },
+                  child: const Text('Buat'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildColorOption(
+    Color color,
+    Color selectedColor,
+    Function(Color) onSelect,
+  ) {
+    final isSelected = color.value == selectedColor.value;
+    return GestureDetector(
+      onTap: () => onSelect(color),
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: isSelected ? Border.all(color: Colors.black, width: 2) : null,
+        ),
+        child: isSelected
+            ? const Icon(LucideIcons.check, color: Colors.white, size: 16)
+            : null,
+      ),
+    );
+  }
+
+  Future<void> _createModule(
+    String title,
+    String category,
+    Color color,
+    String template,
+  ) async {
+    try {
+      List<Map<String, dynamic>>? initialContent;
+
+      if (template == 'Akademik') {
+        initialContent = [
+          {
+            'id': Uuid().v4(),
+            'type': 'heading1',
+            'content': 'Jadwal Kuliah',
+            'isChecked': false,
+          },
+          {
+            'id': Uuid().v4(),
+            'type': 'bullet',
+            'content': 'Senin: ...',
+            'isChecked': false,
+          },
+          {
+            'id': Uuid().v4(),
+            'type': 'heading1',
+            'content': 'Tugas & Deadline',
+            'isChecked': false,
+          },
+          {
+            'id': Uuid().v4(),
+            'type': 'todo',
+            'content': 'Tugas 1',
+            'isChecked': false,
+          },
+        ];
+      } else if (template == 'Pekerjaan') {
+        initialContent = [
+          {
+            'id': Uuid().v4(),
+            'type': 'heading1',
+            'content': 'Prioritas Hari Ini',
+            'isChecked': false,
+          },
+          {
+            'id': Uuid().v4(),
+            'type': 'todo',
+            'content': 'Meeting dengan tim',
+            'isChecked': false,
+          },
+          {
+            'id': Uuid().v4(),
+            'type': 'heading1',
+            'content': 'Catatan Meeting',
+            'isChecked': false,
+          },
+          {
+            'id': Uuid().v4(),
+            'type': 'text',
+            'content': '',
+            'isChecked': false,
+          },
+        ];
+      } else if (template == 'Bisnis') {
+        initialContent = [
+          {
+            'id': Uuid().v4(),
+            'type': 'heading1',
+            'content': 'Overview Bisnis',
+            'isChecked': false,
+          },
+          {
+            'id': Uuid().v4(),
+            'type': 'heading2',
+            'content': 'Keuangan',
+            'isChecked': false,
+          },
+          {
+            'id': Uuid().v4(),
+            'type': 'bullet',
+            'content': 'Pemasukan: ...',
+            'isChecked': false,
+          },
+          {
+            'id': Uuid().v4(),
+            'type': 'heading2',
+            'content': 'Marketing',
+            'isChecked': false,
+          },
+          {
+            'id': Uuid().v4(),
+            'type': 'todo',
+            'content': 'Post Instagram',
+            'isChecked': false,
+          },
+        ];
+      }
+
+      await _supabaseService.createModule(
+        title: title,
+        description: 'Modul $template',
+        tagName: category,
+        tagColor: color.value,
+        dueDate: DateTime.now().add(const Duration(days: 7)),
+        content: initialContent,
+      );
+      _fetchModules(); // Refresh list
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal membuat modul: $e')));
+      }
+    }
   }
 
   Widget _buildFilterChip(String label, bool isSelected, {Color? color}) {
@@ -324,7 +743,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
           side: BorderSide(
             color: isSelected
                 ? Colors.transparent
-                : Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                : Theme.of(context).dividerColor.withOpacity(0.2),
           ),
         ),
         showCheckmark: false,
@@ -333,26 +752,16 @@ class _ModulesScreenState extends State<ModulesScreen> {
     );
   }
 
-  Widget _buildModuleCard(
-    BuildContext context, {
-    required String title,
-    required String description,
-    required double progress,
-    required int taskCount,
-    required int completedCount,
-    required int memberCount,
-    required String dueDate,
-    required Color tagColor,
-    required String tagName,
-  }) {
+  Widget _buildModuleCard(BuildContext context, {required Module module}) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TaskListScreen(moduleTitle: title),
+            builder: (context) => ModuleEditorScreen(module: module),
           ),
         );
+        _fetchModules();
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -361,7 +770,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
           color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+            color: Theme.of(context).dividerColor.withOpacity(0.1),
           ),
         ),
         child: Column(
@@ -375,7 +784,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                   height: 12,
                   margin: const EdgeInsets.only(top: 4),
                   decoration: BoxDecoration(
-                    color: tagColor,
+                    color: module.tagColor,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -385,7 +794,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        module.title,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -394,108 +803,160 @@ class _ModulesScreenState extends State<ModulesScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        description,
+                        module.description,
                         style: TextStyle(
                           fontSize: 14,
                           color: Theme.of(
                             context,
-                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                          ).textTheme.bodyMedium?.color?.withOpacity(0.6),
                         ),
                       ),
                     ],
                   ),
                 ),
-                Icon(
-                  LucideIcons.moreVertical,
-                  size: 20,
-                  color: Theme.of(
-                    context,
-                  ).iconTheme.color?.withValues(alpha: 0.5),
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    LucideIcons.moreVertical,
+                    size: 20,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                  ),
+                  onSelected: (value) async {
+                    if (value == 'delete') {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Hapus Modul'),
+                          content: Text(
+                            'Apakah Anda yakin ingin menghapus modul "${module.title}"?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Batal'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Hapus'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        try {
+                          await _supabaseService.deleteModule(module.id);
+                          _fetchModules();
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal menghapus modul: $e'),
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.trash2, size: 16, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Hapus', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Progress',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
-                  ),
-                ),
-                Text(
-                  '${(progress * 100).toInt()}%',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            LinearPercentIndicator(
-              lineHeight: 6,
-              percent: progress,
-              padding: EdgeInsets.zero,
-              barRadius: const Radius.circular(3),
-              backgroundColor: Theme.of(
-                context,
-              ).dividerColor.withValues(alpha: 0.1),
-              progressColor: Theme.of(context).primaryColor,
-            ),
-
             const SizedBox(height: 16),
+
+            if (module.taskCount > 0) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Progress',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  Text(
+                    '${(module.progress * 100).toInt()}%',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              LinearPercentIndicator(
+                lineHeight: 6,
+                percent: module.progress,
+                padding: EdgeInsets.zero,
+                barRadius: const Radius.circular(3),
+                backgroundColor: Theme.of(
+                  context,
+                ).dividerColor.withValues(alpha: 0.1),
+                progressColor: Theme.of(context).primaryColor,
+              ),
+              const SizedBox(height: 16),
+            ],
             Row(
               children: [
                 Text(
-                  '$completedCount/$taskCount tugas',
+                  '${module.completedCount}/${module.taskCount} tugas',
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Icon(
                   LucideIcons.users,
                   size: 14,
-                  color: Theme.of(
-                    context,
-                  ).iconTheme.color?.withValues(alpha: 0.6),
+                  color: Theme.of(context).iconTheme.color?.withOpacity(0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '$memberCount',
+                  '${module.memberCount}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Icon(
                   LucideIcons.calendar,
                   size: 14,
-                  color: Theme.of(
-                    context,
-                  ).iconTheme.color?.withValues(alpha: 0.6),
+                  color: Theme.of(context).iconTheme.color?.withOpacity(0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  dueDate,
+                  module.dueDate,
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -505,15 +966,15 @@ class _ModulesScreenState extends State<ModulesScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: tagColor.withValues(alpha: 0.1),
+                color: module.tagColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                tagName,
+                module.tagName,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: tagColor,
+                  color: module.tagColor,
                 ),
               ),
             ),
