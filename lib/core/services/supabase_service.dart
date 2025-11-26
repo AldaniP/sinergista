@@ -158,16 +158,6 @@ class SupabaseService {
     }
   }
 
-  // Delete Module
-  Future<void> deleteModule(String id) async {
-    try {
-      await _client.from('modules').delete().eq('id', id);
-    } catch (e) {
-      debugPrint('Error deleting module: $e');
-      rethrow;
-    }
-  }
-
   // Add Module
   Future<void> addModule({
     required String title,
