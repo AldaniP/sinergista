@@ -154,8 +154,30 @@ class DashboardHome extends StatelessWidget {
         final userName =
             user?.userMetadata?['full_name']?.split(' ').first ?? 'Pengguna';
         final now = DateTime.now();
-        final months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        final days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        final months = [
+          '',
+          'Januari',
+          'Februari',
+          'Maret',
+          'April',
+          'Mei',
+          'Juni',
+          'Juli',
+          'Agustus',
+          'September',
+          'Oktober',
+          'November',
+          'Desember',
+        ];
+        final days = [
+          'Minggu',
+          'Senin',
+          'Selasa',
+          'Rabu',
+          'Kamis',
+          'Jumat',
+          'Sabtu',
+        ];
 
         return Container(
           color: Theme.of(context).scaffoldBackgroundColor,
@@ -190,7 +212,9 @@ class DashboardHome extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
                             ),
                           ),
                         ],
@@ -200,12 +224,18 @@ class DashboardHome extends StatelessWidget {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationScreen(),
+                            ),
                           );
                         },
                         child: CircleAvatar(
                           backgroundColor: Theme.of(context).cardColor,
-                          child: Icon(LucideIcons.bell, color: Theme.of(context).iconTheme.color, size: 20),
+                          child: Icon(
+                            LucideIcons.bell,
+                            color: Theme.of(context).iconTheme.color,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ],
@@ -269,26 +299,47 @@ class DashboardHome extends StatelessWidget {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
-                        _buildFeatureItem(context, 'Exam', LucideIcons.graduationCap, () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const ExamScreen()),
-                          );
-                        }),
+                        _buildFeatureItem(
+                          context,
+                          'Exam',
+                          LucideIcons.graduationCap,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ExamScreen(),
+                              ),
+                            );
+                          },
+                        ),
                         const SizedBox(width: 20),
-                        _buildFeatureItem(context, 'Notes', LucideIcons.fileText, () {
-                          // Navigator ke NotesScreen (placeholder)
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Notes segera hadir!')),
-                          );
-                        }),
+                        _buildFeatureItem(
+                          context,
+                          'Notes',
+                          LucideIcons.fileText,
+                          () {
+                            // Navigator ke NotesScreen (placeholder)
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Fitur Notes segera hadir!'),
+                              ),
+                            );
+                          },
+                        ),
                         const SizedBox(width: 20),
-                        _buildFeatureItem(context, 'Tracking', LucideIcons.trendingUp, () {
-                          // Navigator ke TrackingScreen (placeholder)
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Tracking segera hadir!')),
-                          );
-                        }),
+                        _buildFeatureItem(
+                          context,
+                          'Tracking',
+                          LucideIcons.trendingUp,
+                          () {
+                            // Navigator ke TrackingScreen (placeholder)
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Fitur Tracking segera hadir!'),
+                              ),
+                            );
+                          },
+                        ),
                         const SizedBox(width: 20),
                       ],
                     ),
@@ -315,7 +366,10 @@ class DashboardHome extends StatelessWidget {
                       if (tasks.isNotEmpty)
                         Text(
                           '${tasks.where((t) => !t.isCompleted).length} tersisa',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
                         ),
                     ],
                   ),
@@ -336,7 +390,9 @@ class DashboardHome extends StatelessWidget {
                         color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                          color: Theme.of(
+                            context,
+                          ).dividerColor.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Center(
@@ -360,10 +416,14 @@ class DashboardHome extends StatelessWidget {
                       ),
                     )
                   else
-                    ...tasks.take(3).map((task) => _buildToDoItem(context, task, () {
-                      // Navigate to Modules tab
-                      onTabChange(1); // Index 1 is ModulesScreen
-                    })),
+                    ...tasks
+                        .take(3)
+                        .map(
+                          (task) => _buildToDoItem(context, task, () {
+                            // Navigate to Modules tab
+                            onTabChange(1); // Index 1 is ModulesScreen
+                          }),
+                        ),
 
                   if (tasks.length > 3) ...[
                     const SizedBox(height: 12),
@@ -380,10 +440,7 @@ class DashboardHome extends StatelessWidget {
                   // Explore More Section
                   const Text(
                     'Jelajahi lebih luas',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
 
@@ -397,10 +454,10 @@ class DashboardHome extends StatelessWidget {
                   _buildExploreCard(
                     context,
                     icon: '🙏',
-                    title: 'Tingkatkan pengetahuanmu\ndengan mengikuti Tips Produktivitas\nkami hari ini',
+                    title:
+                        'Tingkatkan pengetahuanmu\ndengan mengikuti Tips Produktivitas\nkami hari ini',
                     onTap: () {},
                   ),
-
                 ],
               ),
             ),
@@ -410,7 +467,13 @@ class DashboardHome extends StatelessWidget {
     );
   }
 
-  Widget _buildCircularTile(BuildContext context, String label, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildCircularTile(
+    BuildContext context,
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -425,7 +488,10 @@ class DashboardHome extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 2,
+              ),
             ),
             child: Icon(icon, color: Colors.white, size: 28),
           ),
@@ -503,7 +569,9 @@ class DashboardHome extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.tagGreen,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.tagGreenText.withValues(alpha: 0.1)),
+        border: Border.all(
+          color: AppColors.tagGreenText.withValues(alpha: 0.1),
+        ),
       ),
       child: Row(
         children: [
@@ -514,7 +582,11 @@ class DashboardHome extends StatelessWidget {
               color: AppColors.tagGreenText.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(LucideIcons.target, color: AppColors.tagGreenText, size: 28),
+            child: const Icon(
+              LucideIcons.target,
+              color: AppColors.tagGreenText,
+              size: 28,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -540,13 +612,21 @@ class DashboardHome extends StatelessWidget {
               ],
             ),
           ),
-          Icon(LucideIcons.chevronRight, color: AppColors.tagGreenText.withValues(alpha: 0.5)),
+          Icon(
+            LucideIcons.chevronRight,
+            color: AppColors.tagGreenText.withValues(alpha: 0.5),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureItem(BuildContext context, String label, IconData icon, VoidCallback onTap) {
+  Widget _buildFeatureItem(
+    BuildContext context,
+    String label,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -586,7 +666,12 @@ class DashboardHome extends StatelessWidget {
     );
   }
 
-  Widget _buildExploreCard(BuildContext context, {required String icon, required String title, required VoidCallback onTap}) {
+  Widget _buildExploreCard(
+    BuildContext context, {
+    required String icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -615,7 +700,9 @@ class DashboardHome extends StatelessWidget {
             ),
             Icon(
               LucideIcons.chevronRight,
-              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
+              color: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
             ),
           ],
         ),
@@ -623,7 +710,11 @@ class DashboardHome extends StatelessWidget {
     );
   }
 
-  Widget _buildToDoItem(BuildContext context, DashboardTask task, VoidCallback onTap) {
+  Widget _buildToDoItem(
+    BuildContext context,
+    DashboardTask task,
+    VoidCallback onTap,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: Material(
@@ -644,8 +735,12 @@ class DashboardHome extends StatelessWidget {
               children: [
                 // Checkbox (read-only, just visual)
                 Icon(
-                  task.isCompleted ? LucideIcons.checkCircle2 : LucideIcons.circle,
-                  color: task.isCompleted ? AppColors.success : Colors.grey.shade400,
+                  task.isCompleted
+                      ? LucideIcons.checkCircle2
+                      : LucideIcons.circle,
+                  color: task.isCompleted
+                      ? AppColors.success
+                      : Colors.grey.shade400,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -661,7 +756,9 @@ class DashboardHome extends StatelessWidget {
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).textTheme.bodyLarge?.color,
-                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                          decoration: task.isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -670,7 +767,10 @@ class DashboardHome extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: task.priorityColor,
                               borderRadius: BorderRadius.circular(4),
@@ -686,7 +786,11 @@ class DashboardHome extends StatelessWidget {
                           ),
                           if (task.moduleName != null) ...[
                             const SizedBox(width: 8),
-                            Icon(LucideIcons.folder, size: 12, color: Colors.grey.shade500),
+                            Icon(
+                              LucideIcons.folder,
+                              size: 12,
+                              color: Colors.grey.shade500,
+                            ),
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
