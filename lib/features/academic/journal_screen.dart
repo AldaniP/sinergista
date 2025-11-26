@@ -65,10 +65,10 @@ class JournalScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Column(
+                  const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'November 2025',
                         style: TextStyle(
                           color: Colors.white,
@@ -76,8 +76,8 @@ class JournalScreen extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
+                      SizedBox(height: 4),
+                      Text(
                         '16 entri',
                         style: TextStyle(
                           color: Colors.white,

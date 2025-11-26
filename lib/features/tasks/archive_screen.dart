@@ -165,7 +165,11 @@ class ArchiveScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(LucideIcons.checkCircle2, size: 14, color: Colors.green),
+              const Icon(
+                LucideIcons.checkCircle2,
+                size: 14,
+                color: Colors.green,
+              ),
               const SizedBox(width: 6),
               Text(
                 tasks,
