@@ -38,17 +38,73 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
 
   // --- DATA DUMMY (STATE) ---
   final List<UserModel> _connections = [
-    UserModel(id: '1', name: 'Jane Smith', email: 'jane@email.com', projects: '3 proyek bersama', initial: 'JS', color: AppColors.primary),
-    UserModel(id: '2', name: 'Bob Wilson', email: 'bob@email.com', projects: '1 proyek bersama', initial: 'BW', color: AppColors.primary),
-    UserModel(id: '3', name: 'Alice Johnson', email: 'alice@email.com', projects: '2 proyek bersama', initial: 'AJ', color: AppColors.primary),
-    UserModel(id: '4', name: 'Charlie Brown', email: 'charlie@email.com', projects: '5 proyek bersama', initial: 'CB', color: AppColors.primary),
-    UserModel(id: '5', name: 'Diana Prince', email: 'diana@email.com', projects: '1 proyek bersama', initial: 'DP', color: AppColors.primary),
+    UserModel(
+      id: '1',
+      name: 'Jane Smith',
+      email: 'jane@email.com',
+      projects: '3 proyek bersama',
+      initial: 'JS',
+      color: AppColors.primary,
+    ),
+    UserModel(
+      id: '2',
+      name: 'Bob Wilson',
+      email: 'bob@email.com',
+      projects: '1 proyek bersama',
+      initial: 'BW',
+      color: AppColors.primary,
+    ),
+    UserModel(
+      id: '3',
+      name: 'Alice Johnson',
+      email: 'alice@email.com',
+      projects: '2 proyek bersama',
+      initial: 'AJ',
+      color: AppColors.primary,
+    ),
+    UserModel(
+      id: '4',
+      name: 'Charlie Brown',
+      email: 'charlie@email.com',
+      projects: '5 proyek bersama',
+      initial: 'CB',
+      color: AppColors.primary,
+    ),
+    UserModel(
+      id: '5',
+      name: 'Diana Prince',
+      email: 'diana@email.com',
+      projects: '1 proyek bersama',
+      initial: 'DP',
+      color: AppColors.primary,
+    ),
   ];
 
   final List<UserModel> _requests = [
-    UserModel(id: '6', name: 'Emma Watson', email: 'emma@email.com', projects: '0 proyek bersama', initial: 'EW', color: Colors.orange),
-    UserModel(id: '7', name: 'Tom Hardy', email: 'tom@email.com', projects: '0 proyek bersama', initial: 'TH', color: Colors.green),
-    UserModel(id: '8', name: 'Sarah Connor', email: 'sarah@email.com', projects: '0 proyek bersama', initial: 'SC', color: Colors.purple),
+    UserModel(
+      id: '6',
+      name: 'Emma Watson',
+      email: 'emma@email.com',
+      projects: '0 proyek bersama',
+      initial: 'EW',
+      color: Colors.orange,
+    ),
+    UserModel(
+      id: '7',
+      name: 'Tom Hardy',
+      email: 'tom@email.com',
+      projects: '0 proyek bersama',
+      initial: 'TH',
+      color: Colors.green,
+    ),
+    UserModel(
+      id: '8',
+      name: 'Sarah Connor',
+      email: 'sarah@email.com',
+      projects: '0 proyek bersama',
+      initial: 'SC',
+      color: Colors.purple,
+    ),
   ];
 
   @override
@@ -69,16 +125,24 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
   // Filter list berdasarkan query pencarian
   List<UserModel> get _filteredConnections {
     if (_searchQuery.isEmpty) return _connections;
-    return _connections.where((user) =>
-        user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    return _connections
+        .where(
+          (user) =>
+              user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              user.email.toLowerCase().contains(_searchQuery.toLowerCase()),
+        )
+        .toList();
   }
 
   List<UserModel> get _filteredRequests {
     if (_searchQuery.isEmpty) return _requests;
-    return _requests.where((user) =>
-        user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    return _requests
+        .where(
+          (user) =>
+              user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              user.email.toLowerCase().contains(_searchQuery.toLowerCase()),
+        )
+        .toList();
   }
 
   // Terima permintaan: Pindah dari request ke connections
@@ -108,18 +172,23 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Hapus Koneksi?'),
-        content: Text('Anda yakin ingin menghapus ${user.name} dari daftar teman?'),
+        content: Text(
+          'Anda yakin ingin menghapus ${user.name} dari daftar teman?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
           TextButton(
             onPressed: () {
               setState(() {
                 _connections.remove(user);
               });
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${user.name} dihapus')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('${user.name} dihapus')));
             },
             child: const Text('Hapus', style: TextStyle(color: Colors.red)),
           ),
@@ -131,14 +200,16 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
   // Simulasi tambah teman baru lewat FAB
   void _addNewRandomRequest() {
     setState(() {
-      _requests.add(UserModel(
-        id: DateTime.now().toString(),
-        name: 'New User ${_requests.length + 1}',
-        email: 'newuser${_requests.length}@mail.com',
-        projects: '0 proyek bersama',
-        initial: 'NU',
-        color: Colors.blueAccent,
-      ));
+      _requests.add(
+        UserModel(
+          id: DateTime.now().toString(),
+          name: 'New User ${_requests.length + 1}',
+          email: 'newuser${_requests.length}@mail.com',
+          projects: '0 proyek bersama',
+          initial: 'NU',
+          color: Colors.blueAccent,
+        ),
+      );
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Simulasi: Permintaan baru diterima')),
@@ -200,7 +271,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
               ),
             ),
           ),
-          
+
           // TAB BAR (Dynamic Count)
           Container(
             color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
@@ -217,41 +288,38 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
               ],
             ),
           ),
-          
+
           // TAB VIEW
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
                 // KONEKSI LIST
-                _filteredConnections.isEmpty 
-                  ? _buildEmptyState('Tidak ada koneksi ditemukan') 
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(20),
-                      itemCount: _filteredConnections.length,
-                      itemBuilder: (context, index) {
-                        final user = _filteredConnections[index];
-                        return _buildConnectionItem(
-                          user: user,
-                          isDark: isDark,
-                        );
-                      },
-                    ),
+                _filteredConnections.isEmpty
+                    ? _buildEmptyState('Tidak ada koneksi ditemukan')
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(20),
+                        itemCount: _filteredConnections.length,
+                        itemBuilder: (context, index) {
+                          final user = _filteredConnections[index];
+                          return _buildConnectionItem(
+                            user: user,
+                            isDark: isDark,
+                          );
+                        },
+                      ),
 
                 // PERMINTAAN LIST
-                _filteredRequests.isEmpty 
-                  ? _buildEmptyState('Tidak ada permintaan saat ini') 
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(20),
-                      itemCount: _filteredRequests.length,
-                      itemBuilder: (context, index) {
-                        final user = _filteredRequests[index];
-                        return _buildRequestItem(
-                          user: user,
-                          isDark: isDark,
-                        );
-                      },
-                    ),
+                _filteredRequests.isEmpty
+                    ? _buildEmptyState('Tidak ada permintaan saat ini')
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(20),
+                        itemCount: _filteredRequests.length,
+                        itemBuilder: (context, index) {
+                          final user = _filteredRequests[index];
+                          return _buildRequestItem(user: user, isDark: isDark);
+                        },
+                      ),
               ],
             ),
           ),
@@ -267,17 +335,11 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
 
   Widget _buildEmptyState(String message) {
     return Center(
-      child: Text(
-        message,
-        style: const TextStyle(color: Colors.grey),
-      ),
+      child: Text(message, style: const TextStyle(color: Colors.grey)),
     );
   }
 
-  Widget _buildConnectionItem({
-    required UserModel user,
-    required bool isDark,
-  }) {
+  Widget _buildConnectionItem({required UserModel user, required bool isDark}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -351,10 +413,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
     );
   }
 
-  Widget _buildRequestItem({
-    required UserModel user,
-    required bool isDark,
-  }) {
+  Widget _buildRequestItem({required UserModel user, required bool isDark}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
