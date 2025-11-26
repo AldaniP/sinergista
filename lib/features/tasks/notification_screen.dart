@@ -68,7 +68,9 @@ class NotificationScreen extends StatelessWidget {
               onPressed: () {
                 // Mark all as read
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Semua notifikasi ditandai sudah dibaca')),
+                  const SnackBar(
+                    content: Text('Semua notifikasi ditandai sudah dibaca'),
+                  ),
                 );
               },
               child: const Text('Tandai Semua'),
@@ -88,10 +90,7 @@ class NotificationScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     'Belum ada notifikasi',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -103,7 +102,10 @@ class NotificationScreen extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
@@ -135,13 +137,19 @@ class NotificationScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                 ],
-                ...notifications.map((notification) => _buildNotificationItem(context, notification)),
+                ...notifications.map(
+                  (notification) =>
+                      _buildNotificationItem(context, notification),
+                ),
               ],
             ),
     );
   }
 
-  Widget _buildNotificationItem(BuildContext context, NotificationItem notification) {
+  Widget _buildNotificationItem(
+    BuildContext context,
+    NotificationItem notification,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -199,8 +207,12 @@ class NotificationScreen extends StatelessWidget {
                               notification.title,
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.bold,
-                                color: Theme.of(context).textTheme.bodyLarge?.color,
+                                fontWeight: notification.isRead
+                                    ? FontWeight.w600
+                                    : FontWeight.bold,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyLarge?.color,
                               ),
                             ),
                           ),
@@ -220,7 +232,9 @@ class NotificationScreen extends StatelessWidget {
                         notification.message,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

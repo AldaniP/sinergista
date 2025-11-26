@@ -38,7 +38,10 @@ class _ExamScreenState extends State<ExamScreen> {
     final newQuiz = Quiz(
       moduleName: _moduleController.text,
       topic: _topicController.text,
-      questions: _generateSampleQuestions(_moduleController.text, _topicController.text),
+      questions: _generateSampleQuestions(
+        _moduleController.text,
+        _topicController.text,
+      ),
       createdAt: DateTime.now(),
     );
 
@@ -125,7 +128,11 @@ class _ExamScreenState extends State<ExamScreen> {
               ),
               child: const Row(
                 children: [
-                  Icon(LucideIcons.graduationCap, color: Colors.white, size: 40),
+                  Icon(
+                    LucideIcons.graduationCap,
+                    color: Colors.white,
+                    size: 40,
+                  ),
                   SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -155,10 +162,7 @@ class _ExamScreenState extends State<ExamScreen> {
             // Form Section
             const Text(
               'Buat Quiz Baru',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
@@ -170,7 +174,8 @@ class _ExamScreenState extends State<ExamScreen> {
                 hintText: 'contoh: Matematika, Fisika, dll',
                 prefixIcon: const Icon(LucideIcons.book),
                 filled: true,
-                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                fillColor:
+                    Theme.of(context).inputDecorationTheme.fillColor ??
                     Colors.grey.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -188,7 +193,8 @@ class _ExamScreenState extends State<ExamScreen> {
                 hintText: 'contoh: Integral, Kinematika, dll',
                 prefixIcon: const Icon(LucideIcons.fileText),
                 filled: true,
-                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                fillColor:
+                    Theme.of(context).inputDecorationTheme.fillColor ??
                     Colors.grey.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -213,7 +219,9 @@ class _ExamScreenState extends State<ExamScreen> {
                         ),
                       )
                     : const Icon(LucideIcons.sparkles),
-                label: Text(_isGenerating ? 'Membuat Quiz...' : 'Generate Quiz'),
+                label: Text(
+                  _isGenerating ? 'Membuat Quiz...' : 'Generate Quiz',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -233,17 +241,11 @@ class _ExamScreenState extends State<ExamScreen> {
                 children: [
                   const Text(
                     'Quiz Saya',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     '${_quizzes.length} quiz',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                   ),
                 ],
               ),
@@ -384,10 +386,7 @@ class _ExamScreenState extends State<ExamScreen> {
           const SizedBox(width: 4),
           Text(
             text,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -402,16 +401,14 @@ class _ExamScreenState extends State<ExamScreen> {
     if (diff.inHours < 1) return '${diff.inMinutes} menit lalu';
     if (diff.inDays < 1) return '${diff.inHours} jam lalu';
     if (diff.inDays < 7) return '${diff.inDays} hari lalu';
-    
+
     return '${date.day}/${date.month}/${date.year}';
   }
 
   void _startQuiz(Quiz quiz) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => QuizPlayScreen(quiz: quiz),
-      ),
+      MaterialPageRoute(builder: (context) => QuizPlayScreen(quiz: quiz)),
     );
   }
 
@@ -489,7 +486,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
   void _submitAnswer() {
     if (_selectedAnswer == null) return;
 
-    if (_selectedAnswer == widget.quiz.questions[_currentQuestionIndex].correctAnswer) {
+    if (_selectedAnswer ==
+        widget.quiz.questions[_currentQuestionIndex].correctAnswer) {
       _score++;
     }
 
@@ -535,18 +533,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                 const SizedBox(height: 32),
                 const Text(
                   'Quiz Selesai!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'Skor Anda',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -585,7 +577,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Soal ${_currentQuestionIndex + 1} / ${widget.quiz.questions.length}'),
+        title: Text(
+          'Soal ${_currentQuestionIndex + 1} / ${widget.quiz.questions.length}',
+        ),
         elevation: 0,
       ),
       body: Padding(
@@ -604,10 +598,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
             // Question
             Text(
               question.question,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 32),
 
@@ -634,7 +625,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.primary
-                                  : Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                                  : Theme.of(
+                                      context,
+                                    ).dividerColor.withValues(alpha: 0.2),
                               width: isSelected ? 2 : 1,
                             ),
                           ),
@@ -645,14 +638,22 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                                 height: 24,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isSelected ? AppColors.primary : Colors.transparent,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : Colors.transparent,
                                   border: Border.all(
-                                    color: isSelected ? AppColors.primary : Colors.grey.shade400,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : Colors.grey.shade400,
                                     width: 2,
                                   ),
                                 ),
                                 child: isSelected
-                                    ? const Icon(LucideIcons.check, size: 16, color: Colors.white)
+                                    ? const Icon(
+                                        LucideIcons.check,
+                                        size: 16,
+                                        color: Colors.white,
+                                      )
                                     : null,
                               ),
                               const SizedBox(width: 16),
@@ -663,8 +664,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                                     fontSize: 16,
                                     color: isSelected
                                         ? AppColors.primary
-                                        : Theme.of(context).textTheme.bodyLarge?.color,
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                        : Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge?.color,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
                                   ),
                                 ),
                               ),
