@@ -17,6 +17,9 @@ jobs:
         with:
           channel: 'stable'
           
+      - name: Create dummy .env
+        run: echo "SUPABASE_URL=https://example.supabase.co" > .env && echo "SUPABASE_ANON_KEY=dummy" >> .env
+
       - name: Install dependencies
         run: flutter pub get
         
@@ -42,6 +45,9 @@ jobs:
         with:
           channel: 'stable'
           
+      - name: Create dummy .env
+        run: echo "SUPABASE_URL=https://example.supabase.co" > .env && echo "SUPABASE_ANON_KEY=dummy" >> .env
+
       - name: Install dependencies
         run: flutter pub get
         

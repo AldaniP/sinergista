@@ -260,15 +260,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             vertical: 16,
                             horizontal: 16,
                           ),
-                          child: Row(
+                          child: const Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 LucideIcons.logOut,
                                 color: Colors.red,
                                 size: 20,
                               ),
-                              const SizedBox(width: 12),
-                              const Text(
+                              SizedBox(width: 12),
+                              Text(
                                 'Keluar',
                                 style: TextStyle(
                                   color: Colors.red,

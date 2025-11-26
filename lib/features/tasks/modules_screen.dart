@@ -41,7 +41,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
   }
 
   List<Module> get _filteredModules {
-    var filtered = _modules.where((module) {
+    final filtered = _modules.where((module) {
       final matchesFilter =
           _selectedFilter == 'Semua' || module.tagName == _selectedFilter;
       final matchesSearch =
