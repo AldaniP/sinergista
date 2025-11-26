@@ -10,6 +10,8 @@ import 'task_list_screen.dart';
 import 'dashboard_task_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/services/supabase_service.dart';
+import '../academic/exam_screen.dart';
+import 'notification_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -151,296 +153,570 @@ class DashboardHome extends StatelessWidget {
             Supabase.instance.client.auth.currentUser;
         final userName =
             user?.userMetadata?['full_name']?.split(' ').first ?? 'Pengguna';
+        final now = DateTime.now();
+        final months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        final days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
-        return SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Selamat Datang, $userName! 👋',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Hari ini, Senin, 24 November',
-                          style: TextStyle(
-                            color: Theme.of(context).textTheme.bodyMedium?.color
-                                ?.withValues(alpha: 0.7),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    CircleAvatar(
-                      backgroundColor: Theme.of(context).cardColor,
-                      child: Icon(
-                        LucideIcons.bell,
-                        color: Theme.of(context).iconTheme.color,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Stats Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatCard(
-                        context,
-                        icon: LucideIcons.checkCircle,
-                        value: '12',
-                        label: 'Tugas Selesai',
-                        color: Colors.blue,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStatCard(
-                        context,
-                        icon: LucideIcons.clock,
-                        value: '24h',
-                        label: 'Fokus Minggu Ini',
-                        color: Colors.purple,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Shortcut Box
-                const Row(
-                  children: [
-                    Icon(LucideIcons.zap, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Shortcut',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildShortcutBox(context, 'Exam', LucideIcons.graduationCap),
-                const SizedBox(height: 24),
-
-                // Today's Tasks
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(LucideIcons.target, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Tugas Hari Ini',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          '${tasks.length} tugas',
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                        const SizedBox(width: 8),
-                        InkWell(
-                          onTap: () => _showAddTaskDialog(context),
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              LucideIcons.plus,
-                              size: 20,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                if (isLoading)
-                  const Center(child: CircularProgressIndicator())
-                else if (tasks.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Text('Belum ada tugas hari ini'),
-                    ),
-                  )
-                else
-                  ...tasks.map(
-                    (task) => _buildTaskItem(
-                      context,
-                      task: task,
-                      onToggle: () => onTaskToggle(task),
-                    ),
-                  ),
-
-                const SizedBox(height: 24),
-                // Deadlines
-                const Row(
-                  children: [
-                    Icon(LucideIcons.alertCircle, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Deadline Mendatang',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildDeadlineItem(
-                  context,
-                  date: '18',
-                  month: 'Nov',
-                  title: 'Submission Proposal Klien',
-                  subtitle: 'Project Alpha',
-                ),
-                _buildDeadlineItem(
-                  context,
-                  date: '20',
-                  month: 'Nov',
-                  title: 'Ujian Midterm',
-                  subtitle: 'Matematika',
-                ),
-                _buildDeadlineItem(
-                  context,
-                  date: '22',
-                  month: 'Nov',
-                  title: 'Presentasi Q4',
-                  subtitle: 'Work',
-                ),
-
-                const SizedBox(height: 24),
-                // Focus CTA
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFF5722), Color(0xFFFF8A65)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
+        return Container(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header - dengan avatar, tanggal, poin, notifikasi
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Mulai Sesi Fokus',
-                              style: TextStyle(
+                      // Avatar dan tanggal
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: AppColors.primary,
+                            child: Text(
+                              userName.substring(0, 1).toUpperCase(),
+                              style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
+                                fontSize: 18,
                               ),
                             ),
-                            SizedBox(height: 4),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            '${now.day} ${months[now.month]}',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Icons kanan - hanya notifikasi
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                          );
+                        },
+                        child: CircleAvatar(
+                          backgroundColor: Theme.of(context).cardColor,
+                          child: Icon(LucideIcons.bell, color: Theme.of(context).iconTheme.color, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Quick Stats Cards - Streak fokus dan deadline
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickStatCard(
+                          context,
+                          icon: LucideIcons.target,
+                          title: 'Sekarang',
+                          value: '0 Hari 🔥',
+                          subtitle: 'Fokus Hari Ini',
+                          backgroundColor: AppColors.tagBlue,
+                          textColor: AppColors.tagBlueText,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildQuickStatCard(
+                          context,
+                          icon: LucideIcons.calendar,
+                          title: 'Selanjutnya',
+                          value: 'Lihat →',
+                          subtitle: 'Deadline Terdekat 📅',
+                          backgroundColor: AppColors.tagPurple,
+                          textColor: AppColors.tagPurpleText,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Goal/Target Card
+                  _buildGoalCard(context),
+                  const SizedBox(height: 24),
+
+                  // Feature Menu Section
+                  const Row(
+                    children: [
+                      Icon(LucideIcons.zap, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Fitur Anda',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Feature - scrollable horizontal
+                  SizedBox(
+                    height: 110,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _buildFeatureItem(context, 'Exam', LucideIcons.graduationCap, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ExamScreen()),
+                          );
+                        }),
+                        const SizedBox(width: 20),
+                        _buildFeatureItem(context, 'Notes', LucideIcons.fileText, () {
+                          // Navigator ke NotesScreen (placeholder)
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Fitur Notes segera hadir!')),
+                          );
+                        }),
+                        const SizedBox(width: 20),
+                        _buildFeatureItem(context, 'Tracking', LucideIcons.trendingUp, () {
+                          // Navigator ke TrackingScreen (placeholder)
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Fitur Tracking segera hadir!')),
+                          );
+                        }),
+                        const SizedBox(width: 20),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // To-Do List Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(LucideIcons.clipboardList, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'To Do Hari Ini',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (tasks.isNotEmpty)
+                        Text(
+                          '${tasks.where((t) => !t.isCompleted).length} tersisa',
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Task List
+                  if (isLoading)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (tasks.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              LucideIcons.checkCircle,
+                              size: 48,
+                              color: Colors.grey.shade300,
+                            ),
+                            const SizedBox(height: 12),
                             Text(
-                              'Tingkatkan produktivitas dengan Pomodoro',
+                              'Belum ada tugas hari ini',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Colors.grey.shade600,
                                 fontSize: 14,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      ElevatedButton.icon(
-                        onPressed: () => onTabChange(2), // Switch to Focus tab
-                        icon: const Icon(
-                          LucideIcons.timer,
-                          color: Color(0xFFFF5722),
-                        ),
-                        label: const Text(
-                          'Mulai',
-                          style: TextStyle(color: Color(0xFFFF5722)),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    )
+                  else
+                    ...tasks.take(3).map((task) => _buildToDoItem(context, task, () {
+                      // Navigate to Modules tab
+                      onTabChange(1); // Index 1 is ModulesScreen
+                    })),
 
-                const SizedBox(height: 24),
-                // Module Progress
-                const Row(
-                  children: [
-                    Icon(LucideIcons.trendingUp, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Progress Modul',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  if (tasks.length > 3) ...[
+                    const SizedBox(height: 12),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () => onTabChange(1), // Navigate to Modules
+                        icon: const Icon(LucideIcons.moreHorizontal, size: 18),
+                        label: Text('Lihat ${tasks.length - 3} tugas lainnya'),
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 16),
-                _buildProgressItem(context, 'Project Alpha', 0.65),
-                _buildProgressItem(context, 'Skripsi', 0.40),
-                _buildProgressItem(context, 'Side Project', 0.80),
+                  const SizedBox(height: 24),
 
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => onTabChange(1), // Switch to Modules tab
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  // Explore More Section
+                  const Text(
+                    'Jelajahi lebih luas',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: Text(
-                      'Lihat Semua Modul',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildExploreCard(
+                    context,
+                    icon: '💡',
+                    title: 'Quiz Produktivitas',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 12),
+                  _buildExploreCard(
+                    context,
+                    icon: '🙏',
+                    title: 'Tingkatkan pengetahuanmu\ndengan mengikuti Tips Produktivitas\nkami hari ini',
+                    onTap: () {},
+                  ),
+
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCircularTile(BuildContext context, String label, IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [color, color.withValues(alpha: 0.7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+            ),
+            child: Icon(icon, color: Colors.white, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickStatCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String value,
+    required String subtitle,
+    required Color backgroundColor,
+    required Color textColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: textColor.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: textColor, size: 16),
+              const SizedBox(width: 4),
+              Text(
+                title,
+                style: TextStyle(
+                  color: textColor.withValues(alpha: 0.8),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: textColor.withValues(alpha: 0.7),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoalCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.tagGreen,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.tagGreenText.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppColors.tagGreenText.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(LucideIcons.target, color: AppColors.tagGreenText, size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tetapkan tujuan membaca',
+                  style: TextStyle(
+                    color: AppColors.tagGreenText,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Target Tugas Harian 📚 • 1 Hari Check-in',
+                  style: TextStyle(
+                    color: AppColors.tagGreenText.withValues(alpha: 0.7),
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
-        );
-      },
+          Icon(LucideIcons.chevronRight, color: AppColors.tagGreenText.withValues(alpha: 0.5)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem(BuildContext context, String label, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 65,
+            height: 65,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 30),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExploreCard(BuildContext context, {required String icon, required String title, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 32)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+            ),
+            Icon(
+              LucideIcons.chevronRight,
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToDoItem(BuildContext context, DashboardTask task, VoidCallback onTap) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Checkbox (read-only, just visual)
+                Icon(
+                  task.isCompleted ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                  color: task.isCompleted ? AppColors.success : Colors.grey.shade400,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        task.title,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: task.priorityColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              task.priority,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: task.priorityTextColor,
+                              ),
+                            ),
+                          ),
+                          if (task.moduleName != null) ...[
+                            const SizedBox(width: 8),
+                            Icon(LucideIcons.folder, size: 12, color: Colors.grey.shade500),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                task.moduleName!,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Arrow
+                Icon(
+                  LucideIcons.chevronRight,
+                  size: 18,
+                  color: Colors.grey.shade400,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
