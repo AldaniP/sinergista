@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/providers/theme_provider.dart';
 import '../../core/services/journal_service.dart';
 
 class AddJournalScreen extends StatefulWidget {
@@ -64,8 +62,6 @@ class _AddJournalScreenState extends State<AddJournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tulis Jurnal'),
