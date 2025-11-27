@@ -3,25 +3,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/theme_provider.dart';
-
-// Model data sederhana untuk User
-class UserModel {
-  final String id;
-  final String name;
-  final String email;
-  final String projects;
-  final String initial;
-  final Color color;
-
-  UserModel({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.projects,
-    required this.initial,
-    required this.color,
-  });
-}
+import '../../core/services/connection_service.dart';
+import '../../core/models/connection_model.dart';
+import '../../features/collaboration/search_user_screen.dart'; // Sesuaikan path foldernya
 
 class ConnectionsScreen extends StatefulWidget {
   const ConnectionsScreen({super.key});
@@ -33,84 +17,24 @@ class ConnectionsScreen extends StatefulWidget {
 class _ConnectionsScreenState extends State<ConnectionsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  // Controller untuk Search
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // --- DATA DUMMY (STATE) ---
-  final List<UserModel> _connections = [
-    UserModel(
-      id: '1',
-      name: 'Jane Smith',
-      email: 'jane@email.com',
-      projects: '3 proyek bersama',
-      initial: 'JS',
-      color: AppColors.primary,
-    ),
-    UserModel(
-      id: '2',
-      name: 'Bob Wilson',
-      email: 'bob@email.com',
-      projects: '1 proyek bersama',
-      initial: 'BW',
-      color: AppColors.primary,
-    ),
-    UserModel(
-      id: '3',
-      name: 'Alice Johnson',
-      email: 'alice@email.com',
-      projects: '2 proyek bersama',
-      initial: 'AJ',
-      color: AppColors.primary,
-    ),
-    UserModel(
-      id: '4',
-      name: 'Charlie Brown',
-      email: 'charlie@email.com',
-      projects: '5 proyek bersama',
-      initial: 'CB',
-      color: AppColors.primary,
-    ),
-    UserModel(
-      id: '5',
-      name: 'Diana Prince',
-      email: 'diana@email.com',
-      projects: '1 proyek bersama',
-      initial: 'DP',
-      color: AppColors.primary,
-    ),
-  ];
+  // Service Supabase
+  final _connectionService = ConnectionService();
 
-  final List<UserModel> _requests = [
-    UserModel(
-      id: '6',
-      name: 'Emma Watson',
-      email: 'emma@email.com',
-      projects: '0 proyek bersama',
-      initial: 'EW',
-      color: Colors.orange,
-    ),
-    UserModel(
-      id: '7',
-      name: 'Tom Hardy',
-      email: 'tom@email.com',
-      projects: '0 proyek bersama',
-      initial: 'TH',
-      color: Colors.green,
-    ),
-    UserModel(
-      id: '8',
-      name: 'Sarah Connor',
-      email: 'sarah@email.com',
-      projects: '0 proyek bersama',
-      initial: 'SC',
-      color: Colors.purple,
-    ),
-  ];
+  // State Data
+  List<ConnectionModel> _connections = [];
+  List<ConnectionModel> _requests = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _fetchData(); // Ambil data saat layar dibuka
   }
 
   @override
@@ -120,60 +44,115 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
     super.dispose();
   }
 
-  // --- LOGIC FUNCTIONS ---
+  // --- LOGIC FUNCTIONS (SUPABASE) ---
 
-  // Filter list berdasarkan query pencarian
-  List<UserModel> get _filteredConnections {
+  // 1. Fetch Data dari Database
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    try {
+      final connections = await _connectionService.getConnections();
+      final requests = await _connectionService.getIncomingRequests();
+
+      if (mounted) {
+        setState(() {
+          _connections = connections;
+          _requests = requests;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memuat data: $e')));
+      }
+    }
+  }
+
+  // 2. Filter Search (Logic Lokal)
+  List<ConnectionModel> get _filteredConnections {
     if (_searchQuery.isEmpty) return _connections;
     return _connections
         .where(
-          (user) =>
-              user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              user.email.toLowerCase().contains(_searchQuery.toLowerCase()),
+          (item) => item.friendProfile.fullName.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ),
         )
         .toList();
   }
 
-  List<UserModel> get _filteredRequests {
+  List<ConnectionModel> get _filteredRequests {
     if (_searchQuery.isEmpty) return _requests;
     return _requests
         .where(
-          (user) =>
-              user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              user.email.toLowerCase().contains(_searchQuery.toLowerCase()),
+          (item) => item.friendProfile.fullName.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ),
         )
         .toList();
   }
 
-  // Terima permintaan: Pindah dari request ke connections
-  void _acceptRequest(UserModel user) {
-    setState(() {
-      _requests.remove(user);
-      _connections.insert(0, user); // Tambah ke paling atas
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${user.name} ditambahkan ke koneksi')),
-    );
+  // 3. Action: Terima Permintaan
+  Future<void> _acceptRequest(ConnectionModel item) async {
+    try {
+      // Optimistic Update (Update UI duluan biar cepat)
+      setState(() {
+        _requests.remove(item);
+        _connections.insert(0, item);
+      });
+
+      // Panggil Service
+      await _connectionService.acceptRequest(item.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${item.friendProfile.fullName} ditambahkan ke koneksi',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      _fetchData(); // Rollback jika error
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal menerima permintaan')),
+        );
+    }
   }
 
-  // Tolak permintaan: Hapus dari list
-  void _rejectRequest(UserModel user) {
-    setState(() {
-      _requests.remove(user);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Permintaan dari ${user.name} dihapus')),
-    );
+  // 4. Action: Tolak Permintaan
+  Future<void> _rejectRequest(ConnectionModel item) async {
+    try {
+      setState(() {
+        _requests.remove(item);
+      });
+      await _connectionService.removeConnection(item.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Permintaan dari ${item.friendProfile.fullName} dihapus',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      _fetchData();
+    }
   }
 
-  // Hapus koneksi (Unfriend)
-  void _removeConnection(UserModel user) {
+  // 5. Action: Hapus Teman (Unfriend)
+  Future<void> _removeConnection(ConnectionModel item) async {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Hapus Koneksi?'),
         content: Text(
-          'Anda yakin ingin menghapus ${user.name} dari daftar teman?',
+          'Anda yakin ingin menghapus ${item.friendProfile.fullName} dari daftar teman?',
         ),
         actions: [
           TextButton(
@@ -181,14 +160,27 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
             child: const Text('Batal'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              Navigator.pop(ctx); // Tutup dialog dulu
+
+              // Hapus lokal
               setState(() {
-                _connections.remove(user);
+                _connections.remove(item);
               });
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('${user.name} dihapus')));
+
+              // Hapus di DB
+              try {
+                await _connectionService.removeConnection(item.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${item.friendProfile.fullName} dihapus'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                _fetchData(); // Rollback
+              }
             },
             child: const Text('Hapus', style: TextStyle(color: Colors.red)),
           ),
@@ -197,23 +189,16 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
     );
   }
 
-  // Simulasi tambah teman baru lewat FAB
-  void _addNewRandomRequest() {
-    setState(() {
-      _requests.add(
-        UserModel(
-          id: DateTime.now().toString(),
-          name: 'New User ${_requests.length + 1}',
-          email: 'newuser${_requests.length}@mail.com',
-          projects: '0 proyek bersama',
-          initial: 'NU',
-          color: Colors.blueAccent,
-        ),
-      );
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Simulasi: Permintaan baru diterima')),
+  // 6. Action: Tambah Teman (Navigasi ke Search Screen)
+  void _addNewConnection() async {
+    // Navigasi ke halaman search
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SearchUserScreen()),
     );
+
+    // Saat kembali dari halaman search, refresh data (siapa tahu ada yg di-add)
+    _fetchData();
   }
 
   @override
@@ -241,7 +226,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
                 });
               },
               decoration: InputDecoration(
-                hintText: 'Cari atau tambah teman...',
+                hintText: 'Cari teman...',
                 hintStyle: TextStyle(
                   color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
                 ),
@@ -272,7 +257,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
             ),
           ),
 
-          // TAB BAR (Dynamic Count)
+          // TAB BAR
           Container(
             color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
             child: TabBar(
@@ -283,50 +268,55 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
                   : Colors.grey.shade400,
               indicatorColor: AppColors.primary,
               tabs: [
-                Tab(text: 'Koneksi    ${_connections.length}'), // Dynamic Count
-                Tab(text: 'Permintaan    ${_requests.length}'), // Dynamic Count
+                Tab(text: 'Koneksi    ${_connections.length}'),
+                Tab(text: 'Permintaan    ${_requests.length}'),
               ],
             ),
           ),
 
           // TAB VIEW
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // KONEKSI LIST
-                _filteredConnections.isEmpty
-                    ? _buildEmptyState('Tidak ada koneksi ditemukan')
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(20),
-                        itemCount: _filteredConnections.length,
-                        itemBuilder: (context, index) {
-                          final user = _filteredConnections[index];
-                          return _buildConnectionItem(
-                            user: user,
-                            isDark: isDark,
-                          );
-                        },
-                      ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // KONEKSI LIST
+                      _filteredConnections.isEmpty
+                          ? _buildEmptyState('Tidak ada koneksi ditemukan')
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(20),
+                              itemCount: _filteredConnections.length,
+                              itemBuilder: (context, index) {
+                                final item = _filteredConnections[index];
+                                return _buildConnectionItem(
+                                  item: item,
+                                  isDark: isDark,
+                                );
+                              },
+                            ),
 
-                // PERMINTAAN LIST
-                _filteredRequests.isEmpty
-                    ? _buildEmptyState('Tidak ada permintaan saat ini')
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(20),
-                        itemCount: _filteredRequests.length,
-                        itemBuilder: (context, index) {
-                          final user = _filteredRequests[index];
-                          return _buildRequestItem(user: user, isDark: isDark);
-                        },
-                      ),
-              ],
-            ),
+                      // PERMINTAAN LIST
+                      _filteredRequests.isEmpty
+                          ? _buildEmptyState('Tidak ada permintaan saat ini')
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(20),
+                              itemCount: _filteredRequests.length,
+                              itemBuilder: (context, index) {
+                                final item = _filteredRequests[index];
+                                return _buildRequestItem(
+                                  item: item,
+                                  isDark: isDark,
+                                );
+                              },
+                            ),
+                    ],
+                  ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _addNewRandomRequest,
+        onPressed: _addNewConnection,
         backgroundColor: AppColors.primary,
         child: const Icon(LucideIcons.userPlus, color: Colors.white),
       ),
@@ -339,7 +329,10 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
     );
   }
 
-  Widget _buildConnectionItem({required UserModel user, required bool isDark}) {
+  Widget _buildConnectionItem({
+    required ConnectionModel item,
+    required bool isDark,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -354,15 +347,20 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: user.color,
-            child: Text(
-              user.initial,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            backgroundColor: item.friendProfile.avatarColor,
+            backgroundImage: item.friendProfile.avatarUrl != null
+                ? NetworkImage(item.friendProfile.avatarUrl!)
+                : null,
+            child: item.friendProfile.avatarUrl == null
+                ? Text(
+                    item.friendProfile.initials,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -370,7 +368,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.name,
+                  item.friendProfile.fullName,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -379,25 +377,17 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  user.email,
+                  '@${item.friendProfile.username}',
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  user.projects,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey.shade500 : Colors.grey.shade500,
                   ),
                 ),
               ],
             ),
           ),
           OutlinedButton.icon(
-            onPressed: () => _removeConnection(user), // Action Unfriend
+            onPressed: () => _removeConnection(item),
             icon: const Icon(LucideIcons.userCheck, size: 16),
             label: const Text('Terhubung'),
             style: OutlinedButton.styleFrom(
@@ -413,7 +403,10 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
     );
   }
 
-  Widget _buildRequestItem({required UserModel user, required bool isDark}) {
+  Widget _buildRequestItem({
+    required ConnectionModel item,
+    required bool isDark,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -428,15 +421,20 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: user.color,
-            child: Text(
-              user.initial,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            backgroundColor: item.friendProfile.avatarColor,
+            backgroundImage: item.friendProfile.avatarUrl != null
+                ? NetworkImage(item.friendProfile.avatarUrl!)
+                : null,
+            child: item.friendProfile.avatarUrl == null
+                ? Text(
+                    item.friendProfile.initials,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -444,7 +442,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.name,
+                  item.friendProfile.fullName,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -453,7 +451,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  user.email,
+                  '@${item.friendProfile.username}',
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -465,7 +463,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
           Row(
             children: [
               IconButton(
-                onPressed: () => _acceptRequest(user), // Action Accept
+                onPressed: () => _acceptRequest(item),
                 icon: const Icon(LucideIcons.check, size: 20),
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.green,
@@ -475,7 +473,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
               ),
               const SizedBox(width: 8),
               IconButton(
-                onPressed: () => _rejectRequest(user), // Action Reject
+                onPressed: () => _rejectRequest(item),
                 icon: const Icon(LucideIcons.x, size: 20),
                 style: IconButton.styleFrom(
                   backgroundColor: isDark
