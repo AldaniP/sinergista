@@ -61,6 +61,13 @@ class _FocusScreenState extends State<FocusScreen>
   bool _isLoadingSessions = true;
   bool _isLoadingWeeklySessions = true;
 
+  // Stats State
+  String _todayDuration = '0h';
+  String _weekDuration = '0h';
+  String _monthDuration = '0h';
+  String _totalSessions = '0';
+  bool _isLoadingStats = true;
+
   @override
   void initState() {
     super.initState();
@@ -68,7 +75,9 @@ class _FocusScreenState extends State<FocusScreen>
     _loadRecentSessions();
     WidgetsBinding.instance.addObserver(this);
     _loadRecentSessions();
+    _loadRecentSessions();
     _loadWeeklySessions();
+    _loadStats();
   }
 
   Future<void> _loadWeeklySessions() async {
@@ -93,6 +102,78 @@ class _FocusScreenState extends State<FocusScreen>
         _weeklySessions = sessions;
         _isLoadingWeeklySessions = false;
       });
+    }
+  }
+
+  Future<void> _loadStats() async {
+    if (!mounted) return;
+    setState(() => _isLoadingStats = true);
+
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final startOfWeekDay = DateTime(
+      startOfWeek.year,
+      startOfWeek.month,
+      startOfWeek.day,
+    );
+    final startOfMonth = DateTime(now.year, now.month, 1);
+
+    // Find the earliest date we need to fetch
+    DateTime earliestDate = startOfWeekDay.isBefore(startOfMonth)
+        ? startOfWeekDay
+        : startOfMonth;
+
+    // Fetch sessions
+    final sessions = await _supabaseService.getFocusSessionsForDateRange(
+      earliestDate,
+      now,
+    );
+    final totalCount = await _supabaseService.getTotalSessionCount();
+
+    double todayMinutes = 0;
+    double weekMinutes = 0;
+    double monthMinutes = 0;
+
+    for (var session in sessions) {
+      final sessionDate = session.date;
+      // Use durationSeconds if available, otherwise fallback to minutes
+      final durationSec = session.durationSeconds > 0
+          ? session.durationSeconds
+          : session.durationMinutes * 60;
+      final durationMin = durationSec / 60.0;
+
+      if (sessionDate.isAfter(startOfDay) ||
+          sessionDate.isAtSameMomentAs(startOfDay)) {
+        todayMinutes += durationMin;
+      }
+      if (sessionDate.isAfter(startOfWeekDay) ||
+          sessionDate.isAtSameMomentAs(startOfWeekDay)) {
+        weekMinutes += durationMin;
+      }
+      if (sessionDate.isAfter(startOfMonth) ||
+          sessionDate.isAtSameMomentAs(startOfMonth)) {
+        monthMinutes += durationMin;
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _todayDuration = _formatDuration(todayMinutes);
+        _weekDuration = _formatDuration(weekMinutes);
+        _monthDuration = _formatDuration(monthMinutes);
+        _totalSessions = totalCount.toString();
+        _isLoadingStats = false;
+      });
+    }
+  }
+
+  String _formatDuration(double minutes) {
+    final hours = minutes / 60;
+    if (hours >= 1) {
+      return '${hours.toStringAsFixed(1)}h';
+    } else {
+      return '${minutes.toStringAsFixed(0)}m';
     }
   }
 
@@ -128,6 +209,7 @@ class _FocusScreenState extends State<FocusScreen>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Sesi berhasil dihapus')));
+      _loadStats(); // Refresh stats
     } catch (e) {
       // Revert if failed
       _loadRecentSessions();
@@ -369,8 +451,14 @@ class _FocusScreenState extends State<FocusScreen>
     } else {
       // Timer Biasa
       if (_timerType == 'Countdown') {
-        totalMinutes = _focusDuration;
-        totalSeconds = totalMinutes * 60;
+        if (isStop) {
+          int elapsedSeconds = (_focusDuration * 60 - _remainingSeconds);
+          totalSeconds = elapsedSeconds;
+          totalMinutes = (elapsedSeconds / 60).ceil();
+        } else {
+          totalMinutes = _focusDuration;
+          totalSeconds = totalMinutes * 60;
+        }
       } else {
         // Stopwatch
         totalSeconds = _stopwatchSeconds;
@@ -428,6 +516,7 @@ class _FocusScreenState extends State<FocusScreen>
               _supabaseService.deleteFocusSession(savedSession.id!);
             }
           }
+          _loadStats(); // Refresh stats
         });
       }
     });
@@ -543,10 +632,22 @@ class _FocusScreenState extends State<FocusScreen>
               crossAxisSpacing: 16,
               childAspectRatio: 1.5,
               children: [
-                _buildStatCard('Hari Ini', '2.5h'),
-                _buildStatCard('Minggu Ini', '24h'),
-                _buildStatCard('Bulan Ini', '96h'),
-                _buildStatCard('Total Sesi', '48'),
+                _buildStatCard(
+                  'Hari Ini',
+                  _isLoadingStats ? '...' : _todayDuration,
+                ),
+                _buildStatCard(
+                  'Minggu Ini',
+                  _isLoadingStats ? '...' : _weekDuration,
+                ),
+                _buildStatCard(
+                  'Bulan Ini',
+                  _isLoadingStats ? '...' : _monthDuration,
+                ),
+                _buildStatCard(
+                  'Total Sesi',
+                  _isLoadingStats ? '...' : _totalSessions,
+                ),
               ],
             ),
 

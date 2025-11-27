@@ -462,4 +462,22 @@ class SupabaseService {
       return [];
     }
   }
+
+  // Get Total Session Count
+  Future<int> getTotalSessionCount() async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) return 0;
+
+      final response = await _client
+          .from('focus_sessions')
+          .count(CountOption.exact)
+          .eq('user_id', userId);
+
+      return response;
+    } catch (e) {
+      debugPrint('Error fetching total session count: $e');
+      return 0;
+    }
+  }
 }
