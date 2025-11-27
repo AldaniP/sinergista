@@ -437,4 +437,29 @@ class SupabaseService {
       rethrow;
     }
   }
+
+  // Get Focus Sessions for Date Range
+  Future<List<FocusSession>> getFocusSessionsForDateRange(
+    DateTime start,
+    DateTime end,
+  ) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) return [];
+
+      final response = await _client
+          .from('focus_sessions')
+          .select()
+          .eq('user_id', userId)
+          .gte('start_time', start.toIso8601String())
+          .lte('start_time', end.toIso8601String())
+          .order('start_time', ascending: true);
+
+      final data = response as List<dynamic>;
+      return data.map((json) => FocusSession.fromMap(json)).toList();
+    } catch (e) {
+      debugPrint('Error fetching focus sessions for range: $e');
+      return [];
+    }
+  }
 }

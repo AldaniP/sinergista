@@ -57,13 +57,43 @@ class _FocusScreenState extends State<FocusScreen>
   final TextEditingController _sessionTitleController = TextEditingController();
   final SupabaseService _supabaseService = SupabaseService();
   List<FocusSession> _recentSessions = [];
+  List<FocusSession> _weeklySessions = [];
   bool _isLoadingSessions = true;
+  bool _isLoadingWeeklySessions = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadRecentSessions();
+    WidgetsBinding.instance.addObserver(this);
+    _loadRecentSessions();
+    _loadWeeklySessions();
+  }
+
+  Future<void> _loadWeeklySessions() async {
+    if (!mounted) return;
+    setState(() => _isLoadingWeeklySessions = true);
+
+    final weekStart = _chartDate.subtract(
+      Duration(days: _chartDate.weekday - 1),
+    );
+    final start = DateTime(weekStart.year, weekStart.month, weekStart.day);
+    final end = start
+        .add(const Duration(days: 7))
+        .subtract(const Duration(seconds: 1));
+
+    final sessions = await _supabaseService.getFocusSessionsForDateRange(
+      start,
+      end,
+    );
+
+    if (mounted) {
+      setState(() {
+        _weeklySessions = sessions;
+        _isLoadingWeeklySessions = false;
+      });
+    }
   }
 
   Future<void> _loadRecentSessions() async {
@@ -949,6 +979,7 @@ class _FocusScreenState extends State<FocusScreen>
                           _chartDate = _chartDate.subtract(
                             const Duration(days: 7),
                           );
+                          _loadWeeklySessions();
                         }),
                       ),
                       Text(
@@ -962,6 +993,7 @@ class _FocusScreenState extends State<FocusScreen>
                         icon: const Icon(LucideIcons.chevronRight),
                         onPressed: () => setState(() {
                           _chartDate = _chartDate.add(const Duration(days: 7));
+                          _loadWeeklySessions();
                         }),
                       ),
                     ],
@@ -969,123 +1001,182 @@ class _FocusScreenState extends State<FocusScreen>
                   const SizedBox(height: 24),
 
                   // Bar Chart
-                  SizedBox(
-                    height: 220,
-                    child: BarChart(
-                      BarChartData(
-                        alignment: BarChartAlignment.spaceAround,
-                        maxY: 10,
-                        barTouchData: BarTouchData(
-                          enabled: true,
-                          touchTooltipData: BarTouchTooltipData(
-                            tooltipBgColor: Colors.grey.shade800,
-                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                              return BarTooltipItem(
-                                '${rod.toY.toInt()}h',
-                                const TextStyle(color: Colors.white),
-                              );
-                            },
-                          ),
-                        ),
-                        titlesData: FlTitlesData(
-                          show: true,
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 50,
-                              getTitlesWidget: (value, meta) {
-                                const dayNames = [
-                                  'Sen',
-                                  'Sel',
-                                  'Rab',
-                                  'Kam',
-                                  'Jum',
-                                  'Sab',
-                                  'Min',
-                                ];
-                                final index = value.toInt();
+                  _isLoadingWeeklySessions
+                      ? const SizedBox(
+                          height: 220,
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      : SizedBox(
+                          height: 220,
+                          child: BarChart(
+                            BarChartData(
+                              alignment: BarChartAlignment.spaceAround,
+                              maxY: 10,
+                              barTouchData: BarTouchData(
+                                enabled: true,
+                                touchTooltipData: BarTouchTooltipData(
+                                  tooltipBgColor: Colors.grey.shade800,
+                                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                    final weekStart = _chartDate.subtract(
+                                      Duration(days: _chartDate.weekday - 1),
+                                    );
+                                    final currentDate = weekStart.add(
+                                      Duration(days: group.x.toInt()),
+                                    );
+                                    final sessionsForDay = _weeklySessions
+                                        .where(
+                                          (s) =>
+                                              s.date.year == currentDate.year &&
+                                              s.date.month ==
+                                                  currentDate.month &&
+                                              s.date.day == currentDate.day,
+                                        )
+                                        .toList();
+                                    final totalDuration = sessionsForDay.fold(
+                                      0,
+                                      (sum, s) => sum + s.durationSeconds,
+                                    ); // in seconds
+                                    final totalMinutes = totalDuration ~/ 60;
+                                    final totalHours = totalMinutes ~/ 60;
+                                    final remainingMinutes = totalMinutes % 60;
 
-                                if (index >= 0 && index < dayNames.length) {
-                                  // Calculate the date for this day
-                                  final weekStart = _chartDate.subtract(
-                                    Duration(days: _chartDate.weekday - 1),
-                                  );
-                                  final currentDate = weekStart.add(
-                                    Duration(days: index),
-                                  );
+                                    String durationText;
+                                    if (totalHours > 0) {
+                                      durationText =
+                                          '${totalHours}j ${remainingMinutes}m';
+                                    } else {
+                                      durationText = '${totalMinutes}m';
+                                    }
 
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          dayNames[index],
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          currentDate.day.toString(),
-                                          style: TextStyle(
-                                            color: Colors.grey.shade400,
-                                            fontSize: 10,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }
-                                return const SizedBox();
-                              },
-                            ),
-                          ),
-                          leftTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                        ),
-                        gridData: const FlGridData(show: false),
-                        borderData: FlBorderData(show: false),
-                        barGroups: List.generate(7, (index) {
-                          // Simulate data based on date to make it look dynamic
-                          final daySeed = _chartDate.day + index;
-                          final value =
-                              (daySeed % 8) +
-                              2.0; // Random value between 2 and 9
-
-                          return BarChartGroupData(
-                            x: index,
-                            barRods: [
-                              BarChartRodData(
-                                toY: value,
-                                color:
-                                    index == DateTime.now().weekday - 1 &&
-                                        _isSameWeek(_chartDate, DateTime.now())
-                                    ? AppColors.primary
-                                    : Colors.grey.shade200,
-                                width: 16,
-                                borderRadius: BorderRadius.circular(4),
-                                backDrawRodData: BackgroundBarChartRodData(
-                                  show: true,
-                                  toY: 10,
-                                  color: Colors.grey.shade50,
+                                    return BarTooltipItem(
+                                      '${rod.toY.toInt()} Sesi\n$durationText',
+                                      const TextStyle(color: Colors.white),
+                                    );
+                                  },
                                 ),
                               ),
-                            ],
-                          );
-                        }),
-                      ),
-                    ),
-                  ),
+                              titlesData: FlTitlesData(
+                                show: true,
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 50,
+                                    getTitlesWidget: (value, meta) {
+                                      const dayNames = [
+                                        'Sen',
+                                        'Sel',
+                                        'Rab',
+                                        'Kam',
+                                        'Jum',
+                                        'Sab',
+                                        'Min',
+                                      ];
+                                      final index = value.toInt();
+
+                                      if (index >= 0 &&
+                                          index < dayNames.length) {
+                                        // Calculate the date for this day
+                                        final weekStart = _chartDate.subtract(
+                                          Duration(
+                                            days: _chartDate.weekday - 1,
+                                          ),
+                                        );
+                                        final currentDate = weekStart.add(
+                                          Duration(days: index),
+                                        );
+
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8.0,
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                dayNames[index],
+                                                style: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                currentDate.day.toString(),
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade400,
+                                                  fontSize: 10,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                      return const SizedBox();
+                                    },
+                                  ),
+                                ),
+                                leftTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                                topTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                                rightTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                              ),
+                              gridData: const FlGridData(show: false),
+                              borderData: FlBorderData(show: false),
+                              barGroups: List.generate(7, (index) {
+                                // Calculate date for this bar
+                                final weekStart = _chartDate.subtract(
+                                  Duration(days: _chartDate.weekday - 1),
+                                );
+                                final currentDate = weekStart.add(
+                                  Duration(days: index),
+                                );
+
+                                final now = DateTime.now();
+                                final isToday =
+                                    currentDate.year == now.year &&
+                                    currentDate.month == now.month &&
+                                    currentDate.day == now.day;
+
+                                // Filter sessions for this day
+                                final sessionsForDay = _weeklySessions.where((
+                                  s,
+                                ) {
+                                  return s.date.year == currentDate.year &&
+                                      s.date.month == currentDate.month &&
+                                      s.date.day == currentDate.day;
+                                }).toList();
+
+                                final value = sessionsForDay.length.toDouble();
+
+                                return BarChartGroupData(
+                                  x: index,
+                                  barRods: [
+                                    BarChartRodData(
+                                      toY: value,
+                                      color: isToday
+                                          ? AppColors.primary
+                                          : Colors.grey.shade200,
+                                      width: 16,
+                                      borderRadius: BorderRadius.circular(4),
+                                      backDrawRodData: BackgroundBarChartRodData(
+                                        show: true,
+                                        toY: (value > 10 ? value + 2 : 10)
+                                            .toDouble(), // Dynamic max height
+                                        color: Colors.grey.shade50,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }),
+                            ),
+                          ),
+                        ),
                 ],
               ),
             ),
@@ -1341,13 +1432,5 @@ class _FocusScreenState extends State<FocusScreen>
 
     // Week number (starting from 1)
     return (daysDifference / 7).floor() + 1;
-  }
-
-  bool _isSameWeek(DateTime date1, DateTime date2) {
-    final week1 = _getWeekOfMonth(date1);
-    final week2 = _getWeekOfMonth(date2);
-    return date1.year == date2.year &&
-        date1.month == date2.month &&
-        week1 == week2;
   }
 }

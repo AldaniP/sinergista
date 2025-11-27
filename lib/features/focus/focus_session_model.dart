@@ -64,8 +64,8 @@ class FocusSession {
 
     return {
       'label': title, // Map title to label
-      'start_time': startTime.toIso8601String(),
-      'end_time': endTime.toIso8601String(), // Required by DB
+      'start_time': startTime.toUtc().toIso8601String(),
+      'end_time': endTime.toUtc().toIso8601String(), // Required by DB
       'duration_seconds': durationSecs, // Required by DB
       'category': category,
       'pause_count': pauseCount,
