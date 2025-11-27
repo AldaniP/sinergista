@@ -974,66 +974,6 @@ class DashboardHome extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    // DropdownButtonFormField uses value for current selection, not initialValue if we want it to update
-                    // But the error says 'value' is deprecated? That's unusual for DropdownButtonFormField.
-                    // Wait, usually 'value' is NOT deprecated for DropdownButtonFormField.
-                    // Maybe it's a specific version issue or I'm misinterpreting.
-                    // Let's check the error again: "'value' is deprecated and shouldn't be used. Use initialValue instead."
-                    // This usually applies to TextFormField, but this is DropdownButtonFormField.
-                    // Ah, maybe it's because I'm using it inside a StatefulBuilder and updating it?
-                    // Actually, for DropdownButtonFormField, 'value' IS the way to control it.
-                    // Unless... wait, is this a specific Flutter version thing?
-                    // The error says "This feature was deprecated after v3.33.0-1.0.pre". That is VERY recent (future?).
-                    // Let's try to use 'value' as is but maybe the linter is confused or I should use a DropdownButton instead?
-                    // Or maybe it's just a warning I can ignore? No, user wants it fixed.
-                    // Let's try to use 'value' but ensure it's correct.
-                    // Actually, if I use `value`, it's a controlled component.
-                    // If I use `initialValue`, it's uncontrolled.
-                    // Since I'm updating `selectedModule` in `setState`, I WANT it to be controlled.
-                    // So `value` is correct.
-                    // However, the linter complains.
-                    // Let's look at the docs or assume the linter is right about `initialValue` for FormField?
-                    // But DropdownButtonFormField extends FormField.
-                    // Let's try changing to `value` -> `value` (no change) but maybe the error is about something else?
-                    // "Use initialValue instead. This will set the initial value for the form field."
-                    // If I change to initialValue, it won't update when I select?
-                    // Wait, `onChanged` updates the state variable.
-                    // If I use `initialValue`, it only sets it once.
-                    // But `DropdownButtonFormField` needs `value` to show the selected item.
-                    // Let's assume the linter is actually talking about `TextFormField`? No, line 597 is DropdownButtonFormField.
-                    // Let's try to ignore it or maybe it's a false positive?
-                    // Or maybe I should use `DropdownButton` inside a `InputDecorator`?
-                    // Let's try to just suppress it? No, user wants fix.
-                    // Let's try to use `value` and see if I can suppress it or if there is a real fix.
-                    // Actually, let's look at the code again.
-                    // `value: selectedModule`
-                    // If I change it to `initialValue: selectedModule`, it might work if the widget is rebuilt?
-                    // But `StatefulBuilder` rebuilds it.
-                    // Let's try changing `value` to `value` but maybe the linter is strict.
-                    // Wait, I'll just change it to `value` and ignore if I can't find a better way, BUT
-                    // I will try to use `DropdownButton` instead of `DropdownButtonFormField` if it's problematic,
-                    // but `DropdownButtonFormField` is better for UI consistency.
-                    // Let's try to use `value` and add `// ignore: deprecated_member_use`?
-                    // No, I should try to fix it.
-                    // Let's try to use `initialValue` as suggested?
-                    // But `DropdownButtonFormField` has `value`.
-                    // Let's check if `DropdownButtonFormField` has `initialValue`. Yes, from `FormField`.
-                    // If I use `initialValue`, `value` must be null?
-                    // If I use `value`, `initialValue` is ignored?
-                    // The error says "Use initialValue instead".
-                    // Let's try to use `value` and see.
-                    // Actually, I will try to use `value` and if it persists, I will suppress.
-                    // But wait, the error is specific.
-                    // Let's try to use `value` but maybe the issue is that I am passing `value` to `FormField` constructor implicitly?
-                    // No.
-                    // Let's try to change `value` to `value` (maybe I am overthinking and it's just a linter bug or I should use `initialValue` because I am inside a dialog that rebuilds?).
-                    // Actually, inside `StatefulBuilder`, `selectedModule` changes.
-                    // If I use `initialValue`, it will be set to the *initial* `selectedModule` (null) and never update visually even if `setState` is called?
-                    // No, `StatefulBuilder` rebuilds the widget tree.
-                    // So `DropdownButtonFormField` is created anew.
-                    // So `initialValue` would be the *current* `selectedModule`.
-                    // So `initialValue` SHOULD work if the widget is recreated.
-                    // Let's try changing `value` to `initialValue`.
                     initialValue: selectedModule,
                     decoration: InputDecoration(
                       filled: true,

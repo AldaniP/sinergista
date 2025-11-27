@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/tasks/module_model.dart';
 import '../../features/tasks/dashboard_task_model.dart';
+import '../../features/focus/focus_session_model.dart';
 import 'package:flutter/material.dart';
 
 class SupabaseService {
@@ -378,6 +379,62 @@ class SupabaseService {
       return DateTime(year, month, day).toIso8601String();
     } catch (e) {
       return DateTime.now().toIso8601String();
+    }
+  }
+
+  // Save Focus Session
+  Future<FocusSession> saveFocusSession(FocusSession session) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not logged in');
+
+      final data = {'user_id': userId, ...session.toMap()};
+
+      // If ID exists, include it for upsert/update
+      if (session.id != null) {
+        data['id'] = session.id;
+      }
+
+      final response = await _client
+          .from('focus_sessions')
+          .upsert(data)
+          .select()
+          .single();
+
+      return FocusSession.fromMap(response);
+    } catch (e) {
+      debugPrint('Error saving focus session: $e');
+      rethrow;
+    }
+  }
+
+  // Get Recent Focus Sessions
+  Future<List<FocusSession>> getRecentFocusSessions({int limit = 5}) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) return [];
+
+      final response = await _client
+          .from('focus_sessions')
+          .select()
+          .eq('user_id', userId)
+          .order('start_time', ascending: false)
+          .limit(limit);
+
+      final data = response as List<dynamic>;
+      return data.map((json) => FocusSession.fromMap(json)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Delete Focus Session
+  Future<void> deleteFocusSession(String id) async {
+    try {
+      await _client.from('focus_sessions').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('Error deleting focus session: $e');
+      rethrow;
     }
   }
 }

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/supabase_service.dart';
 import 'focus_session_model.dart';
 
 class FocusScreen extends StatefulWidget {
@@ -14,10 +15,14 @@ class FocusScreen extends StatefulWidget {
   State<FocusScreen> createState() => _FocusScreenState();
 }
 
-class _FocusScreenState extends State<FocusScreen> {
+class _FocusScreenState extends State<FocusScreen>
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
+  @override
+  bool get wantKeepAlive => true;
   bool _isPomodoro = true;
   // Pomodoro State
   Timer? _timer;
+  Timer? _autoSaveTimer;
   int _remainingSeconds = 25 * 60;
   bool _isRunning = false;
   int _pomodoroCycle = 0;
@@ -38,32 +43,118 @@ class _FocusScreenState extends State<FocusScreen> {
   int _shortBreak = 5;
   int _longBreak = 15;
 
+  // Session Aggregation State
+  int _completedFocusSessions = 0;
+  int _completedShortBreaks = 0;
+  int _completedLongBreaks = 0;
+  DateTime? _lastAutoSaveTime;
+  String? _currentSessionId;
+  bool _showAllSessions = false; // State for pagination
+
   // Chart State
   DateTime _chartDate = DateTime.now();
 
   final TextEditingController _sessionTitleController = TextEditingController();
+  final SupabaseService _supabaseService = SupabaseService();
+  List<FocusSession> _recentSessions = [];
+  bool _isLoadingSessions = true;
 
-  final List<FocusSession> _recentSessions = [
-    FocusSession(
-      title: 'Belajar React',
-      date: DateTime.now().subtract(const Duration(minutes: 30)),
-      durationMinutes: 25,
-      category: 'Belajar',
-      pauseCount: 2,
-      totalPauseDurationSeconds: 120,
-    ),
-    FocusSession(
-      title: 'Menulis artikel blog',
-      date: DateTime.now().subtract(const Duration(hours: 5)),
-      durationMinutes: 50,
-      category: 'Work',
-      pauseCount: 0,
-      totalPauseDurationSeconds: 0,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadRecentSessions();
+  }
+
+  Future<void> _loadRecentSessions() async {
+    final sessions = await _supabaseService.getRecentFocusSessions();
+    if (mounted) {
+      setState(() {
+        _recentSessions = sessions;
+        _isLoadingSessions = false;
+      });
+    }
+  }
+
+  Future<void> _deleteSession(FocusSession session) async {
+    if (session.id == null) return;
+
+    debugPrint('Deleting session: ${session.id}, Current: $_currentSessionId');
+    // Optimistic update
+    setState(() {
+      _recentSessions.removeWhere((s) => s.id == session.id);
+      // Prevent auto-save from re-creating the session if it's the current one
+      if (session.id == _currentSessionId) {
+        debugPrint('Deleting CURRENT session. Resetting state.');
+        _timer?.cancel();
+        _timer = null;
+        _autoSaveTimer?.cancel();
+        _resetTimerState();
+      }
+    });
+
+    try {
+      await _supabaseService.deleteFocusSession(session.id!);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Sesi berhasil dihapus')));
+    } catch (e) {
+      // Revert if failed
+      _loadRecentSessions();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menghapus sesi: $e')));
+    }
+  }
+
+  @override
+  void deactivate() {
+    // Called when the widget is removed from the tree (e.g., tab switch)
+    _saveCurrentSession();
+    super.deactivate();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Save if app is paused or detached
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _saveCurrentSession();
+    }
+  }
+
+  void _saveCurrentSession() {
+    debugPrint(
+      'Check Save: Running=$_isRunning, Stopwatch=$_stopwatchSeconds, ID=$_currentSessionId',
+    );
+    // Save if running or has progress
+    if (_isRunning ||
+        _completedFocusSessions > 0 ||
+        _completedShortBreaks > 0 ||
+        _completedLongBreaks > 0 ||
+        _completedLongBreaks > 0 ||
+        (_currentPhase == 'Fokus' && _remainingSeconds < _focusDuration * 60) ||
+        (_stopwatchSeconds > 0)) {
+      debugPrint('Saving current session...');
+      _completeSession(isStop: true);
+      _lastAutoSaveTime = DateTime.now();
+    }
+  }
+
+  void _periodicAutoSave() {
+    // Only save if it's been at least 30 seconds since last save
+    if (_lastAutoSaveTime == null ||
+        DateTime.now().difference(_lastAutoSaveTime!).inSeconds >= 30) {
+      _saveCurrentSession();
+    }
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // Auto-save if running or has progress
+    _saveCurrentSession();
     _timer?.cancel();
     _sessionTitleController.dispose();
     super.dispose();
@@ -95,6 +186,17 @@ class _FocusScreenState extends State<FocusScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _tick();
     });
+
+    // Start auto-save timer (saves every 30 seconds)
+    _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _periodicAutoSave();
+    });
+  }
+
+  void _resetSessionCounts() {
+    _completedFocusSessions = 0;
+    _completedShortBreaks = 0;
+    _completedLongBreaks = 0;
   }
 
   void _pauseTimer() {
@@ -110,6 +212,24 @@ class _FocusScreenState extends State<FocusScreen> {
   void _stopTimer() {
     _timer?.cancel();
     _timer = null;
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = null;
+
+    // Save the session if there's any progress or completed sessions
+    if (_isRunning || // Save if it was running (even if 0s)
+        _completedFocusSessions > 0 ||
+        _completedShortBreaks > 0 ||
+        _completedLongBreaks > 0 ||
+        (_currentPhase == 'Fokus' && _remainingSeconds < _focusDuration * 60) ||
+        (_stopwatchSeconds > 0)) {
+      _completeSession(isStop: true);
+    }
+
+    _resetTimerState();
+  }
+
+  void _resetTimerState() {
+    debugPrint('Resetting Timer State');
     setState(() {
       _isRunning = false;
       _remainingSeconds = _focusDuration * 60;
@@ -119,6 +239,9 @@ class _FocusScreenState extends State<FocusScreen> {
       _pauseCount = 0;
       _totalPauseDuration = 0;
       _pauseStartTime = null;
+      _resetSessionCounts();
+      _lastAutoSaveTime = null;
+      _currentSessionId = null;
     });
   }
 
@@ -138,9 +261,7 @@ class _FocusScreenState extends State<FocusScreen> {
     // Pomodoro Logic
     if (_currentPhase == 'Fokus') {
       // Focus finished -> Start Break
-      _completeSession(
-        isPomodoroBreak: true,
-      ); // Save session but don't reset everything
+      _completedFocusSessions++;
       _pomodoroCycle++;
 
       if (_pomodoroCycle % 4 == 0) {
@@ -152,9 +273,23 @@ class _FocusScreenState extends State<FocusScreen> {
       }
     } else {
       // Break finished -> Start Focus
+      if (_currentPhase == 'Istirahat Pendek') {
+        _completedShortBreaks++;
+      } else {
+        _completedLongBreaks++;
+      }
       _currentPhase = 'Fokus';
       _remainingSeconds = _focusDuration * 60;
     }
+
+    // Play sound or notify (optional)
+    // For now just show a snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Fase $_currentPhase dimulai!'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
 
     // Auto-start next phase
     _isRunning = true;
@@ -186,51 +321,127 @@ class _FocusScreenState extends State<FocusScreen> {
     });
   }
 
-  void _completeSession({bool isPomodoroBreak = false}) {
-    // Only save session if it was a Focus phase (or Timer Biasa)
-    if (_currentPhase == 'Fokus' || !_isPomodoro) {
-      final newSession = FocusSession(
-        title: _sessionTitleController.text.isEmpty
-            ? 'Sesi Fokus'
-            : _sessionTitleController.text,
-        date: DateTime.now(),
-        durationMinutes: _isPomodoro || _timerType == 'Countdown'
-            ? _focusDuration
-            : (_stopwatchSeconds / 60).ceil(),
-        pauseCount: _pauseCount,
-        totalPauseDurationSeconds: _totalPauseDuration,
-        sessionType: _isPomodoro ? 'Pomodoro' : _timerType,
-      );
+  void _completeSession({bool isStop = false}) {
+    // Calculate total duration based on completed sessions + current progress if stopped
+    int totalMinutes = 0;
+    int totalSeconds = 0;
 
-      setState(() {
-        _recentSessions.insert(0, newSession);
-        if (!isPomodoroBreak) {
-          _sessionTitleController.clear();
-          _remainingSeconds = _focusDuration * 60;
-          _stopwatchSeconds = 0;
-          _pauseCount = 0;
-          _totalPauseDuration = 0;
-        }
-      });
+    if (_isPomodoro) {
+      totalMinutes += _completedFocusSessions * _focusDuration;
+      // Add current progress if stopped during focus
+      if (isStop && _currentPhase == 'Fokus') {
+        int elapsedSeconds = (_focusDuration * 60 - _remainingSeconds);
+        totalSeconds = totalMinutes * 60 + elapsedSeconds;
+        totalMinutes += (elapsedSeconds / 60).ceil();
+      } else {
+        totalSeconds = totalMinutes * 60;
+      }
+    } else {
+      // Timer Biasa
+      if (_timerType == 'Countdown') {
+        totalMinutes = _focusDuration;
+        totalSeconds = totalMinutes * 60;
+      } else {
+        // Stopwatch
+        totalSeconds = _stopwatchSeconds;
+        totalMinutes = (totalSeconds / 60).ceil();
+      }
+
+      // Ensure at least 1 minute if it was running (even if < 1 min)
+      if (totalMinutes == 0 && isStop) {
+        totalMinutes = 1;
+        if (totalSeconds == 0)
+          totalSeconds = 60; // Ensure seconds match min duration
+      }
     }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(isPomodoroBreak ? 'Waktunya Istirahat!' : 'Selesai!'),
-        content: Text(
-          isPomodoroBreak
-              ? 'Fokus selesai. Ambil istirahat sejenak.'
-              : 'Sesi ${_isPomodoro ? "fokus" : _timerType.toLowerCase()} telah selesai.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+    final newSession = FocusSession(
+      id: _currentSessionId,
+      title: _sessionTitleController.text.isEmpty
+          ? 'Sesi Fokus'
+          : _sessionTitleController.text,
+      date: DateTime.now(),
+      durationMinutes: totalMinutes,
+      durationSeconds: totalSeconds, // Pass precise seconds
+      pauseCount: _pauseCount,
+      totalPauseDurationSeconds: _totalPauseDuration,
+      sessionType: _isPomodoro ? 'Pomodoro' : _timerType,
+      focusCount:
+          _completedFocusSessions +
+          (isStop &&
+                  _currentPhase == 'Fokus' &&
+                  _remainingSeconds < _focusDuration * 60
+              ? 1
+              : 0),
+      shortBreakCount: _completedShortBreaks,
+      longBreakCount: _completedLongBreaks,
     );
+
+    // Save to Supabase
+    _supabaseService.saveFocusSession(newSession).then((savedSession) {
+      if (mounted) {
+        setState(() {
+          // Replace the optimistic session with the saved one (which has ID)
+          final index = _recentSessions.indexOf(newSession);
+          if (index != -1) {
+            debugPrint('Save success. Updating list. ID: ${savedSession.id}');
+            // Update current session ID for future updates
+            _currentSessionId = savedSession.id;
+            _recentSessions[index] = savedSession;
+          } else {
+            debugPrint(
+              'Save success BUT session removed from list. Deleting from DB. ID: ${savedSession.id}',
+            );
+            // Session was removed from list (deleted) while save was in progress.
+            // Ensure it is deleted from DB too.
+            if (savedSession.id != null) {
+              _supabaseService.deleteFocusSession(savedSession.id!);
+            }
+          }
+        });
+      }
+    });
+
+    setState(() {
+      // Optimistic update
+      if (_currentSessionId != null) {
+        // Update existing session in list
+        final index = _recentSessions.indexWhere(
+          (s) => s.id == _currentSessionId,
+        );
+        if (index != -1) {
+          _recentSessions[index] = newSession;
+        } else {
+          _recentSessions.insert(0, newSession);
+        }
+      } else {
+        // New session
+        _recentSessions.insert(0, newSession);
+      }
+
+      if (isStop) {
+        _sessionTitleController.clear();
+      }
+    });
+
+    if (!isStop) {
+      // Only show dialog if it's a countdown finish (not pomodoro phase change)
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Selesai!'),
+          content: Text(
+            'Sesi ${_isPomodoro ? "fokus" : _timerType.toLowerCase()} telah selesai.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   String get _timerString {
@@ -275,6 +486,7 @@ class _FocusScreenState extends State<FocusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fokus & Timer'),
@@ -335,7 +547,10 @@ class _FocusScreenState extends State<FocusScreen> {
                       children: [
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => setState(() => _isPomodoro = true),
+                            onTap: () {
+                              if (_currentSessionId != null) _stopTimer();
+                              setState(() => _isPomodoro = true);
+                            },
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               decoration: BoxDecoration(
@@ -365,7 +580,10 @@ class _FocusScreenState extends State<FocusScreen> {
                         ),
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => setState(() => _isPomodoro = false),
+                            onTap: () {
+                              if (_currentSessionId != null) _stopTimer();
+                              setState(() => _isPomodoro = false);
+                            },
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               decoration: BoxDecoration(
@@ -486,8 +704,10 @@ class _FocusScreenState extends State<FocusScreen> {
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () =>
-                                setState(() => _timerType = 'Stopwatch'),
+                            onPressed: () {
+                              if (_currentSessionId != null) _stopTimer();
+                              setState(() => _timerType = 'Stopwatch');
+                            },
                             style: OutlinedButton.styleFrom(
                               backgroundColor: _timerType == 'Stopwatch'
                                   ? Colors.grey.shade100
@@ -512,8 +732,10 @@ class _FocusScreenState extends State<FocusScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () =>
-                                setState(() => _timerType = 'Countdown'),
+                            onPressed: () {
+                              if (_currentSessionId != null) _stopTimer();
+                              setState(() => _timerType = 'Countdown');
+                            },
                             style: OutlinedButton.styleFrom(
                               backgroundColor: _timerType == 'Countdown'
                                   ? Colors.grey.shade100
@@ -564,7 +786,14 @@ class _FocusScreenState extends State<FocusScreen> {
                             _isRunning ? LucideIcons.pause : LucideIcons.play,
                           ),
                           label: Text(
-                            _isRunning ? 'Jeda Sesi' : 'Mulai Sesi Fokus',
+                            _isRunning
+                                ? 'Jeda Sesi'
+                                : (_stopwatchSeconds > 0 ||
+                                      (_currentPhase == 'Fokus' &&
+                                          _remainingSeconds <
+                                              _focusDuration * 60))
+                                ? 'Lanjutkan'
+                                : 'Mulai Sesi Fokus',
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
@@ -647,7 +876,26 @@ class _FocusScreenState extends State<FocusScreen> {
             ),
             const SizedBox(height: 16),
 
-            ..._recentSessions.map((session) => _buildSessionItem(session)),
+            if (_isLoadingSessions)
+              const Center(child: CircularProgressIndicator())
+            else if (_recentSessions.isEmpty)
+              const Center(
+                child: Text(
+                  'Belum ada sesi fokus.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              )
+            else ...[
+              ...(_showAllSessions ? _recentSessions : _recentSessions.take(4))
+                  .map((session) => _buildSessionItem(session)),
+              if (!_showAllSessions && _recentSessions.length > 4)
+                Center(
+                  child: TextButton(
+                    onPressed: () => setState(() => _showAllSessions = true),
+                    child: const Text('Lihat Lebih Banyak'),
+                  ),
+                ),
+            ],
 
             const SizedBox(height: 32),
 
@@ -971,7 +1219,7 @@ class _FocusScreenState extends State<FocusScreen> {
   }
 
   Widget _buildSessionItem(FocusSession session) {
-    return GestureDetector(
+    return InkWell(
       onTap: () {
         showDialog(
           context: context,
@@ -981,15 +1229,19 @@ class _FocusScreenState extends State<FocusScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Kategori: ${session.category}'),
                 Text('Tipe: ${session.sessionType}'),
-                Text('Durasi: ${session.durationMinutes} menit'),
                 Text(
-                  'Waktu: ${DateFormat('dd MMM yyyy, HH:mm').format(session.date)}',
+                  session.durationSeconds > 0
+                      ? 'Durasi: ${session.durationSeconds ~/ 60} menit ${session.durationSeconds % 60} detik'
+                      : 'Durasi: ${session.durationMinutes} menit',
                 ),
-                const SizedBox(height: 8),
                 const Divider(),
-                const SizedBox(height: 8),
+                if (session.sessionType == 'Pomodoro') ...[
+                  Text('Fokus: ${session.focusCount} kali'),
+                  Text('Istirahat Pendek: ${session.shortBreakCount} kali'),
+                  Text('Istirahat Panjang: ${session.longBreakCount} kali'),
+                  const SizedBox(height: 8),
+                ],
                 Text('Jeda: ${session.pauseCount} kali'),
                 Text(
                   'Rata-rata Jeda: ${session.averagePauseDurationSeconds.toStringAsFixed(1)} detik',
@@ -1001,16 +1253,25 @@ class _FocusScreenState extends State<FocusScreen> {
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Tutup'),
               ),
+              if (session.id != null)
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _deleteSession(session);
+                  },
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text('Hapus'),
+                ),
             ],
           ),
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
           ),
@@ -1018,15 +1279,15 @@ class _FocusScreenState extends State<FocusScreen> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFE0B2).withValues(alpha: 0.2),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 LucideIcons.clock,
-                color: Color(0xFFFF9800),
-                size: 20,
+                color: AppColors.primary,
+                size: 24,
               ),
             ),
             const SizedBox(width: 16),
@@ -1036,31 +1297,35 @@ class _FocusScreenState extends State<FocusScreen> {
                 children: [
                   Text(
                     session.title,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Text(
-                    '${DateFormat('HH:mm').format(session.date)} • ${session.category}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
-                    ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        session.sessionType,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
             Text(
               '${session.durationMinutes} min',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
+            if (session.id != null)
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                onPressed: () => _deleteSession(session),
+              ),
           ],
         ),
       ),
