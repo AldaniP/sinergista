@@ -859,9 +859,103 @@ class _ModulesScreenState extends State<ModulesScreen> {
                           }
                         }
                       }
+                    } else if (value == 'archive') {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Arsip Modul'),
+                          content: Text(
+                            'Apakah Anda yakin ingin mengarsipkan modul "${module.title}"?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Batal'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Arsip'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        try {
+                          await _supabaseService.archiveModule(module.id);
+                          _fetchModules();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Modul berhasil diarsipkan'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal mengarsipkan modul: $e'),
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    } else if (value == 'duplicate') {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Duplikat Modul'),
+                          content: Text(
+                            'Apakah Anda yakin ingin menduplikasi modul "${module.title}" beserta isinya?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Batal'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Duplikat'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        try {
+                          await _supabaseService.duplicateModule(module);
+                          _fetchModules();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Modul berhasil diduplikasi'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal menduplikasi modul: $e'),
+                              ),
+                            );
+                          }
+                        }
+                      }
                     }
                   },
                   itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'duplicate',
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.copy, size: 16),
+                          SizedBox(width: 8),
+                          Text('Duplikat'),
+                        ],
+                      ),
+                    ),
                     const PopupMenuItem(
                       value: 'delete',
                       child: Row(
@@ -869,6 +963,16 @@ class _ModulesScreenState extends State<ModulesScreen> {
                           Icon(LucideIcons.trash2, size: 16, color: Colors.red),
                           SizedBox(width: 8),
                           Text('Hapus', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'archive',
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.archive, size: 16),
+                          SizedBox(width: 8),
+                          Text('Arsip'),
                         ],
                       ),
                     ),

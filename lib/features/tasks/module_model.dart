@@ -12,6 +12,7 @@ class Module {
   final Color tagColor;
   final String tagName;
   final List<dynamic>? content; // JSON content for Notion-like editor
+  final bool isArchived;
 
   Module({
     required this.id,
@@ -25,5 +26,6 @@ class Module {
     required this.tagColor,
     required this.tagName,
     this.content,
+    this.isArchived = false,
   });
 }

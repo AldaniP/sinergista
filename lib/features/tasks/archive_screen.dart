@@ -3,9 +3,55 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/theme_provider.dart';
+import '../../core/services/supabase_service.dart';
+import 'module_model.dart';
+import 'module_editor_screen.dart';
 
-class ArchiveScreen extends StatelessWidget {
+class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
+
+  @override
+  State<ArchiveScreen> createState() => _ArchiveScreenState();
+}
+
+class _ArchiveScreenState extends State<ArchiveScreen> {
+  final SupabaseService _supabaseService = SupabaseService();
+  List<Module> _archivedModules = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchArchivedModules();
+  }
+
+  Future<void> _fetchArchivedModules() async {
+    final modules = await _supabaseService.getArchivedModules();
+    if (mounted) {
+      setState(() {
+        _archivedModules = modules;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _restoreModule(Module module) async {
+    try {
+      await _supabaseService.restoreModule(module.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Modul berhasil dipulihkan')),
+        );
+        _fetchArchivedModules();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memulihkan modul: $e')));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,105 +78,64 @@ class ArchiveScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  LucideIcons.archive,
-                  size: 20,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Modul Selesai',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        LucideIcons.archive,
+                        size: 20,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Modul Diarsipkan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  if (_archivedModules.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32),
+                        child: Text(
+                          'Belum ada modul yang diarsipkan',
+                          style: TextStyle(
+                            color: isDark
+                                ? Colors.grey.shade600
+                                : Colors.grey.shade400,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    ..._archivedModules.map(
+                      (module) =>
+                          _buildModuleCard(module: module, isDark: isDark),
+                    ),
+
+                  // Note: Task archiving is not yet implemented in backend,
+                  // so we are hiding the task section for now or keeping it static if needed.
+                  // For this task, we focus on Modules as requested.
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildModuleCard(
-              color: Colors.blue,
-              title: 'Website Redesign Project',
-              tasks: '24 tugas selesai',
-              date: '5 Nov 2025',
-              isDark: isDark,
-            ),
-            const SizedBox(height: 12),
-            _buildModuleCard(
-              color: Colors.purple,
-              title: 'Q3 Marketing Campaign',
-              tasks: '18 tugas selesai',
-              date: '28 Okt 2025',
-              isDark: isDark,
-            ),
-            const SizedBox(height: 12),
-            _buildModuleCard(
-              color: Colors.green,
-              title: 'Belajar Python Basics',
-              tasks: '12 tugas selesai',
-              date: '15 Okt 2025',
-              isDark: isDark,
-            ),
-            const SizedBox(height: 32),
-            Row(
-              children: [
-                Icon(
-                  LucideIcons.checkCircle,
-                  size: 20,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Tugas Selesai',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildTaskItem(
-              title: 'Setup project repository',
-              module: 'Website Redesign',
-              date: '5 Nov 2025',
-              isDark: isDark,
-            ),
-            _buildTaskItem(
-              title: 'Design social media assets',
-              module: 'Q3 Marketing',
-              date: '28 Okt 2025',
-              isDark: isDark,
-            ),
-            _buildTaskItem(
-              title: 'Complete Python course',
-              module: 'Belajar Python',
-              date: '15 Okt 2025',
-              isDark: isDark,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
-  Widget _buildModuleCard({
-    required Color color,
-    required String title,
-    required String tasks,
-    required String date,
-    required bool isDark,
-  }) {
+  Widget _buildModuleCard({required Module module, required bool isDark}) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -147,12 +152,15 @@ class ArchiveScreen extends StatelessWidget {
               Container(
                 width: 12,
                 height: 12,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: module.tagColor,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  title,
+                  module.title,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -172,7 +180,7 @@ class ArchiveScreen extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                tasks,
+                '${module.completedCount} tugas selesai',
                 style: TextStyle(
                   fontSize: 13,
                   color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -180,7 +188,7 @@ class ArchiveScreen extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Text(
-                '• $date',
+                '• ${module.dueDate}',
                 style: TextStyle(
                   fontSize: 13,
                   color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -193,7 +201,14 @@ class ArchiveScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ModuleEditorScreen(module: module),
+                      ),
+                    );
+                  },
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     side: BorderSide(
@@ -209,7 +224,7 @@ class ArchiveScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () => _restoreModule(module),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     backgroundColor: AppColors.primary,
@@ -219,58 +234,6 @@ class ArchiveScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskItem({
-    required String title,
-    required String module,
-    required String date,
-    required bool isDark,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(LucideIcons.check, color: Colors.green, size: 16),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$module  •  $date',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

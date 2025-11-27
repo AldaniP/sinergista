@@ -12,6 +12,7 @@ class SupabaseService {
       final response = await _client
           .from('modules')
           .select()
+          .eq('is_archived', false)
           .order('created_at', ascending: false);
 
       final data = response as List<dynamic>;
@@ -30,6 +31,7 @@ class SupabaseService {
               : _getCategoryColor(json['tag_name']),
           tagName: json['tag_name'] ?? 'Personal',
           content: json['content'],
+          isArchived: json['is_archived'] ?? false,
         );
       }).toList();
     } catch (e) {
@@ -63,6 +65,7 @@ class SupabaseService {
         'task_count': 0,
         'member_count': 1,
         'content': content,
+        'is_archived': false,
       });
     } catch (e) {
       debugPrint('Error creating module: $e');
@@ -92,6 +95,66 @@ class SupabaseService {
       await _client.from('modules').delete().eq('id', moduleId);
     } catch (e) {
       debugPrint('Error deleting module: $e');
+      rethrow;
+    }
+  }
+
+  // Fetch Archived Modules
+  Future<List<Module>> getArchivedModules() async {
+    try {
+      final response = await _client
+          .from('modules')
+          .select()
+          .eq('is_archived', true)
+          .order('created_at', ascending: false);
+
+      final data = response as List<dynamic>;
+      return data.map((json) {
+        return Module(
+          id: json['id']?.toString() ?? '',
+          title: json['title'] ?? 'No Title',
+          description: json['description'] ?? '',
+          progress: (json['progress'] ?? 0).toDouble(),
+          completedCount: json['completed_count'] ?? 0,
+          taskCount: json['task_count'] ?? 0,
+          memberCount: json['member_count'] ?? 1,
+          dueDate: _formatDate(json['due_date']),
+          tagColor: json['tag_color'] != null
+              ? Color(json['tag_color'])
+              : _getCategoryColor(json['tag_name']),
+          tagName: json['tag_name'] ?? 'Personal',
+          content: json['content'],
+          isArchived: json['is_archived'] ?? true,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching archived modules: $e');
+      return [];
+    }
+  }
+
+  // Archive Module
+  Future<void> archiveModule(String moduleId) async {
+    try {
+      await _client
+          .from('modules')
+          .update({'is_archived': true})
+          .eq('id', moduleId);
+    } catch (e) {
+      debugPrint('Error archiving module: $e');
+      rethrow;
+    }
+  }
+
+  // Restore Module
+  Future<void> restoreModule(String moduleId) async {
+    try {
+      await _client
+          .from('modules')
+          .update({'is_archived': false})
+          .eq('id', moduleId);
+    } catch (e) {
+      debugPrint('Error restoring module: $e');
       rethrow;
     }
   }
@@ -154,6 +217,65 @@ class SupabaseService {
           .eq('id', id);
     } catch (e) {
       debugPrint('Error updating task: $e');
+      rethrow;
+    }
+  }
+
+  // Duplicate Module (Deep Copy)
+  Future<void> duplicateModule(Module module) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not logged in');
+
+      // 1. Create new module (Copy of original)
+      final newModuleResponse = await _client
+          .from('modules')
+          .insert({
+            'user_id': userId,
+            'title': '${module.title} (Copy)',
+            'description': module.description,
+            'tag_name': module.tagName,
+            'tag_color': module.tagColor.value,
+            'due_date': _parseFormattedDate(
+              module.dueDate,
+            ), // Convert back to ISO string
+            'progress': 0,
+            'completed_count': 0,
+            'task_count': 0,
+            'member_count': 1,
+            'content': module.content, // Copy JSON content
+            'is_archived': false, // Always active when duplicated
+          })
+          .select()
+          .single();
+
+      final newModuleId = newModuleResponse['id'];
+
+      // 2. Fetch related tasks
+      final tasksResponse = await _client
+          .from('tasks')
+          .select()
+          .eq('module_id', module.id);
+
+      final tasks = tasksResponse as List<dynamic>;
+
+      // 3. Duplicate tasks if any
+      if (tasks.isNotEmpty) {
+        final newTasks = tasks.map((task) {
+          return {
+            'user_id': userId,
+            'module_id': newModuleId,
+            'title': task['title'],
+            'priority': task['priority'],
+            'is_completed': task['is_completed'],
+            // 'due_date': task['due_date'], // If exists
+          };
+        }).toList();
+
+        await _client.from('tasks').insert(newTasks);
+      }
+    } catch (e) {
+      debugPrint('Error duplicating module: $e');
       rethrow;
     }
   }
@@ -224,6 +346,38 @@ class SupabaseService {
         return const Color(0xFF66BB6A); // Green
       default:
         return Colors.grey;
+    }
+  }
+
+  // Helper to parse formatted date back to ISO string
+  String _parseFormattedDate(String dateStr) {
+    try {
+      final parts = dateStr.split(' ');
+      if (parts.length != 3) return DateTime.now().toIso8601String();
+
+      final day = int.parse(parts[0]);
+      final year = int.parse(parts[2]);
+      final monthStr = parts[1];
+
+      final monthMap = {
+        'Jan': 1,
+        'Feb': 2,
+        'Mar': 3,
+        'Apr': 4,
+        'Mei': 5,
+        'Jun': 6,
+        'Jul': 7,
+        'Agu': 8,
+        'Sep': 9,
+        'Okt': 10,
+        'Nov': 11,
+        'Des': 12,
+      };
+
+      final month = monthMap[monthStr] ?? 1;
+      return DateTime(year, month, day).toIso8601String();
+    } catch (e) {
+      return DateTime.now().toIso8601String();
     }
   }
 }
