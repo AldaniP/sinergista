@@ -51,7 +51,7 @@ class ConnectionService {
 
     // Note: receiver_profile sebenarnya tidak perlu diload full karena itu saya sendiri,
     // tapi diperlukan agar parsing di Model.fromSupabase tidak error null.
-    
+
     return (response as List)
         .map((e) => ConnectionModel.fromSupabase(e, _currentUserId))
         .toList();

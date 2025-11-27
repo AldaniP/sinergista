@@ -17,7 +17,7 @@ class ConnectionsScreen extends StatefulWidget {
 class _ConnectionsScreenState extends State<ConnectionsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   // Controller untuk Search
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -63,9 +63,9 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat data: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memuat data: $e')));
       }
     }
   }
@@ -73,14 +73,24 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
   // 2. Filter Search (Logic Lokal)
   List<ConnectionModel> get _filteredConnections {
     if (_searchQuery.isEmpty) return _connections;
-    return _connections.where((item) =>
-        item.friendProfile.fullName.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    return _connections
+        .where(
+          (item) => item.friendProfile.fullName.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ),
+        )
+        .toList();
   }
 
   List<ConnectionModel> get _filteredRequests {
     if (_searchQuery.isEmpty) return _requests;
-    return _requests.where((item) =>
-        item.friendProfile.fullName.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    return _requests
+        .where(
+          (item) => item.friendProfile.fullName.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ),
+        )
+        .toList();
   }
 
   // 3. Action: Terima Permintaan
@@ -89,20 +99,27 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
       // Optimistic Update (Update UI duluan biar cepat)
       setState(() {
         _requests.remove(item);
-        _connections.insert(0, item); 
+        _connections.insert(0, item);
       });
 
       // Panggil Service
       await _connectionService.acceptRequest(item.id);
-      
-      if(mounted) {
+
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${item.friendProfile.fullName} ditambahkan ke koneksi')),
+          SnackBar(
+            content: Text(
+              '${item.friendProfile.fullName} ditambahkan ke koneksi',
+            ),
+          ),
         );
       }
     } catch (e) {
       _fetchData(); // Rollback jika error
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal menerima permintaan')));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal menerima permintaan')),
+        );
     }
   }
 
@@ -113,10 +130,14 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
         _requests.remove(item);
       });
       await _connectionService.removeConnection(item.id);
-      
-      if(mounted) {
+
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Permintaan dari ${item.friendProfile.fullName} dihapus')),
+          SnackBar(
+            content: Text(
+              'Permintaan dari ${item.friendProfile.fullName} dihapus',
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -141,7 +162,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx); // Tutup dialog dulu
-              
+
               // Hapus lokal
               setState(() {
                 _connections.remove(item);
@@ -150,9 +171,11 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
               // Hapus di DB
               try {
                 await _connectionService.removeConnection(item.id);
-                if(mounted) {
-                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${item.friendProfile.fullName} dihapus')),
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${item.friendProfile.fullName} dihapus'),
+                    ),
                   );
                 }
               } catch (e) {
@@ -245,47 +268,50 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
                   : Colors.grey.shade400,
               indicatorColor: AppColors.primary,
               tabs: [
-                Tab(text: 'Koneksi    ${_connections.length}'), 
-                Tab(text: 'Permintaan    ${_requests.length}'), 
+                Tab(text: 'Koneksi    ${_connections.length}'),
+                Tab(text: 'Permintaan    ${_requests.length}'),
               ],
             ),
           ),
 
           // TAB VIEW
           Expanded(
-            child: _isLoading 
-            ? const Center(child: CircularProgressIndicator()) 
-            : TabBarView(
-              controller: _tabController,
-              children: [
-                // KONEKSI LIST
-                _filteredConnections.isEmpty
-                    ? _buildEmptyState('Tidak ada koneksi ditemukan')
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(20),
-                        itemCount: _filteredConnections.length,
-                        itemBuilder: (context, index) {
-                          final item = _filteredConnections[index];
-                          return _buildConnectionItem(
-                            item: item,
-                            isDark: isDark,
-                          );
-                        },
-                      ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // KONEKSI LIST
+                      _filteredConnections.isEmpty
+                          ? _buildEmptyState('Tidak ada koneksi ditemukan')
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(20),
+                              itemCount: _filteredConnections.length,
+                              itemBuilder: (context, index) {
+                                final item = _filteredConnections[index];
+                                return _buildConnectionItem(
+                                  item: item,
+                                  isDark: isDark,
+                                );
+                              },
+                            ),
 
-                // PERMINTAAN LIST
-                _filteredRequests.isEmpty
-                    ? _buildEmptyState('Tidak ada permintaan saat ini')
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(20),
-                        itemCount: _filteredRequests.length,
-                        itemBuilder: (context, index) {
-                          final item = _filteredRequests[index];
-                          return _buildRequestItem(item: item, isDark: isDark);
-                        },
-                      ),
-              ],
-            ),
+                      // PERMINTAAN LIST
+                      _filteredRequests.isEmpty
+                          ? _buildEmptyState('Tidak ada permintaan saat ini')
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(20),
+                              itemCount: _filteredRequests.length,
+                              itemBuilder: (context, index) {
+                                final item = _filteredRequests[index];
+                                return _buildRequestItem(
+                                  item: item,
+                                  isDark: isDark,
+                                );
+                              },
+                            ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -303,7 +329,10 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
     );
   }
 
-  Widget _buildConnectionItem({required ConnectionModel item, required bool isDark}) {
+  Widget _buildConnectionItem({
+    required ConnectionModel item,
+    required bool isDark,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -319,19 +348,19 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
           CircleAvatar(
             radius: 28,
             backgroundColor: item.friendProfile.avatarColor,
-            backgroundImage: item.friendProfile.avatarUrl != null 
-              ? NetworkImage(item.friendProfile.avatarUrl!) 
-              : null,
-            child: item.friendProfile.avatarUrl == null 
-              ? Text(
-                  item.friendProfile.initials,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
-              : null,
+            backgroundImage: item.friendProfile.avatarUrl != null
+                ? NetworkImage(item.friendProfile.avatarUrl!)
+                : null,
+            child: item.friendProfile.avatarUrl == null
+                ? Text(
+                    item.friendProfile.initials,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -358,7 +387,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
             ),
           ),
           OutlinedButton.icon(
-            onPressed: () => _removeConnection(item), 
+            onPressed: () => _removeConnection(item),
             icon: const Icon(LucideIcons.userCheck, size: 16),
             label: const Text('Terhubung'),
             style: OutlinedButton.styleFrom(
@@ -374,7 +403,10 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
     );
   }
 
-  Widget _buildRequestItem({required ConnectionModel item, required bool isDark}) {
+  Widget _buildRequestItem({
+    required ConnectionModel item,
+    required bool isDark,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -390,19 +422,19 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
           CircleAvatar(
             radius: 28,
             backgroundColor: item.friendProfile.avatarColor,
-            backgroundImage: item.friendProfile.avatarUrl != null 
-              ? NetworkImage(item.friendProfile.avatarUrl!) 
-              : null,
-            child: item.friendProfile.avatarUrl == null 
-              ? Text(
-                  item.friendProfile.initials,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
-              : null,
+            backgroundImage: item.friendProfile.avatarUrl != null
+                ? NetworkImage(item.friendProfile.avatarUrl!)
+                : null,
+            child: item.friendProfile.avatarUrl == null
+                ? Text(
+                    item.friendProfile.initials,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -418,7 +450,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
                   ),
                 ),
                 const SizedBox(height: 4),
-                 Text(
+                Text(
                   '@${item.friendProfile.username}',
                   style: TextStyle(
                     fontSize: 13,
@@ -431,7 +463,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
           Row(
             children: [
               IconButton(
-                onPressed: () => _acceptRequest(item), 
+                onPressed: () => _acceptRequest(item),
                 icon: const Icon(LucideIcons.check, size: 20),
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.green,
@@ -441,7 +473,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
               ),
               const SizedBox(width: 8),
               IconButton(
-                onPressed: () => _rejectRequest(item), 
+                onPressed: () => _rejectRequest(item),
                 icon: const Icon(LucideIcons.x, size: 20),
                 style: IconButton.styleFrom(
                   backgroundColor: isDark

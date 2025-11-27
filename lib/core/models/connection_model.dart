@@ -24,9 +24,10 @@ class ProfileModel {
   }
 
   // Helper untuk warna avatar (UI Only)
-  Color get avatarColor => Colors.blueAccent; // Bisa diganti logika random color
-  String get initials => fullName.isNotEmpty 
-      ? fullName.trim().split(' ').map((e) => e[0]).take(2).join().toUpperCase() 
+  Color get avatarColor =>
+      Colors.blueAccent; // Bisa diganti logika random color
+  String get initials => fullName.isNotEmpty
+      ? fullName.trim().split(' ').map((e) => e[0]).take(2).join().toUpperCase()
       : '?';
 }
 
@@ -36,7 +37,7 @@ class ConnectionModel {
   final String requesterId;
   final String receiverId;
   final String status;
-  
+
   // Data teman (profil orang lain dalam hubungan ini)
   final ProfileModel friendProfile;
 
@@ -48,13 +49,16 @@ class ConnectionModel {
     required this.friendProfile,
   });
 
-  factory ConnectionModel.fromSupabase(Map<String, dynamic> json, String myUserId) {
+  factory ConnectionModel.fromSupabase(
+    Map<String, dynamic> json,
+    String myUserId,
+  ) {
     // Tentukan siapa "teman" dalam hubungan ini
     // Jika saya requester, maka teman adalah receiver.
     // Jika saya receiver, maka teman adalah requester.
     final isMeRequester = json['requester_id'] == myUserId;
-    
-    final friendData = isMeRequester 
+
+    final friendData = isMeRequester
         ? json['receiver_profile'] // Data hasil join (alias)
         : json['requester_profile']; // Data hasil join (alias)
 
