@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileService {
@@ -49,6 +50,104 @@ class ProfileService {
         'connections': 0,
         'journals': 0,
       };
+    }
+  }
+
+  /// Update Profile (Full Name & Avatar URL)
+  Future<void> updateProfile({String? fullName, String? avatarUrl}) async {
+    try {
+      final updates = <String, dynamic>{};
+      if (fullName != null) updates['full_name'] = fullName;
+      if (avatarUrl != null) updates['avatar_url'] = avatarUrl;
+
+      if (updates.isNotEmpty) {
+        await _client.auth.updateUser(UserAttributes(data: updates));
+      }
+    } catch (e) {
+      throw 'Gagal update profil: $e';
+    }
+  }
+
+  /// Upload Avatar to Supabase Storage
+  Future<String> uploadAvatar(XFile file) async {
+    try {
+      final fileExt = file.name.split('.').last;
+      final fileName =
+          '$_userId/avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final filePath = fileName;
+      final bytes = await file.readAsBytes();
+
+      try {
+        // Upload file
+        await _client.storage
+            .from('avatars')
+            .uploadBinary(
+              filePath,
+              bytes,
+              fileOptions: const FileOptions(
+                cacheControl: '3600',
+                upsert: false,
+              ),
+            );
+      } on StorageException catch (e) {
+        if (e.statusCode == '404' || e.message.contains('Bucket not found')) {
+          try {
+            // Try creating the bucket if it doesn't exist
+            await _client.storage.createBucket(
+              'avatars',
+              const BucketOptions(public: true),
+            );
+
+            // Retry upload
+            await _client.storage
+                .from('avatars')
+                .uploadBinary(
+                  filePath,
+                  bytes,
+                  fileOptions: const FileOptions(
+                    cacheControl: '3600',
+                    upsert: false,
+                  ),
+                );
+          } catch (_) {
+            throw 'Bucket "avatars" tidak ditemukan. Silakan buat Storage Bucket bernama "avatars" (Public) di Supabase Dashboard.';
+          }
+        } else {
+          rethrow;
+        }
+      }
+
+      // Get Public URL
+      final imageUrl = _client.storage.from('avatars').getPublicUrl(filePath);
+      return imageUrl;
+    } catch (e) {
+      throw 'Gagal upload foto: $e';
+    }
+  }
+
+  /// Verify Password (by re-authenticating)
+  Future<bool> verifyPassword(String password) async {
+    try {
+      final email = _client.auth.currentUser?.email;
+      if (email == null) return false;
+
+      final response = await _client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      return response.user != null;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Update Password
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+    } catch (e) {
+      throw 'Gagal update password: $e';
     }
   }
 }

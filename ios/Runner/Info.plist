@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Kami membutuhkan akses galeri untuk mengganti foto profil.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Kami membutuhkan akses kamera untuk mengambil foto profil.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Kami membutuhkan akses mikrofon untuk merekam video.</string>
 </dict>
 </plist>
