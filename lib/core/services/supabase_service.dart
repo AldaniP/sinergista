@@ -10,34 +10,44 @@ class SupabaseService {
   // Fetch Modules
   Future<List<Module>> getModules() async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      debugPrint('Current User ID: $userId');
+
       final response = await _client
           .from('modules')
           .select()
           .eq('is_archived', false)
           .order('created_at', ascending: false);
 
+      debugPrint('Raw Modules Response: $response');
+
       final data = response as List<dynamic>;
       return data.map((json) {
-        return Module(
-          id: json['id']?.toString() ?? '',
-          title: json['title'] ?? 'No Title',
-          description: json['description'] ?? '',
-          progress: (json['progress'] ?? 0).toDouble(),
-          completedCount: json['completed_count'] ?? 0,
-          taskCount: json['task_count'] ?? 0,
-          memberCount: json['member_count'] ?? 1,
-          dueDate: _formatDate(json['due_date']),
-          tagColor: json['tag_color'] != null
-              ? Color(json['tag_color'])
-              : _getCategoryColor(json['tag_name']),
-          tagName: json['tag_name'] ?? 'Personal',
-          content: json['content'],
-          isArchived: json['is_archived'] ?? false,
-        );
+        try {
+          return Module(
+            id: json['id']?.toString() ?? '',
+            title: json['title'] ?? 'No Title',
+            description: json['description'] ?? '',
+            progress: (json['progress'] ?? 0).toDouble(),
+            completedCount: json['completed_count'] ?? 0,
+            taskCount: json['task_count'] ?? 0,
+            memberCount: json['member_count'] ?? 1,
+            dueDate: _formatDate(json['due_date']),
+            tagColor: json['tag_color'] != null
+                ? Color((json['tag_color'] as num).toInt())
+                : _getCategoryColor(json['tag_name']),
+            tagName: json['tag_name'] ?? 'Personal',
+            content: json['content'],
+            isArchived: json['is_archived'] ?? false,
+          );
+        } catch (e) {
+          debugPrint('Error parsing module ${json['id']}: $e');
+          rethrow;
+        }
       }).toList();
-    } catch (e) {
-      debugPrint('Error fetching modules: $e');
-      return [];
+    } catch (e, stack) {
+      debugPrint('Error fetching modules: $e\nStack: $stack');
+      rethrow;
     }
   }
 
@@ -47,7 +57,7 @@ class SupabaseService {
     required String description,
     required String tagName,
     required int tagColor,
-    required DateTime dueDate,
+    DateTime? dueDate,
     List<dynamic>? content,
   }) async {
     try {
@@ -60,7 +70,7 @@ class SupabaseService {
         'description': description,
         'tag_name': tagName,
         'tag_color': tagColor,
-        'due_date': dueDate.toIso8601String(),
+        'due_date': dueDate?.toIso8601String(),
         'progress': 0,
         'completed_count': 0,
         'task_count': 0,
@@ -237,9 +247,9 @@ class SupabaseService {
             'description': module.description,
             'tag_name': module.tagName,
             'tag_color': module.tagColor.value,
-            'due_date': _parseFormattedDate(
-              module.dueDate,
-            ), // Convert back to ISO string
+            'due_date': module.dueDate != null
+                ? _parseFormattedDate(module.dueDate!)
+                : null, // Convert back to ISO string
             'progress': 0,
             'completed_count': 0,
             'task_count': 0,
@@ -286,7 +296,7 @@ class SupabaseService {
     required String title,
     required String description,
     required String category,
-    required String dueDate,
+    String? dueDate,
   }) async {
     try {
       final userId = _client.auth.currentUser?.id;
@@ -296,7 +306,8 @@ class SupabaseService {
         'user_id': userId,
         'title': title,
         'description': description,
-        'category': category,
+        'tag_name': category,
+        'tag_color': _getCategoryColor(category).value,
         'due_date': dueDate,
         // 'created_at': DateTime.now().toIso8601String(), // Usually handled by DB default
       });
@@ -312,8 +323,8 @@ class SupabaseService {
   }
 
   // Helper to format date
-  String _formatDate(String? dateStr) {
-    if (dateStr == null) return '';
+  String? _formatDate(String? dateStr) {
+    if (dateStr == null) return null;
     try {
       final date = DateTime.parse(dateStr);
       final months = [

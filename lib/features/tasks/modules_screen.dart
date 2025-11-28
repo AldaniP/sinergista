@@ -25,6 +25,8 @@ class _ModulesScreenState extends State<ModulesScreen> {
   List<Module> _modules = [];
   bool _isLoading = true;
 
+  String? _errorMessage;
+
   @override
   void initState() {
     super.initState();
@@ -32,12 +34,28 @@ class _ModulesScreenState extends State<ModulesScreen> {
   }
 
   Future<void> _fetchModules() async {
-    final modules = await _supabaseService.getModules();
-    if (mounted) {
+    try {
       setState(() {
-        _modules = modules;
-        _isLoading = false;
+        _isLoading = true;
+        _errorMessage = null;
       });
+      final modules = await _supabaseService.getModules();
+      if (mounted) {
+        setState(() {
+          _modules = modules;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString();
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memuat modul: $e')));
+      }
     }
   }
 
@@ -54,10 +72,10 @@ class _ModulesScreenState extends State<ModulesScreen> {
     // Sorting Logic
     filtered.sort((a, b) {
       switch (_sortOption) {
-        case 'Terdekat':
-          return _parseDate(a.dueDate).compareTo(_parseDate(b.dueDate));
-        case 'Terlama':
-          return _parseDate(b.dueDate).compareTo(_parseDate(a.dueDate));
+        case 'Terdekat (Deadline)':
+          return _compareDates(a.dueDate, b.dueDate, ascending: true);
+        case 'Terlama (Deadline)':
+          return _compareDates(a.dueDate, b.dueDate, ascending: false);
         case 'Progres Terbanyak':
           return b.progress.compareTo(a.progress);
         case 'Progres Terkecil':
@@ -70,7 +88,19 @@ class _ModulesScreenState extends State<ModulesScreen> {
     return filtered;
   }
 
-  DateTime _parseDate(String dateStr) {
+  int _compareDates(String? dateA, String? dateB, {required bool ascending}) {
+    if (dateA == null && dateB == null) return 0;
+    if (dateA == null) return 1; // Null dates go to the bottom
+    if (dateB == null) return -1;
+
+    final dtA = _parseDate(dateA);
+    final dtB = _parseDate(dateB);
+
+    return ascending ? dtA.compareTo(dtB) : dtB.compareTo(dtA);
+  }
+
+  DateTime _parseDate(String? dateStr) {
+    if (dateStr == null) return DateTime.now();
     // Format: "25 Nov 2025" or "15 Des 2025"
     try {
       final parts = dateStr.split(' ');
@@ -264,14 +294,50 @@ class _ModulesScreenState extends State<ModulesScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredModules.isEmpty
                 ? Center(
-                    child: Text(
-                      'Belum ada modul',
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.color?.withOpacity(0.5),
-                      ),
-                    ),
+                    child: _errorMessage != null
+                        ? Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  LucideIcons.alertTriangle,
+                                  size: 48,
+                                  color: Colors.red,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Terjadi Kesalahan',
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _errorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withOpacity(0.7),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                ElevatedButton(
+                                  onPressed: _fetchModules,
+                                  child: const Text('Coba Lagi'),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Text(
+                            'Belum ada modul',
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                            ),
+                          ),
                   )
                 : ListView(
                     padding: const EdgeInsets.all(20),
@@ -368,6 +434,8 @@ class _ModulesScreenState extends State<ModulesScreen> {
   void _showCreateModuleDialog({required String template}) {
     final titleController = TextEditingController();
     final categoryController = TextEditingController();
+    final dateController = TextEditingController();
+    DateTime? selectedDate;
 
     // Pre-fill based on template
     Color selectedColor = Colors.blue;
@@ -491,6 +559,69 @@ class _ModulesScreenState extends State<ModulesScreen> {
                       ),
                     ],
                     const SizedBox(height: 24),
+                    TextField(
+                      controller: dateController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: 'Batas Waktu',
+                        hintText: 'dd/mm/yyyy',
+                        filled: true,
+                        fillColor: Theme.of(
+                          context,
+                        ).inputDecorationTheme.fillColor,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (selectedDate != null)
+                              IconButton(
+                                icon: const Icon(LucideIcons.x, size: 16),
+                                onPressed: () {
+                                  setState(() {
+                                    selectedDate = null;
+                                    dateController.clear();
+                                  });
+                                },
+                              ),
+                            const Icon(LucideIcons.calendar, size: 20),
+                            const SizedBox(width: 12),
+                          ],
+                        ),
+                      ),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate ?? DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            selectedDate = picked;
+                            final months = [
+                              'Jan',
+                              'Feb',
+                              'Mar',
+                              'Apr',
+                              'Mei',
+                              'Jun',
+                              'Jul',
+                              'Agu',
+                              'Sep',
+                              'Okt',
+                              'Nov',
+                              'Des',
+                            ];
+                            dateController.text =
+                                '${picked.day} ${months[picked.month - 1]} ${picked.year}';
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 24),
                     const Text(
                       'Warna Kategori',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -550,6 +681,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                         categoryController.text,
                         selectedColor,
                         template,
+                        selectedDate,
                       );
                       if (context.mounted) Navigator.pop(context);
                     }
@@ -593,6 +725,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
     String category,
     Color color,
     String template,
+    DateTime? dueDate,
   ) async {
     try {
       List<Map<String, dynamic>>? initialContent;
@@ -691,7 +824,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
         description: 'Modul $template',
         tagName: category,
         tagColor: color.value,
-        dueDate: DateTime.now().add(const Duration(days: 7)),
+        dueDate: dueDate,
         content: initialContent,
       );
       _fetchModules(); // Refresh list
@@ -1047,22 +1180,24 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     ).textTheme.bodyMedium?.color?.withOpacity(0.6),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Icon(
-                  LucideIcons.calendar,
-                  size: 14,
-                  color: Theme.of(context).iconTheme.color?.withOpacity(0.6),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  module.dueDate,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                if (module.dueDate != null) ...[
+                  const SizedBox(width: 16),
+                  Icon(
+                    LucideIcons.calendar,
+                    size: 14,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.6),
                   ),
-                ),
+                  const SizedBox(width: 4),
+                  Text(
+                    module.dueDate!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    ),
+                  ),
+                ],
               ],
             ),
 
