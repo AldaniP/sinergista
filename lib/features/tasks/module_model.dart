@@ -8,7 +8,7 @@ class Module {
   final int completedCount;
   final int taskCount;
   final int memberCount;
-  final String dueDate;
+  final String? dueDate;
   final Color tagColor;
   final String tagName;
   final List<dynamic>? content; // JSON content for Notion-like editor
@@ -22,7 +22,7 @@ class Module {
     required this.completedCount,
     required this.taskCount,
     required this.memberCount,
-    required this.dueDate,
+    this.dueDate,
     required this.tagColor,
     required this.tagName,
     this.content,
