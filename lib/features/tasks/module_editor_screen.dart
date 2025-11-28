@@ -65,7 +65,7 @@ class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
 
   void _addBlock(BlockType type) {
     setState(() {
-      final newBlock = BlockModel(id: Uuid().v4(), type: type);
+      final newBlock = BlockModel(id: const Uuid().v4(), type: type);
       _blocks.add(newBlock);
       _addFocusListener(newBlock, _blocks.length - 1);
 

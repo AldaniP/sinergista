@@ -120,7 +120,7 @@ class _FocusScreenState extends State<FocusScreen>
     final startOfMonth = DateTime(now.year, now.month, 1);
 
     // Find the earliest date we need to fetch
-    DateTime earliestDate = startOfWeekDay.isBefore(startOfMonth)
+    final DateTime earliestDate = startOfWeekDay.isBefore(startOfMonth)
         ? startOfWeekDay
         : startOfMonth;
 
@@ -442,7 +442,7 @@ class _FocusScreenState extends State<FocusScreen>
       totalMinutes += _completedFocusSessions * _focusDuration;
       // Add current progress if stopped during focus
       if (isStop && _currentPhase == 'Fokus') {
-        int elapsedSeconds = (_focusDuration * 60 - _remainingSeconds);
+        final int elapsedSeconds = (_focusDuration * 60 - _remainingSeconds);
         totalSeconds = totalMinutes * 60 + elapsedSeconds;
         totalMinutes += (elapsedSeconds / 60).ceil();
       } else {
@@ -452,7 +452,7 @@ class _FocusScreenState extends State<FocusScreen>
       // Timer Biasa
       if (_timerType == 'Countdown') {
         if (isStop) {
-          int elapsedSeconds = (_focusDuration * 60 - _remainingSeconds);
+          final int elapsedSeconds = (_focusDuration * 60 - _remainingSeconds);
           totalSeconds = elapsedSeconds;
           totalMinutes = (elapsedSeconds / 60).ceil();
         } else {
@@ -468,8 +468,9 @@ class _FocusScreenState extends State<FocusScreen>
       // Ensure at least 1 minute if it was running (even if < 1 min)
       if (totalMinutes == 0 && isStop) {
         totalMinutes = 1;
-        if (totalSeconds == 0)
+        if (totalSeconds == 0) {
           totalSeconds = 60; // Ensure seconds match min duration
+        }
       }
     }
 

@@ -733,25 +733,25 @@ class _ModulesScreenState extends State<ModulesScreen> {
       if (template == 'Akademik') {
         initialContent = [
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'heading1',
             'content': 'Jadwal Kuliah',
             'isChecked': false,
           },
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'bullet',
             'content': 'Senin: ...',
             'isChecked': false,
           },
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'heading1',
             'content': 'Tugas & Deadline',
             'isChecked': false,
           },
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'todo',
             'content': 'Tugas 1',
             'isChecked': false,
@@ -760,25 +760,25 @@ class _ModulesScreenState extends State<ModulesScreen> {
       } else if (template == 'Pekerjaan') {
         initialContent = [
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'heading1',
             'content': 'Prioritas Hari Ini',
             'isChecked': false,
           },
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'todo',
             'content': 'Meeting dengan tim',
             'isChecked': false,
           },
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'heading1',
             'content': 'Catatan Meeting',
             'isChecked': false,
           },
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'text',
             'content': '',
             'isChecked': false,
@@ -787,31 +787,31 @@ class _ModulesScreenState extends State<ModulesScreen> {
       } else if (template == 'Bisnis') {
         initialContent = [
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'heading1',
             'content': 'Overview Bisnis',
             'isChecked': false,
           },
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'heading2',
             'content': 'Keuangan',
             'isChecked': false,
           },
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'bullet',
             'content': 'Pemasukan: ...',
             'isChecked': false,
           },
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'heading2',
             'content': 'Marketing',
             'isChecked': false,
           },
           {
-            'id': Uuid().v4(),
+            'id': const Uuid().v4(),
             'type': 'todo',
             'content': 'Post Instagram',
             'isChecked': false,

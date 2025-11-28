@@ -116,10 +116,11 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
       }
     } catch (e) {
       _fetchData(); // Rollback jika error
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gagal menerima permintaan')),
         );
+      }
     }
   }
 

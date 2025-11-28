@@ -593,7 +593,7 @@ class DashboardHome extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Tetapkan tujuan membaca',
                   style: TextStyle(
                     color: AppColors.tagGreenText,
