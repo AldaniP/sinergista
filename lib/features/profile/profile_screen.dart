@@ -10,6 +10,8 @@ import '../collaboration/connections_screen.dart';
 import '../academic/journal_screen.dart';
 import '../tasks/archive_screen.dart';
 import '../auth/login_screen.dart';
+import 'edit_profile_screen.dart';
+import 'change_password_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -110,12 +112,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.3),
                             shape: BoxShape.circle,
+                            image: user?.userMetadata?['avatar_url'] != null
+                                ? DecorationImage(
+                                    image: NetworkImage(
+                                      user!.userMetadata!['avatar_url'],
+                                    ),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
-                          child: const Icon(
-                            LucideIcons.user,
-                            color: Colors.white,
-                            size: 40,
-                          ),
+                          child: user?.userMetadata?['avatar_url'] == null
+                              ? const Icon(
+                                  LucideIcons.user,
+                                  color: Colors.white,
+                                  size: 40,
+                                )
+                              : null,
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -294,6 +306,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
 
+                        const SizedBox(height: 12),
+
+                        // Change Password
+                        _buildMenuItem(
+                          context,
+                          icon: LucideIcons.lock,
+                          title: 'Ganti Password',
+                          subtitle: 'Ubah kata sandi akun',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ChangePasswordScreen(),
+                              ),
+                            );
+                          },
+                        ),
+
                         const SizedBox(height: 32),
 
                         // Edit Profile
@@ -303,11 +333,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           title: 'Edit Profil',
                           subtitle: null,
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Fitur Edit Profil segera hadir'),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EditProfileScreen(),
                               ),
-                            );
+                            ).then((updated) {
+                              if (updated == true) {
+                                setState(
+                                  () {},
+                                ); // Refresh UI to show new name/avatar
+                              }
+                            });
                           },
                         ),
 
