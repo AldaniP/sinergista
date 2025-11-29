@@ -319,11 +319,7 @@ class DashboardHome extends StatelessWidget {
                           LucideIcons.fileText,
                           () {
                             // Navigator ke NotesScreen (placeholder)
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Fitur Notes segera hadir!'),
-                              ),
-                            );
+                            Navigator.pushNamed(context, '/notes');
                           },
                         ),
                         const SizedBox(width: 20),
