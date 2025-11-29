@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Selamat datang kembali',
+                  'Selamat datang',
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.textSecondary,
