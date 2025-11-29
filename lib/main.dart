@@ -37,8 +37,9 @@ class MyApp extends StatelessWidget {
       themeMode: themeProvider.themeMode,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      routes: {'/notes': (_) => const NotesScreen()},
-
+      routes: {
+        '/notes': (_) => const NotesScreen(),
+      },
       home: const LoginScreen(),
     );
   }

@@ -57,7 +57,7 @@ class _NotesScreenState extends State<NotesScreen> {
         title: Text(note.title),
         content: ConstrainedBox(
           constraints: const BoxConstraints(
-            maxHeight: 400, // bebas, bisa 500 atau 60% height
+            maxHeight: 400,
           ),
           child: SingleChildScrollView(
             child: Text(
@@ -88,8 +88,7 @@ class _NotesScreenState extends State<NotesScreen> {
           ],
         ),
         content: const Text(
-          "Fitur Notes memungkinkan Anda menyimpan catatan penting, rangkuman materi, dan ide. "
-          "Tambahkan judul dan isi catatan, lalu catatan akan tersimpan di daftar.",
+          "Fitur Notes memungkinkan Anda menyimpan catatan penting, rangkuman materi, dan ide.",
         ),
         actions: [
           TextButton(
@@ -131,7 +130,6 @@ class _NotesScreenState extends State<NotesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HEADER
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -142,7 +140,11 @@ class _NotesScreenState extends State<NotesScreen> {
               ),
               child: const Row(
                 children: [
-                  Icon(LucideIcons.stickyNote, color: Colors.white, size: 40),
+                  Icon(
+                    LucideIcons.stickyNote,
+                    color: Colors.white,
+                    size: 40,
+                  ),
                   SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -159,18 +161,20 @@ class _NotesScreenState extends State<NotesScreen> {
                         SizedBox(height: 4),
                         Text(
                           "Simpan ide, rangkuman, dan notes penting",
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                  )
                 ],
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // FORM INPUT
             const Text(
               "Buat Catatan Baru",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -185,7 +189,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 filled: true,
                 fillColor:
                     Theme.of(context).inputDecorationTheme.fillColor ??
-                    Colors.grey.withOpacity(0.05),
+                        Colors.grey.withOpacity(0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -205,7 +209,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 filled: true,
                 fillColor:
                     Theme.of(context).inputDecorationTheme.fillColor ??
-                    Colors.grey.withOpacity(0.05),
+                        Colors.grey.withOpacity(0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -215,7 +219,6 @@ class _NotesScreenState extends State<NotesScreen> {
 
             const SizedBox(height: 20),
 
-            // ADD BUTTON
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -235,7 +238,6 @@ class _NotesScreenState extends State<NotesScreen> {
 
             const SizedBox(height: 32),
 
-            // LIST NOTES
             if (_notes.isNotEmpty) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -263,7 +265,6 @@ class _NotesScreenState extends State<NotesScreen> {
                       size: 64,
                       color: Colors.grey.shade400,
                     ),
-
                     const SizedBox(height: 16),
                     Text(
                       "Belum ada catatan",
@@ -275,7 +276,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   ],
                 ),
               ),
-            ],
+            ]
           ],
         ),
       ),
@@ -325,7 +326,10 @@ class _NotesScreenState extends State<NotesScreen> {
                   const SizedBox(height: 4),
                   Text(
                     _formatDate(note.createdAt),
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -338,11 +342,14 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 }
 
-// MODEL
 class Note {
   final String title;
   final String content;
   final DateTime createdAt;
 
-  Note({required this.title, required this.content, required this.createdAt});
+  Note({
+    required this.title,
+    required this.content,
+    required this.createdAt,
+  });
 }
