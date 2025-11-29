@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/constants/app_colors.dart';
 
-
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
 
@@ -143,11 +142,7 @@ class _NotesScreenState extends State<NotesScreen> {
               ),
               child: const Row(
                 children: [
-                  Icon(
-                    LucideIcons.stickyNote,
-                    color: Colors.white,
-                    size: 40,
-                  ),
+                  Icon(LucideIcons.stickyNote, color: Colors.white, size: 40),
                   SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -168,7 +163,7 @@ class _NotesScreenState extends State<NotesScreen> {
                         ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -190,7 +185,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 filled: true,
                 fillColor:
                     Theme.of(context).inputDecorationTheme.fillColor ??
-                        Colors.grey.withOpacity(0.05),
+                    Colors.grey.withOpacity(0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -210,7 +205,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 filled: true,
                 fillColor:
                     Theme.of(context).inputDecorationTheme.fillColor ??
-                        Colors.grey.withOpacity(0.05),
+                    Colors.grey.withOpacity(0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -272,12 +267,15 @@ class _NotesScreenState extends State<NotesScreen> {
                     const SizedBox(height: 16),
                     Text(
                       "Belum ada catatan",
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
               ),
-            ]
+            ],
           ],
         ),
       ),
@@ -346,9 +344,5 @@ class Note {
   final String content;
   final DateTime createdAt;
 
-  Note({
-    required this.title,
-    required this.content,
-    required this.createdAt,
-  });
+  Note({required this.title, required this.content, required this.createdAt});
 }

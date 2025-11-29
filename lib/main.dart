@@ -7,7 +7,6 @@ import 'core/providers/theme_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/academic/notes_screen.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -38,9 +37,7 @@ class MyApp extends StatelessWidget {
       themeMode: themeProvider.themeMode,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      routes: {
-        '/notes': (_) => const NotesScreen(),
-      },
+      routes: {'/notes': (_) => const NotesScreen()},
 
       home: const LoginScreen(),
     );
