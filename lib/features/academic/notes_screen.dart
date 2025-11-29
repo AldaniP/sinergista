@@ -56,9 +56,7 @@ class _NotesScreenState extends State<NotesScreen> {
       builder: (context) => AlertDialog(
         title: Text(note.title),
         content: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxHeight: 400,
-          ),
+          constraints: const BoxConstraints(maxHeight: 400),
           child: SingleChildScrollView(
             child: Text(
               note.content,
@@ -140,11 +138,7 @@ class _NotesScreenState extends State<NotesScreen> {
               ),
               child: const Row(
                 children: [
-                  Icon(
-                    LucideIcons.stickyNote,
-                    color: Colors.white,
-                    size: 40,
-                  ),
+                  Icon(LucideIcons.stickyNote, color: Colors.white, size: 40),
                   SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -161,14 +155,11 @@ class _NotesScreenState extends State<NotesScreen> {
                         SizedBox(height: 4),
                         Text(
                           "Simpan ide, rangkuman, dan notes penting",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -189,7 +180,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 filled: true,
                 fillColor:
                     Theme.of(context).inputDecorationTheme.fillColor ??
-                        Colors.grey.withOpacity(0.05),
+                    Colors.grey.withOpacity(0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -209,7 +200,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 filled: true,
                 fillColor:
                     Theme.of(context).inputDecorationTheme.fillColor ??
-                        Colors.grey.withOpacity(0.05),
+                    Colors.grey.withOpacity(0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -276,7 +267,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   ],
                 ),
               ),
-            ]
+            ],
           ],
         ),
       ),
@@ -326,10 +317,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   const SizedBox(height: 4),
                   Text(
                     _formatDate(note.createdAt),
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                 ],
               ),
@@ -347,9 +335,5 @@ class Note {
   final String content;
   final DateTime createdAt;
 
-  Note({
-    required this.title,
-    required this.content,
-    required this.createdAt,
-  });
+  Note({required this.title, required this.content, required this.createdAt});
 }
