@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:file_picker/file_picker.dart';
@@ -59,6 +60,7 @@ class ExamScreen extends StatefulWidget {
 class _ExamScreenState extends State<ExamScreen> {
   final _moduleController = TextEditingController();
   final _topicController = TextEditingController();
+  final _countController = TextEditingController(text: '10');
   final List<Quiz> _quizzes = [];
   final GeminiService _geminiService = GeminiService();
 
@@ -71,12 +73,13 @@ class _ExamScreenState extends State<ExamScreen> {
   final Set<QuestionType> _selectedQuestionTypes = {
     QuestionType.multipleChoice,
   };
-  double _numberOfQuestions = 10;
+  int _numberOfQuestions = 10;
 
   @override
   void dispose() {
     _moduleController.dispose();
     _topicController.dispose();
+    _countController.dispose();
     super.dispose();
   }
 
@@ -156,6 +159,20 @@ class _ExamScreenState extends State<ExamScreen> {
       return;
     }
 
+    if (_countController.text.isEmpty ||
+        int.tryParse(_countController.text) == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mohon isi jumlah soal dengan angka yang valid'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _numberOfQuestions = int.parse(_countController.text);
+    });
+
     setState(() => _isGenerating = true);
 
     try {
@@ -188,7 +205,7 @@ class _ExamScreenState extends State<ExamScreen> {
       final questionsData = await _geminiService.generateQuestions(
         text: pdfText,
         questionTypes: questionTypes,
-        numberOfQuestions: _numberOfQuestions.toInt(),
+        numberOfQuestions: _numberOfQuestions,
       );
 
       // Convert to QuizQuestion objects
@@ -500,7 +517,7 @@ class _ExamScreenState extends State<ExamScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Number of Questions Slider
+            // Number of Questions Input
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -514,47 +531,109 @@ class _ExamScreenState extends State<ExamScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            LucideIcons.hash,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Jumlah Soal',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                      Icon(
+                        LucideIcons.hash,
+                        color: AppColors.primary,
+                        size: 20,
                       ),
-                      Text(
-                        '${_numberOfQuestions.toInt()} soal',
-                        style: const TextStyle(
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Jumlah Soal',
+                        style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-                  Slider(
-                    value: _numberOfQuestions,
-                    min: 5,
-                    max: 20,
-                    divisions: 15,
-                    label: '${_numberOfQuestions.toInt()}',
-                    onChanged: _isGenerating
-                        ? null
-                        : (value) {
-                            setState(() => _numberOfQuestions = value);
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      // Decrement Button
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(LucideIcons.minus),
+                          onPressed: _isGenerating
+                              ? null
+                              : () {
+                                  final current =
+                                      int.tryParse(_countController.text) ?? 10;
+                                  if (current > 1) {
+                                    setState(() {
+                                      _numberOfQuestions = current - 1;
+                                      _countController.text = _numberOfQuestions
+                                          .toString();
+                                    });
+                                  }
+                                },
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Number Input
+                      Expanded(
+                        child: TextField(
+                          controller: _countController,
+                          enabled: !_isGenerating,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          onChanged: (value) {
+                            if (value.isNotEmpty) {
+                              final count = int.tryParse(value);
+                              if (count != null) {
+                                setState(() => _numberOfQuestions = count);
+                              }
+                            }
                           },
-                    activeColor: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Increment Button
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(LucideIcons.plus),
+                          onPressed: _isGenerating
+                              ? null
+                              : () {
+                                  final current =
+                                      int.tryParse(_countController.text) ?? 10;
+                                  setState(() {
+                                    _numberOfQuestions = current + 1;
+                                    _countController.text = _numberOfQuestions
+                                        .toString();
+                                  });
+                                },
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -934,7 +1013,11 @@ class QuizQuestion {
     this.options,
     this.correctAnswer,
     this.essayAnswer,
+    this.userAnswer,
   });
+
+  // Add this field
+  dynamic userAnswer;
 
   factory QuizQuestion.fromMap(Map<String, dynamic> map) {
     QuestionType type;
@@ -982,6 +1065,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
   String _textAnswer = '';
   int _score = 0;
   bool _quizCompleted = false;
+  bool _isChecking = false;
   final List<String> _essayAnswers = [];
   final _textController = TextEditingController();
 
@@ -991,21 +1075,96 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
     super.dispose();
   }
 
-  void _submitAnswer() {
+  Future<void> _submitAnswer() async {
     final question = widget.quiz.questions[_currentQuestionIndex];
 
-    if (question.type == QuestionType.essay) {
+    if (question.type == QuestionType.essay ||
+        question.type == QuestionType.fillBlank) {
+      setState(() => _isChecking = true);
+
+      // Check answer with AI
+      final result = await GeminiService().checkAnswer(
+        question: question.question,
+        userAnswer: _textAnswer,
+        questionType: question.type.displayName,
+        correctAnswer: question.correctAnswer?.toString(),
+      );
+
+      setState(() => _isChecking = false);
+
+      if (!mounted) return;
+
+      // Show feedback
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(
+                result['isCorrect'] == true
+                    ? LucideIcons.checkCircle
+                    : LucideIcons.xCircle,
+                color: result['isCorrect'] == true
+                    ? AppColors.success
+                    : AppColors.error,
+              ),
+              const SizedBox(width: 12),
+              Text(result['isCorrect'] == true ? 'Benar!' : 'Kurang Tepat'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                result['feedback'] ?? 'Tidak ada feedback.',
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _proceedToNextQuestion(
+                  isCorrect: result['isCorrect'] == true,
+                  saveEssay: question.type == QuestionType.essay,
+                );
+              },
+              child: const Text('Lanjut'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Multiple Choice / True False
+      final isCorrect = _selectedAnswer == question.correctAnswer;
+      _proceedToNextQuestion(isCorrect: isCorrect);
+    }
+  }
+
+  void _proceedToNextQuestion({
+    bool isCorrect = false,
+    bool saveEssay = false,
+  }) {
+    final question = widget.quiz.questions[_currentQuestionIndex];
+
+    // Save answer if not already saved (for AI check flow)
+    if (question.type == QuestionType.essay ||
+        question.type == QuestionType.fillBlank) {
+      question.userAnswer = _textAnswer;
+    } else {
+      question.userAnswer = _selectedAnswer;
+    }
+
+    if (isCorrect) {
+      _score++;
+    }
+
+    if (saveEssay) {
       _essayAnswers.add(_textAnswer);
       question.essayAnswer = _textAnswer;
-    } else if (question.type == QuestionType.fillBlank) {
-      if (_textAnswer.trim().toLowerCase() ==
-          question.correctAnswer.toString().toLowerCase()) {
-        _score++;
-      }
-    } else {
-      if (_selectedAnswer == question.correctAnswer) {
-        _score++;
-      }
     }
 
     if (_currentQuestionIndex < widget.quiz.questions.length - 1) {
@@ -1093,7 +1252,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _canSubmit() ? _submitAnswer : null,
+                onPressed: _canSubmit() && !_isChecking ? _submitAnswer : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -1104,8 +1263,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                 ),
                 child: Text(
                   _currentQuestionIndex < widget.quiz.questions.length - 1
-                      ? 'Lanjut'
-                      : 'Selesai',
+                      ? (_isChecking ? 'Memeriksa...' : 'Lanjut')
+                      : (_isChecking ? 'Memeriksa...' : 'Selesai'),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1252,12 +1411,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
   }
 
   Widget _buildResultsScreen() {
-    final autoGradedCount = widget.quiz.questions
-        .where((q) => q.type != QuestionType.essay)
-        .length;
-    final essayCount = widget.quiz.questions
-        .where((q) => q.type == QuestionType.essay)
-        .length;
+    final totalQuestions = widget.quiz.questions.length;
 
     return Scaffold(
       appBar: AppBar(
@@ -1270,143 +1424,78 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(32.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                LucideIcons.trophy,
-                size: 80,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 32),
+            const Icon(LucideIcons.trophy, size: 80, color: AppColors.warning),
+            const SizedBox(height: 24),
             const Text(
               'Quiz Selesai!',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
-            if (autoGradedCount > 0) ...[
-              Text(
-                'Skor Anda',
-                style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+            Text(
+              'Skor Anda',
+              style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$_score / $totalQuestions',
+              style: const TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
               ),
-              const SizedBox(height: 8),
-              Text(
-                '$_score / $autoGradedCount',
-                style: const TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-              Text(
-                '${((_score / autoGradedCount) * 100).toStringAsFixed(0)}%',
-                style: TextStyle(fontSize: 20, color: Colors.grey.shade600),
-              ),
-            ],
+            ),
+            Text(
+              '${((_score / totalQuestions) * 100).toStringAsFixed(0)}%',
+              style: TextStyle(fontSize: 20, color: Colors.grey.shade600),
+            ),
 
-            if (essayCount > 0) ...[
-              const SizedBox(height: 32),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Theme.of(
-                      context,
-                    ).dividerColor.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          LucideIcons.fileText,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Jawaban Essay ($essayCount soal)',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Soal essay tidak dinilai otomatis. '
-                      'Silakan review jawaban Anda di bawah.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
+            const SizedBox(height: 32),
+
+            // Review Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                 ),
               ),
-              const SizedBox(height: 16),
-              ...widget.quiz.questions
-                  .asMap()
-                  .entries
-                  .where((entry) => entry.value.type == QuestionType.essay)
-                  .map((entry) {
-                    final index = widget.quiz.questions
-                        .where((q) => q.type == QuestionType.essay)
-                        .toList()
-                        .indexOf(entry.value);
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).dividerColor.withValues(alpha: 0.2),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(LucideIcons.listChecks, color: AppColors.primary),
+                      SizedBox(width: 8),
+                      Text(
+                        'Review Jawaban',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Soal ${index + 1}:',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(entry.value.question),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Jawaban Anda:',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            entry.value.essayAnswer ?? '-',
-                            style: TextStyle(color: Colors.grey.shade600),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-            ],
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Berikut adalah detail jawaban Anda:',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            ...widget.quiz.questions.asMap().entries.map((entry) {
+              final index = entry.key;
+              final question = entry.value;
+              return _buildQuestionReviewCard(index, question);
+            }),
 
             const SizedBox(height: 32),
             SizedBox(
@@ -1427,6 +1516,231 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildQuestionReviewCard(int index, QuizQuestion question) {
+    bool isCorrect = false;
+    if (question.type == QuestionType.multipleChoice ||
+        question.type == QuestionType.trueFalse) {
+      isCorrect = question.userAnswer == question.correctAnswer;
+    } else if (question.type == QuestionType.fillBlank) {
+      isCorrect =
+          question.userAnswer.toString().trim().toLowerCase() ==
+          question.correctAnswer.toString().toLowerCase();
+    } else {
+      // Essay is manually reviewed or AI checked
+      isCorrect = true;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  question.question,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 16),
+
+          if (question.type == QuestionType.multipleChoice ||
+              question.type == QuestionType.trueFalse)
+            ...List.generate(question.options?.length ?? 0, (i) {
+              final isSelected = question.userAnswer == i;
+              final isAnswerCorrect = question.correctAnswer == i;
+
+              Color? cardColor;
+              Color borderColor = Colors.transparent;
+
+              if (isAnswerCorrect) {
+                cardColor = AppColors.success.withValues(alpha: 0.1);
+                borderColor = AppColors.success;
+              } else if (isSelected && !isAnswerCorrect) {
+                cardColor = AppColors.error.withValues(alpha: 0.1);
+                borderColor = AppColors.error;
+              }
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: cardColor ?? Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: borderColor != Colors.transparent
+                        ? borderColor
+                        : Colors.grey.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isAnswerCorrect
+                          ? LucideIcons.checkCircle
+                          : (isSelected
+                                ? LucideIcons.xCircle
+                                : LucideIcons.circle),
+                      size: 16,
+                      color: isAnswerCorrect
+                          ? AppColors.success
+                          : (isSelected ? AppColors.error : Colors.grey),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        question.options![i],
+                        style: TextStyle(
+                          color: isAnswerCorrect
+                              ? AppColors.success
+                              : (isSelected ? AppColors.error : null),
+                          fontWeight: isAnswerCorrect || isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            })
+          else if (question.type == QuestionType.fillBlank)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Jawaban Anda:',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isCorrect
+                        ? AppColors.success.withValues(alpha: 0.1)
+                        : AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isCorrect ? AppColors.success : AppColors.error,
+                    ),
+                  ),
+                  child: Text(
+                    question.userAnswer?.toString() ?? '-',
+                    style: TextStyle(
+                      color: isCorrect ? AppColors.success : AppColors.error,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                if (!isCorrect) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Jawaban Benar:',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.success),
+                    ),
+                    child: Text(
+                      question.correctAnswer.toString(),
+                      style: const TextStyle(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            )
+          else // Essay
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Jawaban Anda:',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.grey.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Text(question.userAnswer?.toString() ?? '-'),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Poin Kunci Jawaban:',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Text(
+                    question.correctAnswer?.toString() ??
+                        'Tidak ada kunci jawaban.',
+                    style: const TextStyle(color: AppColors.primary),
+                  ),
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }

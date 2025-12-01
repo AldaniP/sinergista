@@ -14,7 +14,7 @@ class GeminiService {
       throw Exception('GEMINI_API_KEY not found in .env file');
     }
 
-    _model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+    _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: apiKey);
   }
 
   /// Extract text from PDF file
@@ -77,6 +77,11 @@ class GeminiService {
       // Parse the response
       final questions = _parseResponse(response.text!);
 
+      // Enforce exact number of questions if AI generated too many
+      if (questions.length > numberOfQuestions) {
+        return questions.sublist(0, numberOfQuestions);
+      }
+
       return questions;
     } catch (e) {
       debugPrint('Error generating questions: $e');
@@ -84,8 +89,131 @@ class GeminiService {
     }
   }
 
+  /// Check answer using Gemini AI
+  Future<Map<String, dynamic>> checkAnswer({
+    required String question,
+    required String userAnswer,
+    required String questionType,
+    String? correctAnswer,
+  }) async {
+    try {
+      final prompt = _buildCheckAnswerPrompt(
+        question,
+        userAnswer,
+        questionType,
+        correctAnswer,
+      );
+
+      final response = await _model.generateContent([Content.text(prompt)]);
+
+      if (response.text == null) {
+        throw Exception('No response from Gemini AI');
+      }
+
+      return _parseCheckAnswerResponse(response.text!);
+    } catch (e) {
+      debugPrint('Error checking answer: $e');
+      // Fallback if AI fails
+      return {
+        'isCorrect': false,
+        'feedback':
+            'Gagal memverifikasi jawaban dengan AI. Silakan cek koneksi internet Anda.',
+      };
+    }
+  }
+
+  String _buildCheckAnswerPrompt(
+    String question,
+    String userAnswer,
+    String type,
+    String? context,
+  ) {
+    return '''
+Anda adalah asisten dosen yang sedang mengoreksi ujian.
+Tugas Anda adalah menilai jawaban berdasarkan pertanyaan dan kunci jawaban (jika ada).
+
+PERTANYAAN: $question
+TIPE SOAL: $type
+JAWABAN ANDA: $userAnswer
+${context != null ? 'KUNCI JAWABAN / KONTEKS: $context' : ''}
+
+INSTRUKSI:
+1. Tentukan apakah jawaban user BENAR atau SALAH.
+   - Untuk Essay: Jawaban dianggap benar jika mencakup poin-poin penting yang relevan.
+   - Untuk Isian: Jawaban harus tepat atau sinonim yang sangat dekat.
+2. Berikan penjelasan singkat (feedback) mengapa jawaban tersebut benar atau salah.
+3. Berikan output dalam format JSON STRICT.
+
+FORMAT OUTPUT (JSON):
+{
+  "isCorrect": true/false,
+  "feedback": "Penjelasan singkat..."
+}
+''';
+  }
+
+  Map<String, dynamic> _parseCheckAnswerResponse(String response) {
+    try {
+      String cleaned = response.trim();
+      if (cleaned.startsWith('```json')) {
+        cleaned = cleaned.substring(7);
+      } else if (cleaned.startsWith('```')) {
+        cleaned = cleaned.substring(3);
+      }
+      if (cleaned.endsWith('```')) {
+        cleaned = cleaned.substring(0, cleaned.length - 3);
+      }
+      return jsonDecode(cleaned.trim());
+    } catch (e) {
+      return {'isCorrect': false, 'feedback': 'Format respons AI tidak valid.'};
+    }
+  }
+
   String _buildPrompt(String text, List<String> questionTypes, int count) {
     final typesStr = questionTypes.join(', ');
+
+    // Build dynamic JSON examples based on selected types
+    final List<String> jsonExamples = [];
+
+    if (questionTypes.contains('Pilihan Ganda')) {
+      jsonExamples.add('''
+  {
+    "type": "multiple_choice",
+    "question": "Pertanyaan pilihan ganda?",
+    "options": ["A. Opsi 1", "B. Opsi 2", "C. Opsi 3", "D. Opsi 4"],
+    "correctAnswer": 0
+  }''');
+    }
+
+    if (questionTypes.contains('Benar/Salah')) {
+      jsonExamples.add('''
+  {
+    "type": "true_false",
+    "question": "Pertanyaan benar/salah?",
+    "options": ["Benar", "Salah"],
+    "correctAnswer": 0
+  }''');
+    }
+
+    if (questionTypes.contains('Essay')) {
+      jsonExamples.add('''
+  {
+    "type": "essay",
+    "question": "Pertanyaan essay?",
+    "correctAnswer": "Poin-poin kunci jawaban singkat"
+  }''');
+    }
+
+    if (questionTypes.contains('Isian')) {
+      jsonExamples.add('''
+  {
+    "type": "fill_blank",
+    "question": "Pertanyaan isian dengan ___ kosong?",
+    "correctAnswer": "jawaban yang benar"
+  }''');
+    }
+
+    final jsonExampleStr = jsonExamples.join(',\n');
 
     return '''
 Berdasarkan teks berikut, buatlah $count soal ujian dalam bahasa Indonesia.
@@ -95,43 +223,22 @@ $text
 
 INSTRUKSI:
 1. Buat soal dengan tipe: $typesStr
-2. Distribusikan soal secara merata di antara tipe-tipe yang diminta
-3. Soal harus relevan dengan konten teks
-4. Format output harus STRICT JSON array seperti contoh di bawah
+2. TOTAL soal harus TEPAT $count buah. JANGAN LEBIH, JANGAN KURANG.
+3. Distribusikan soal secara merata di antara tipe-tipe yang diminta ($typesStr)
+4. Soal harus relevan dengan konten teks
+5. Format output harus STRICT JSON array seperti contoh di bawah
+6. JANGAN membuat soal dengan tipe yang tidak diminta!
 
 FORMAT OUTPUT (STRICT JSON):
 [
-  {
-    "type": "multiple_choice",
-    "question": "Pertanyaan pilihan ganda?",
-    "options": ["A. Opsi 1", "B. Opsi 2", "C. Opsi 3", "D. Opsi 4"],
-    "correctAnswer": 0
-  },
-  {
-    "type": "true_false",
-    "question": "Pertanyaan benar/salah?",
-    "options": ["Benar", "Salah"],
-    "correctAnswer": 0
-  },
-  {
-    "type": "essay",
-    "question": "Pertanyaan essay?"
-  },
-  {
-    "type": "fill_blank",
-    "question": "Pertanyaan isian dengan ___ kosong?",
-    "correctAnswer": "jawaban yang benar"
-  }
+$jsonExampleStr
 ]
 
 PENTING: 
 - Berikan HANYA JSON array, tanpa teks tambahan
-- Untuk multiple_choice: gunakan 4 opsi (A, B, C, D)
-- Untuk true_false: gunakan 2 opsi (Benar, Salah)
-- Untuk essay: TIDAK perlu field "options" atau "correctAnswer"
-- Untuk fill_blank: gunakan ___ untuk menandai tempat kosong
+- Gunakan format JSON persis seperti contoh di atas untuk setiap tipe soal yang diminta
 - correctAnswer adalah INDEX (0-based) untuk multiple_choice dan true_false
-- correctAnswer adalah STRING untuk fill_blank
+- correctAnswer adalah STRING untuk fill_blank dan essay
 ''';
   }
 
