@@ -263,6 +263,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                       (m) => m.tagName == category,
                       orElse: () => Module(
                         id: '',
+                        userId: '',
                         title: '',
                         description: '',
                         progress: 0,

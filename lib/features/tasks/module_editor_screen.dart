@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/services/supabase_service.dart';
 import 'block_model.dart';
 import 'module_model.dart';
+import 'module_members_screen.dart';
 
 class ModuleEditorScreen extends StatefulWidget {
   final Module module;
@@ -143,6 +144,18 @@ class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
       appBar: AppBar(
         title: Text(widget.module.title),
         actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.users, size: 20),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ModuleMembersScreen(module: widget.module),
+                ),
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: _isSaving
