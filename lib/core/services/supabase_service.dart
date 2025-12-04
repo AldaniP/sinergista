@@ -92,9 +92,28 @@ class SupabaseService {
     List<dynamic> content,
   ) async {
     try {
+      int taskCount = 0;
+      int completedCount = 0;
+
+      for (var block in content) {
+        if (block['type'] == 'todo') {
+          taskCount++;
+          if (block['isChecked'] == true) {
+            completedCount++;
+          }
+        }
+      }
+
+      double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
+
       await _client
           .from('modules')
-          .update({'content': content})
+          .update({
+            'content': content,
+            'task_count': taskCount,
+            'completed_count': completedCount,
+            'progress': progress,
+          })
           .eq('id', moduleId);
     } catch (e) {
       debugPrint('Error updating module content: $e');
