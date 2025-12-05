@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/services/supabase_service.dart';
 import '../academic/exam_screen.dart';
 import 'notification_screen.dart';
+import '../tracking/tracking_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -328,10 +329,10 @@ class DashboardHome extends StatelessWidget {
                           'Tracking',
                           LucideIcons.trendingUp,
                           () {
-                            // Navigator ke TrackingScreen (placeholder)
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Fitur Tracking segera hadir!'),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TrackingScreen(),
                               ),
                             );
                           },
