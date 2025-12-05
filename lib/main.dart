@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -6,7 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/theme_provider.dart';
 import 'features/auth/login_screen.dart';
+import 'features/auth/update_password_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
+import 'features/tasks/dashboard_screen.dart';
 import 'features/academic/notes_screen.dart';
 
 Future<void> main() async {
@@ -55,21 +58,62 @@ class InitialScreen extends StatefulWidget {
 class _InitialScreenState extends State<InitialScreen> {
   bool _isLoading = true;
   bool _showOnboarding = false;
+  bool _isLoggedIn = false;
+  late final StreamSubscription<AuthState> _authSubscription;
 
   @override
   void initState() {
     super.initState();
-    _checkOnboardingStatus();
+    _checkAuthAndOnboarding();
+    _setupAuthListener();
   }
 
-  Future<void> _checkOnboardingStatus() async {
+  void _setupAuthListener() {
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
+      data,
+    ) {
+      final event = data.event;
+      if (event == AuthChangeEvent.passwordRecovery) {
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const UpdatePasswordScreen()));
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
+
+  Future<void> _checkAuthAndOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
+    final rememberMe = prefs.getBool('remember_me') ?? false;
+    final session = Supabase.instance.client.auth.currentSession;
 
-    setState(() {
-      _showOnboarding = !onboardingCompleted;
-      _isLoading = false;
-    });
+    bool loggedIn = false;
+    if (session != null) {
+      if (rememberMe) {
+        loggedIn = true;
+      } else {
+        // Session exists but remember me is false (e.g. didn't log out properly or preference changed)
+        // Force strict logout or just ignore session for auto-login
+        // Let's clear just to be safe if desired, but user might just want to re-enter password.
+        // For "Remember Me" pattern, usually we just don't auto-navigate.
+        // Option: Supabase persistence is on by default. checking rememberMe allows us to decide.
+        // If we want to force login, we treat as not logged in.
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _showOnboarding = !onboardingCompleted;
+        _isLoggedIn = loggedIn;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -78,6 +122,8 @@ class _InitialScreenState extends State<InitialScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return _showOnboarding ? const OnboardingScreen() : const LoginScreen();
+    if (_showOnboarding) return const OnboardingScreen();
+    if (_isLoggedIn) return const DashboardScreen();
+    return const LoginScreen();
   }
 }
