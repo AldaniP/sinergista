@@ -4,9 +4,26 @@ import '../../features/tasks/dashboard_task_model.dart';
 import '../../features/focus/focus_session_model.dart';
 import '../models/connection_model.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 class SupabaseService {
   final SupabaseClient _client = Supabase.instance.client;
+
+  // Fetch Single Module
+  Future<Module> getModule(String id) async {
+    try {
+      final response = await _client
+          .from('modules')
+          .select()
+          .eq('id', id)
+          .single();
+
+      return Module.fromMap(response);
+    } catch (e) {
+      debugPrint('Error fetching module: $e');
+      rethrow;
+    }
+  }
 
   // Fetch Modules
   Future<List<Module>> getModules() async {
@@ -250,6 +267,135 @@ class SupabaseService {
           .eq('id', id);
     } catch (e) {
       debugPrint('Error updating task: $e');
+      rethrow;
+    }
+  }
+
+  // Fetch All Module Todos
+  Future<List<DashboardTask>> getAllModuleTodos() async {
+    try {
+      final modules = await getModules();
+      final List<DashboardTask> moduleTodos = [];
+
+      for (var module in modules) {
+        if (module.content != null) {
+          final content = module.content as List;
+          for (var block in content) {
+            if (block['type'] == 'todo') {
+              final isChecked = block['isChecked'] ?? false;
+              // Only add if not checked (optional, depending on requirement.
+              // But usually dashboard shows pending tasks.
+              // Let's show all and filter in UI if needed, or just follow existing pattern)
+
+              moduleTodos.add(
+                DashboardTask(
+                  id: block['id'], // Block ID
+                  title: block['content'] ?? '',
+                  priority: 'Sedang', // Default priority for module todos
+                  priorityColor: const Color(0xFFF5F5F5),
+                  priorityTextColor: Colors.black,
+                  isCompleted: isChecked,
+                  moduleName: module.title,
+                  moduleId: module.id,
+                  isModuleTodo: true,
+                ),
+              );
+            }
+          }
+        }
+      }
+      return moduleTodos;
+    } catch (e) {
+      debugPrint('Error fetching module todos: $e');
+      return [];
+    }
+  }
+
+  // Toggle Module Todo
+  Future<void> toggleModuleTodo(
+    String moduleId,
+    String blockId,
+    bool isCompleted,
+  ) async {
+    try {
+      debugPrint(
+        'Toggling module todo: $moduleId, block: $blockId, to: $isCompleted',
+      );
+
+      // 1. Fetch current module content directly
+      final response = await _client
+          .from('modules')
+          .select('content')
+          .eq('id', moduleId)
+          .single();
+
+      final rawContent = response['content'];
+      if (rawContent == null) {
+        debugPrint('Content is null');
+        return;
+      }
+
+      // 2. Create a deep mutable copy
+      final List<dynamic> content = [];
+      for (var item in rawContent as List) {
+        if (item is Map) {
+          content.add(Map<String, dynamic>.from(item));
+        } else {
+          content.add(item);
+        }
+      }
+
+      // 3. Update the specific block
+      bool contentChanged = false;
+      for (var i = 0; i < content.length; i++) {
+        final block = content[i];
+        if (block is Map && block['id'] == blockId) {
+          debugPrint('Found block: $block');
+          block['isChecked'] = isCompleted; // Direct boolean assignment
+          debugPrint('Updated block to: $block');
+          contentChanged = true;
+          break;
+        }
+      }
+
+      if (contentChanged) {
+        // 4. Update directly to avoid any side effects from other methods first
+        // We will call updateModuleContent logic manually here to be safe
+
+        int taskCount = 0;
+        int completedCount = 0;
+
+        for (var block in content) {
+          if (block is Map && block['type'] == 'todo') {
+            taskCount++;
+            if (block['isChecked'] == true) {
+              completedCount++;
+            }
+          }
+        }
+
+        double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
+
+        debugPrint(
+          'Updating DB with: taskCount=$taskCount, completed=$completedCount, progress=$progress',
+        );
+
+        await _client
+            .from('modules')
+            .update({
+              'content': content,
+              'task_count': taskCount,
+              'completed_count': completedCount,
+              'progress': progress,
+            })
+            .eq('id', moduleId);
+
+        debugPrint('Save complete');
+      } else {
+        debugPrint('Block not found with ID: $blockId');
+      }
+    } catch (e) {
+      debugPrint('Error toggling module todo: $e');
       rethrow;
     }
   }
@@ -645,6 +791,71 @@ class SupabaseService {
     } catch (e) {
       debugPrint('Error fetching profile: $e');
       return null;
+    }
+  }
+
+  // Add Todo to Module Content
+  Future<void> addTodoToModule(String moduleId, String contentText) async {
+    try {
+      // 1. Fetch current module content
+      final response = await _client
+          .from('modules')
+          .select('content')
+          .eq('id', moduleId)
+          .single();
+
+      final rawContent = response['content'];
+      final List<dynamic> content = [];
+
+      if (rawContent != null) {
+        for (var item in rawContent as List) {
+          if (item is Map) {
+            content.add(Map<String, dynamic>.from(item));
+          } else {
+            content.add(item);
+          }
+        }
+      }
+
+      // 2. Create new Todo Block
+      final newBlock = {
+        'id': const Uuid().v4(),
+        'type': 'todo',
+        'content': contentText,
+        'isChecked': false,
+      };
+
+      // 3. Append to content
+      content.add(newBlock);
+
+      // 4. Recalculate stats
+      int taskCount = 0;
+      int completedCount = 0;
+
+      for (var block in content) {
+        if (block is Map && block['type'] == 'todo') {
+          taskCount++;
+          if (block['isChecked'] == true) {
+            completedCount++;
+          }
+        }
+      }
+
+      double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
+
+      // 5. Update Module
+      await _client
+          .from('modules')
+          .update({
+            'content': content,
+            'task_count': taskCount,
+            'completed_count': completedCount,
+            'progress': progress,
+          })
+          .eq('id', moduleId);
+    } catch (e) {
+      debugPrint('Error adding todo to module: $e');
+      rethrow;
     }
   }
 }
