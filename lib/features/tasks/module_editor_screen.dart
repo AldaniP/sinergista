@@ -18,16 +18,20 @@ class ModuleEditorScreen extends StatefulWidget {
 
 class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
   final SupabaseService _supabaseService = SupabaseService();
-  List<BlockModel> _blocks = [];
+  late List<BlockModel> _blocks;
+  final ScrollController _scrollController = ScrollController();
   bool _isSaving = false;
   Timer? _autoSaveTimer;
+  late Module _module;
 
   int? _focusedBlockIndex;
 
   @override
   void initState() {
     super.initState();
+    _module = widget.module;
     _loadContent();
+    _refreshModuleData();
   }
 
   @override
@@ -37,12 +41,27 @@ class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
       block.focusNode.dispose();
       block.controller.dispose();
     }
+    _scrollController.dispose();
     super.dispose();
   }
 
+  Future<void> _refreshModuleData() async {
+    try {
+      final freshModule = await _supabaseService.getModule(_module.id);
+      if (mounted) {
+        setState(() {
+          _module = freshModule;
+          _loadContent();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error refreshing module: $e');
+    }
+  }
+
   void _loadContent() {
-    if (widget.module.content != null) {
-      _blocks = (widget.module.content as List)
+    if (_module.content != null) {
+      _blocks = (_module.content as List)
           .map((e) => BlockModel.fromMap(e))
           .toList();
       for (var i = 0; i < _blocks.length; i++) {
@@ -112,6 +131,15 @@ class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
         widget.module.id,
         _blocks.map((e) => e.toMap()).toList(),
       );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Perubahan berhasil disimpan'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(

@@ -829,6 +829,11 @@ class _ModulesScreenState extends State<ModulesScreen> {
         dueDate: dueDate,
         content: initialContent,
       );
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Modul berhasil dibuat')));
+      }
       _fetchModules(); // Refresh list
     } catch (e) {
       if (mounted) {
