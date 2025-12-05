@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/tasks/module_model.dart';
 import '../../features/tasks/dashboard_task_model.dart';
 import '../../features/focus/focus_session_model.dart';
+import '../models/connection_model.dart';
 import 'package:flutter/material.dart';
 
 class SupabaseService {
@@ -26,6 +27,7 @@ class SupabaseService {
         try {
           return Module(
             id: json['id']?.toString() ?? '',
+            userId: json['user_id']?.toString() ?? '',
             title: json['title'] ?? 'No Title',
             description: json['description'] ?? '',
             progress: (json['progress'] ?? 0).toDouble(),
@@ -90,9 +92,28 @@ class SupabaseService {
     List<dynamic> content,
   ) async {
     try {
+      int taskCount = 0;
+      int completedCount = 0;
+
+      for (var block in content) {
+        if (block['type'] == 'todo') {
+          taskCount++;
+          if (block['isChecked'] == true) {
+            completedCount++;
+          }
+        }
+      }
+
+      double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
+
       await _client
           .from('modules')
-          .update({'content': content})
+          .update({
+            'content': content,
+            'task_count': taskCount,
+            'completed_count': completedCount,
+            'progress': progress,
+          })
           .eq('id', moduleId);
     } catch (e) {
       debugPrint('Error updating module content: $e');
@@ -123,6 +144,7 @@ class SupabaseService {
       return data.map((json) {
         return Module(
           id: json['id']?.toString() ?? '',
+          userId: json['user_id']?.toString() ?? '',
           title: json['title'] ?? 'No Title',
           description: json['description'] ?? '',
           progress: (json['progress'] ?? 0).toDouble(),
@@ -302,14 +324,27 @@ class SupabaseService {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) throw Exception('User not logged in');
 
-      await _client.from('modules').insert({
+      final response = await _client
+          .from('modules')
+          .insert({
+            'user_id': userId,
+            'title': title,
+            'description': description,
+            'tag_name': category,
+            'tag_color': _getCategoryColor(category).value,
+            'due_date': dueDate,
+            'member_count': 0, // Will be updated by trigger
+          })
+          .select()
+          .single();
+
+      final moduleId = response['id'] as String;
+
+      // Add owner as member
+      await _client.from('module_members').insert({
+        'module_id': moduleId,
         'user_id': userId,
-        'title': title,
-        'description': description,
-        'tag_name': category,
-        'tag_color': _getCategoryColor(category).value,
-        'due_date': dueDate,
-        // 'created_at': DateTime.now().toIso8601String(), // Usually handled by DB default
+        'role': 'owner',
       });
     } on PostgrestException catch (e) {
       debugPrint(
@@ -489,6 +524,127 @@ class SupabaseService {
     } catch (e) {
       debugPrint('Error fetching total session count: $e');
       return 0;
+    }
+  }
+
+  // Search Users
+  Future<List<ProfileModel>> searchUsers(String query) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) return [];
+
+      final response = await _client
+          .from('profiles')
+          .select()
+          .neq('id', userId) // Exclude self
+          .or('username.ilike.%$query%,full_name.ilike.%$query%')
+          .limit(20);
+
+      final data = response as List<dynamic>;
+      return data.map((json) => ProfileModel.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('Error searching users: $e');
+      return [];
+    }
+  }
+
+  // Add Module Member
+  Future<void> addModuleMember({
+    required String moduleId,
+    required String userId,
+    String role = 'editor',
+  }) async {
+    try {
+      await _client.from('module_members').insert({
+        'module_id': moduleId,
+        'user_id': userId,
+        'role': role,
+      });
+    } catch (e) {
+      debugPrint('Error adding module member: $e');
+      rethrow;
+    }
+  }
+
+  // Get Module Members
+  Future<List<Map<String, dynamic>>> getModuleMembers(String moduleId) async {
+    try {
+      // 1. Fetch members (user_id and role)
+      final membersResponse = await _client
+          .from('module_members')
+          .select('user_id, role')
+          .eq('module_id', moduleId);
+
+      final membersData = membersResponse as List<dynamic>;
+      if (membersData.isEmpty) return [];
+
+      // 2. Extract User IDs
+      final userIds = membersData.map((m) => m['user_id'] as String).toList();
+
+      // 3. Fetch Profiles for these users
+      final profilesResponse = await _client
+          .from('profiles')
+          .select()
+          .inFilter('id', userIds);
+
+      final profilesData = profilesResponse as List<dynamic>;
+      final profilesMap = {
+        for (var p in profilesData) p['id'] as String: ProfileModel.fromJson(p),
+      };
+
+      // 4. Combine data
+      return membersData.map((m) {
+        final userId = m['user_id'] as String;
+        final profile = profilesMap[userId];
+
+        // If profile not found (shouldn't happen usually), return basic info or skip
+        if (profile == null) {
+          return {
+            'role': m['role'],
+            'profile': ProfileModel(
+              id: userId,
+              username: 'Unknown',
+              fullName: 'Unknown User',
+            ),
+          };
+        }
+
+        return {'role': m['role'], 'profile': profile};
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching module members: $e');
+      return [];
+    }
+  }
+
+  // Remove Module Member
+  Future<void> removeModuleMember(String moduleId, String userId) async {
+    try {
+      await _client
+          .from('module_members')
+          .delete()
+          .eq('module_id', moduleId)
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('Error removing module member: $e');
+      rethrow;
+    }
+  }
+
+  // Get Profile
+  Future<ProfileModel?> getProfile(String userId) async {
+    try {
+      final response = await _client
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (response == null) return null;
+      return ProfileModel.fromJson(response);
+    } catch (e) {
+      debugPrint('Error fetching profile: $e');
+      return null;
     }
   }
 }
