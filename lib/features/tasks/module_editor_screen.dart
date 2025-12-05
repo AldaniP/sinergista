@@ -112,6 +112,15 @@ class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
         widget.module.id,
         _blocks.map((e) => e.toMap()).toList(),
       );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Perubahan berhasil disimpan'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
