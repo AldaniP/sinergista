@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../../core/constants/app_colors.dart';
@@ -955,6 +956,9 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                   ),
                   onSelected: (value) async {
+                    final currentUserId =
+                        Supabase.instance.client.auth.currentUser?.id;
+
                     if (value == 'delete') {
                       final confirm = await showDialog<bool>(
                         context: context,
@@ -988,6 +992,54 @@ class _ModulesScreenState extends State<ModulesScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Gagal menghapus modul: $e'),
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    } else if (value == 'leave') {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Keluar Modul'),
+                          content: Text(
+                            'Apakah Anda yakin ingin keluar dari modul "${module.title}"?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Batal'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Keluar'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true && currentUserId != null) {
+                        try {
+                          await _supabaseService.removeModuleMember(
+                            module.id,
+                            currentUserId,
+                          );
+                          _fetchModules();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Berhasil keluar dari modul'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal keluar dari modul: $e'),
                               ),
                             );
                           }
@@ -1079,38 +1131,73 @@ class _ModulesScreenState extends State<ModulesScreen> {
                       }
                     }
                   },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'duplicate',
-                      child: Row(
-                        children: [
-                          Icon(LucideIcons.copy, size: 16),
-                          SizedBox(width: 8),
-                          Text('Duplikat'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(LucideIcons.trash2, size: 16, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Hapus', style: TextStyle(color: Colors.red)),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'archive',
-                      child: Row(
-                        children: [
-                          Icon(LucideIcons.archive, size: 16),
-                          SizedBox(width: 8),
-                          Text('Arsip'),
-                        ],
-                      ),
-                    ),
-                  ],
+                  itemBuilder: (context) {
+                    final currentUserId =
+                        Supabase.instance.client.auth.currentUser?.id;
+                    final isOwner = module.userId == currentUserId;
+
+                    if (isOwner) {
+                      return [
+                        const PopupMenuItem(
+                          value: 'duplicate',
+                          child: Row(
+                            children: [
+                              Icon(LucideIcons.copy, size: 16),
+                              SizedBox(width: 8),
+                              Text('Duplikat'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.trash2,
+                                size: 16,
+                                color: Colors.red,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Hapus',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'archive',
+                          child: Row(
+                            children: [
+                              Icon(LucideIcons.archive, size: 16),
+                              SizedBox(width: 8),
+                              Text('Arsip'),
+                            ],
+                          ),
+                        ),
+                      ];
+                    } else {
+                      return [
+                        const PopupMenuItem(
+                          value: 'leave',
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.logOut,
+                                size: 16,
+                                color: Colors.red,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Keluar',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ];
+                    }
+                  },
                 ),
               ],
             ),
