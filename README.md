@@ -10,48 +10,11 @@
 
 ## 📋 Daftar Isi
 
-1. [Fitur Utama](#-fitur-utama)
-2. [Arsitektur & Struktur Folder](#-arsitektur--struktur-folder)
-3. [Instalasi & Setup](#-instalasi--setup)
-4. [Panduan Kontribusi (Git Flow)](#-panduan-kontribusi-wajib-baca)
+1. [Arsitektur & Struktur Folder](#-arsitektur--struktur-folder)
+2. [Instalasi & Setup](#-instalasi--setup)
+3. [Panduan Kontribusi (Git Flow)](#-panduan-kontribusi-wajib-baca)
+4. [Fitur Utama](#-fitur-utama)
 5. [Tim Pengembang & Pembagian Tugas](#-tim-pengembang--pembagian-tugas)
-
----
-
-## 🚀 Fitur Utama
-
-Aplikasi ini terdiri dari 16 fitur inti yang dikelompokkan berdasarkan fungsinya:
-
-### 🔹 Manajemen Inti (Core Task)
-
-- **Fitur 1:** Kebutuhan Tugas (CRUD, Sub-tasks, Priority).
-- **Fitur 3:** Tracking Progress (Kanban Board & Timeline).
-- **Fitur 9:** Arsip (Riwayat tugas/modul selesai).
-- **Fitur 10:** Pengelompokan Berdasarkan Warna (Color Tags).
-- **Fitur 13:** Add New Modul (Container Proyek).
-
-### 🔹 Fokus & Produktivitas
-
-- **Fitur 2:** Pengingat Deadline (Notifikasi H-1, H-3 Jam).
-- **Fitur 4:** Timer (Stopwatch & Pomodoro Focus).
-
-### 🔹 Akademik & Catatan
-
-- **Fitur 6:** Exam (Upload materi & persiapan ujian).
-- **Fitur 12:** Notes (Rich Text Editor).
-- **Fitur 15:** Template Jurnal (Refleksi Harian).
-
-### 🔹 Kolaborasi & Sosial
-
-- **Fitur 5:** Login & Autentikasi (Auth System).
-- **Fitur 7:** Koneksi Pengguna (Friend list & Request).
-- **Fitur 8:** Revisi Pekerjaan (Shared tasks & Comments).
-
-### 🔹 Finansial & Personalisasi
-
-- **Fitur 11:** Achievement (Gamifikasi & XP System).
-- **Fitur 14:** Budget Planner (Pencatatan Keuangan).
-- **Fitur 16:** Mode Gelap/Terang (Theme Settings).
 
 ---
 
@@ -278,19 +241,52 @@ Konflik terjadi saat Anda dan teman mengedit baris yang sama di file yang sama.
 
 ---
 
-## 👥 Tim Pengembang & Pembagian Tugas
+## 🚀 Fitur Utama
 
-Berikut adalah pembagian tanggung jawab fitur sinergista.
+Aplikasi ini terdiri dari 16 fitur inti yang dikelompokkan berdasarkan fungsinya:
 
-| Nama Anggota            | Fitur Utama 1         | Fitur Utama 2               | Folder Kerja Utama                             |
-| :---------------------- | :-------------------- | :-------------------------- | :--------------------------------------------- |
-| **Aldani Prasetyo**     | Fitur 4: Timer        | Fitur 10: Color Grouping    | `features/focus` & `features/tasks`            |
-| **Bagus Subekti**       | Fitur 12: Notes       | Fitur 1: Kebutuhan Tugas    | `features/academic` & `features/tasks`         |
-| **Eric Vincentius J.**  | Fitur 2: Deadline     | Fitur 14: Budget Planner    | `features/focus` & `features/finance`          |
-| **Burju Ferdinand H.**  | Fitur 7: Koneksi      | Fitur 15: Template Jurnal   | `features/collaboration` & `features/academic` |
-| **Antony Purnamarasid** | Fitur 6: Exam         | Fitur 3: Tracking Progress  | `features/academic` & `features/tasks`         |
-| **Faris Abqori**        | Fitur 9: Arsip        | Fitur 8: Revisi Pekerjaan   | `features/tasks` & `features/collaboration`    |
-| **Marcellino SP P.**    | Fitur 11: Achievement | Fitur 16: Mode Gelap/Terang | `features/gamification` & `features/settings`  |
+### 🔹 Manajemen Inti (Core Task)
+
+- **Fitur 1:** Kebutuhan Tugas (CRUD, Sub-tasks, Priority).
+- **Fitur 3:** Tracking Progress (Kanban Board & Timeline).
+- **Fitur 9:** Arsip (Riwayat tugas/modul selesai).
+- **Fitur 10:** Pengelompokan Berdasarkan Warna (Color Tags).
+- **Fitur 13:** Add New Modul (Container Proyek).
+
+### 🔹 Fokus & Produktivitas
+
+- **Fitur 2:** Pengingat Deadline (Notifikasi H-1, H-3 Jam).
+- **Fitur 4:** Timer (Stopwatch & Pomodoro Focus).
+
+### 🔹 Akademik & Catatan
+
+- **Fitur 6:** Exam (Upload materi & persiapan ujian).
+- **Fitur 12:** Notes (Rich Text Editor).
+- **Fitur 15:** Template Jurnal (Refleksi Harian).
+
+### 🔹 Kolaborasi & Sosial
+
+- **Fitur 5:** Login & Autentikasi (Auth System).
+- **Fitur 7:** Koneksi Pengguna (Friend list & Request).
+- **Fitur 8:** Revisi Pekerjaan (Shared tasks & Comments).
+
+### 🔹 Finansial & Personalisasi
+
+- **Fitur 11:** Achievement (Gamifikasi & XP System).
+- **Fitur 14:** Budget Planner (Pencatatan Keuangan).
+- **Fitur 16:** Mode Gelap/Terang (Theme Settings).
+
+---
+
+## 👥 Tim Pengembang
+
+- Aldani Prasetyo
+- Bagus Subekti
+- Eric Vincentius J.
+- Burju Ferdinand H.
+- Antony Purnamarasid
+- Faris Abqori
+- Marcellino SP P.
 
 ---
 
