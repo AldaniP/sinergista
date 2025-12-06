@@ -121,7 +121,7 @@ class SupabaseService {
         }
       }
 
-      double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
+      final double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
 
       await _client
           .from('modules')
@@ -374,7 +374,9 @@ class SupabaseService {
           }
         }
 
-        double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
+        final double progress = taskCount > 0
+            ? completedCount / taskCount
+            : 0.0;
 
         debugPrint(
           'Updating DB with: taskCount=$taskCount, completed=$completedCount, progress=$progress',
@@ -414,7 +416,7 @@ class SupabaseService {
             'title': '${module.title} (Copy)',
             'description': module.description,
             'tag_name': module.tagName,
-            'tag_color': module.tagColor.value,
+            'tag_color': module.tagColor.toARGB32(),
             'due_date': module.dueDate != null
                 ? _parseFormattedDate(module.dueDate!)
                 : null, // Convert back to ISO string
@@ -477,7 +479,7 @@ class SupabaseService {
             'title': title,
             'description': description,
             'tag_name': category,
-            'tag_color': _getCategoryColor(category).value,
+            'tag_color': _getCategoryColor(category).toARGB32(),
             'due_date': dueDate,
             'member_count': 0, // Will be updated by trigger
           })
@@ -841,7 +843,7 @@ class SupabaseService {
         }
       }
 
-      double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
+      final double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
 
       // 5. Update Module
       await _client

@@ -74,6 +74,7 @@ class _InitialScreenState extends State<InitialScreen> {
     ) {
       final event = data.event;
       if (event == AuthChangeEvent.passwordRecovery) {
+        if (!mounted) return;
         Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (_) => const UpdatePasswordScreen()));

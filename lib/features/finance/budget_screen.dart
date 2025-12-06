@@ -38,14 +38,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
       final user = supabase.auth.currentUser;
 
       if (user == null) {
-        print('No user');
+        debugPrint('No user');
         _items = [];
         _calculateStats();
         return;
       }
 
       try {
-        print('Fetching data for user ID: ${user.id}');
+        debugPrint('Fetching data for user ID: ${user.id}');
         final List<dynamic> rows = await supabase
             .from('budgets')
             .select()
@@ -68,7 +68,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
           );
         }).toList();
       } catch (e, st) {
-        print('Supabase fetch error: $e\n$st');
+        debugPrint('Supabase fetch error: $e\n$st');
         _items = [];
       }
 
@@ -270,8 +270,10 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                   }).select();
                                 }
 
+                                if (!context.mounted) return;
                                 Navigator.of(modalCtx).pop();
                                 await _loadData();
+                                if (!rootContext.mounted) return;
                                 ScaffoldMessenger.of(rootContext).showSnackBar(
                                   SnackBar(
                                     content: Text(
@@ -282,7 +284,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                   ),
                                 );
                               } catch (e) {
-                                print('Save error: $e');
+                                debugPrint('Save error: $e');
+                                if (!rootContext.mounted) return;
                                 ScaffoldMessenger.of(rootContext).showSnackBar(
                                   SnackBar(
                                     content: Text('Gagal menyimpan: $e'),
@@ -343,14 +346,18 @@ class _BudgetScreenState extends State<BudgetScreen> {
     try {
       await supabase.from('budgets').delete().eq('id', item.id);
       await _loadData();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Berhasil dihapus')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Berhasil dihapus')));
+      }
     } catch (e) {
-      print('Delete error: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal menghapus: $e')));
+      debugPrint('Delete error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal menghapus: $e')));
+      }
     }
   }
 
@@ -601,7 +608,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.05),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
         ),
       ),
       child: Row(
@@ -610,8 +617,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isIncome
-                  ? Colors.green.withOpacity(0.12)
-                  : Colors.red.withOpacity(0.12),
+                  ? Colors.green.withValues(alpha: 0.12)
+                  : Colors.red.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
