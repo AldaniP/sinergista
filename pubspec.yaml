@@ -24,6 +24,7 @@ dependencies:
   google_generative_ai: ^0.4.6
   syncfusion_flutter_pdf: ^28.1.33
   shared_preferences: ^2.3.3
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

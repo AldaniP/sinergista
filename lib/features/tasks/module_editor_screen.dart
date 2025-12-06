@@ -2,10 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/services/supabase_service.dart';
 import 'block_model.dart';
 import 'module_model.dart';
 import 'module_members_screen.dart';
+import 'kanban_board_screen.dart';
 
 class ModuleEditorScreen extends StatefulWidget {
   final Module module;
@@ -173,6 +176,19 @@ class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
         title: Text(widget.module.title),
         actions: [
           IconButton(
+            icon: const Icon(LucideIcons.layoutGrid, size: 20),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      KanbanBoardScreen(module: widget.module),
+                ),
+              );
+            },
+            tooltip: 'Kanban Board',
+          ),
+          IconButton(
             icon: const Icon(LucideIcons.users, size: 20),
             onPressed: () {
               Navigator.push(
@@ -270,6 +286,67 @@ class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
           ],
         );
         break;
+      case BlockType.link:
+        content = InkWell(
+          onTap: () async {
+            if (block.url != null) {
+              final uri = Uri.parse(block.url!);
+              final canLaunch = await canLaunchUrl(uri);
+
+              if (canLaunch) {
+                await launchUrl(uri);
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Tidak dapat membuka link')),
+                  );
+                }
+              }
+            }
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.link2, color: AppColors.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        block.content.isNotEmpty ? block.content : 'Link',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (block.url != null)
+                        Text(
+                          block.url!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.primary.withValues(alpha: 0.7),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        break;
       default:
         content = _buildTextField(block);
     }
@@ -350,11 +427,76 @@ class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
             onPressed: () => _addBlock(BlockType.todo),
           ),
           IconButton(
+            icon: const Icon(LucideIcons.link2),
+            onPressed: _showAddLinkDialog,
+          ),
+          IconButton(
             icon: const Icon(LucideIcons.trash2, color: Colors.red),
             onPressed: _deleteFocusedBlock,
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _showAddLinkDialog() async {
+    final titleController = TextEditingController();
+    final urlController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tambahkan Link'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(
+                labelText: 'Nama Link',
+                hintText: 'Contoh: Materi Kuliah',
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: urlController,
+              decoration: const InputDecoration(
+                labelText: 'URL Link',
+                hintText: 'https://...',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (titleController.text.isNotEmpty &&
+                  urlController.text.isNotEmpty) {
+                _addLinkBlock(titleController.text, urlController.text);
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _addLinkBlock(String title, String url) {
+    setState(() {
+      final newBlock = BlockModel(
+        id: const Uuid().v4(),
+        type: BlockType.link,
+        content: title,
+        url: url,
+      );
+      _blocks.add(newBlock);
+    });
+    _onContentChanged();
   }
 }
