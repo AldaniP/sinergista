@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
-enum BlockType { text, heading1, heading2, bullet, todo }
+enum BlockType { text, heading1, heading2, bullet, todo, link }
 
 class BlockModel {
   String id;
   BlockType type;
   String content;
   bool isChecked;
+  String? url; // Add URL field
   final TextEditingController controller;
   final FocusNode focusNode;
 
@@ -15,6 +16,7 @@ class BlockModel {
     required this.type,
     this.content = '',
     this.isChecked = false,
+    this.url,
   }) : controller = TextEditingController(text: content),
        focusNode = FocusNode();
 
@@ -24,6 +26,7 @@ class BlockModel {
       'type': type.name,
       'content': controller.text,
       'isChecked': isChecked,
+      'url': url, // Save URL
     };
   }
 
@@ -33,6 +36,7 @@ class BlockModel {
       type: BlockType.values.firstWhere((e) => e.name == map['type']),
       content: map['content'] ?? '',
       isChecked: map['isChecked'] ?? false,
+      url: map['url'], // Load URL
     );
   }
 }

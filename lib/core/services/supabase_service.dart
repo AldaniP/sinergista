@@ -271,6 +271,16 @@ class SupabaseService {
     }
   }
 
+  // Delete Task
+  Future<void> deleteTask(String id) async {
+    try {
+      await _client.from('tasks').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('Error deleting task: $e');
+      rethrow;
+    }
+  }
+
   // Fetch All Module Todos
   Future<List<DashboardTask>> getAllModuleTodos() async {
     try {
@@ -308,6 +318,69 @@ class SupabaseService {
     } catch (e) {
       debugPrint('Error fetching module todos: $e');
       return [];
+    }
+  }
+
+  // Delete Module Todo (Remove Block)
+  Future<void> deleteModuleTodo(String moduleId, String blockId) async {
+    try {
+      debugPrint('Deleting module todo: $moduleId, block: $blockId');
+
+      // 1. Fetch current module content directly
+      final response = await _client
+          .from('modules')
+          .select('content')
+          .eq('id', moduleId)
+          .single();
+
+      final rawContent = response['content'];
+      if (rawContent == null) return;
+
+      // 2. Create a deep mutable copy
+      final List<dynamic> content = [];
+      for (var item in rawContent as List) {
+        if (item is Map) {
+          content.add(Map<String, dynamic>.from(item));
+        } else {
+          content.add(item);
+        }
+      }
+
+      // 3. Remove the specific block
+      final initialLength = content.length;
+      content.removeWhere((block) => block is Map && block['id'] == blockId);
+
+      if (content.length != initialLength) {
+        // 4. Update stats and save
+        int taskCount = 0;
+        int completedCount = 0;
+
+        for (var block in content) {
+          if (block is Map && block['type'] == 'todo') {
+            taskCount++;
+            if (block['isChecked'] == true) {
+              completedCount++;
+            }
+          }
+        }
+
+        final double progress = taskCount > 0
+            ? completedCount / taskCount
+            : 0.0;
+
+        await _client
+            .from('modules')
+            .update({
+              'content': content,
+              'task_count': taskCount,
+              'completed_count': completedCount,
+              'progress': progress,
+            })
+            .eq('id', moduleId);
+      }
+    } catch (e) {
+      debugPrint('Error deleting module todo: $e');
+      rethrow;
     }
   }
 
