@@ -14,7 +14,7 @@
 2. [Instalasi & Setup](#-instalasi--setup)
 3. [Panduan Kontribusi (Git Flow)](#-panduan-kontribusi-wajib-baca)
 4. [Fitur Utama](#-fitur-utama)
-5. [Tim Pengembang & Pembagian Tugas](#-tim-pengembang--pembagian-tugas)
+5. [Tim Pengembang](#-tim-pengembang)
 
 ---
 
@@ -27,19 +27,23 @@ Project ini menggunakan **Feature-First Architecture**.
 lib/
 ├── core/                  # Komponen Global (Shared)
 │   ├── constants/         # Colors, Strings, API Urls
-│   ├── theme/             # AppTheme (Light/Dark Logic)
+│   ├── models/            # Data Models (Shared)
 │   ├── providers/         # State Management (Theme, etc)
+│   ├── services/          # External Services (Supabase, etc)
+│   ├── theme/             # AppTheme (Light/Dark Logic)
 │   └── widgets/           # Widget umum (Button, InputField, Cards)
 ├── features/              # MODUL FITUR (Area Kerja Utama)
-│   ├── auth/              # Fitur 5 (Login/Register)
-│   ├── tasks/             # Fitur 1, 3, 9, 10, 13 (Manajemen Tugas, Modul, Arsip)
-│   ├── focus/             # Fitur 2, 4 (Timer & Deadline)
 │   ├── academic/          # Fitur 6, 12, 15 (Exam, Notes, Jurnal)
+│   ├── auth/              # Fitur 5 (Login/Register)
 │   ├── collaboration/     # Fitur 7, 8 (Koneksi & Revisi)
 │   ├── finance/           # Fitur 14 (Budget Planner)
+│   ├── focus/             # Fitur 2, 4 (Timer & Deadline)
 │   ├── gamification/      # Fitur 11 (Achievement)
+│   ├── onboarding/        # Halaman Pengenalan Aplikasi
 │   ├── profile/           # Halaman Profil User
-│   └── settings/          # Fitur 16 (Pengaturan Tema)
+│   ├── settings/          # Fitur 16 (Pengaturan Tema)
+│   ├── tasks/             # Fitur 1, 9, 10, 13 (Manajemen Tugas, Modul, Arsip)
+│   └── tracking/          # Fitur 3 (Tracking Progress)
 └── main.dart
 ```
 
@@ -248,7 +252,7 @@ Aplikasi ini terdiri dari 16 fitur inti yang dikelompokkan berdasarkan fungsinya
 ### 🔹 Manajemen Inti (Core Task)
 
 - **Fitur 1:** Kebutuhan Tugas (CRUD, Sub-tasks, Priority).
-- **Fitur 3:** Tracking Progress (Kanban Board & Timeline).
+- **Fitur 3:** Tracking Progress (Kanban Board & Timeline) -> _Lihat fitur tracking_.
 - **Fitur 9:** Arsip (Riwayat tugas/modul selesai).
 - **Fitur 10:** Pengelompokan Berdasarkan Warna (Color Tags).
 - **Fitur 13:** Add New Modul (Container Proyek).
