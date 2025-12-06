@@ -12,6 +12,7 @@ import '../academic/exam_screen.dart';
 import 'notification_screen.dart';
 import '../tracking/tracking_screen.dart';
 import 'module_model.dart';
+import 'module_editor_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -122,6 +123,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }
           }
         },
+        onDeleteTask: (task) async {
+          try {
+            if (task.isModuleTodo && task.moduleId != null && task.id != null) {
+              await _supabaseService.deleteModuleTodo(task.moduleId!, task.id!);
+            } else if (task.id != null) {
+              await _supabaseService.deleteTask(task.id!);
+            }
+            _fetchTasks();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Tugas berhasil dihapus')),
+              );
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Gagal menghapus tugas: $e')),
+              );
+            }
+          }
+        },
+        onOpenModule: (task) async {
+          if (task.moduleId != null) {
+            try {
+              // Show loading if needed, or just navigate
+              final module = await _supabaseService.getModule(task.moduleId!);
+              if (context.mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ModuleEditorScreen(module: module),
+                  ),
+                ).then((_) => _fetchTasks());
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Gagal membuka modul: $e')),
+                );
+              }
+            }
+          }
+        },
       ),
       const ModulesScreen(),
       const FocusScreen(), // Placeholder for Focus
@@ -168,11 +212,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class DashboardHome extends StatelessWidget {
+class DashboardHome extends StatefulWidget {
   final Function(int) onTabChange;
   final List<DashboardTask> tasks;
   final Function(DashboardTask) onTaskToggle;
   final Function(DashboardTask) onAddTask;
+  final Function(DashboardTask) onDeleteTask;
+  final Function(DashboardTask) onOpenModule;
   final bool isLoading;
 
   const DashboardHome({
@@ -181,8 +227,17 @@ class DashboardHome extends StatelessWidget {
     required this.tasks,
     required this.onTaskToggle,
     required this.onAddTask,
+    required this.onDeleteTask,
+    required this.onOpenModule,
     this.isLoading = false,
   });
+
+  @override
+  State<DashboardHome> createState() => _DashboardHomeState();
+}
+
+class _DashboardHomeState extends State<DashboardHome> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -210,6 +265,10 @@ class DashboardHome extends StatelessWidget {
           'November',
           'Desember',
         ];
+
+        final displayedTasks = _isExpanded
+            ? widget.tasks
+            : widget.tasks.take(3).toList();
 
         return Container(
           color: Theme.of(context).scaffoldBackgroundColor,
@@ -400,9 +459,9 @@ class DashboardHome extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (tasks.isNotEmpty)
+                      if (widget.tasks.isNotEmpty)
                         Text(
-                          '${tasks.where((t) => !t.isCompleted).length} tersisa',
+                          '${widget.tasks.where((t) => !t.isCompleted).length} tersisa',
                           style: TextStyle(
                             color: Colors.grey.shade600,
                             fontSize: 14,
@@ -413,14 +472,14 @@ class DashboardHome extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Task List
-                  if (isLoading)
+                  if (widget.isLoading)
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.all(20.0),
                         child: CircularProgressIndicator(),
                       ),
                     )
-                  else if (tasks.isEmpty)
+                  else if (widget.tasks.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
@@ -453,27 +512,35 @@ class DashboardHome extends StatelessWidget {
                       ),
                     )
                   else
-                    ...tasks
-                        .take(3)
-                        .map(
-                          (task) => _buildToDoItem(context, task, () {
-                            // Navigate to Modules tab or Task Detail
-                            if (task.isModuleTodo) {
-                              // For now just go to modules list, ideally go to specific module
-                              onTabChange(1);
-                            } else {
-                              // Handle standalone task navigation if needed
-                            }
-                          }, () => onTaskToggle(task)),
-                        ),
+                    ...displayedTasks.map(
+                      (task) => _buildToDoItem(context, task, () {
+                        // On Tap (Navigate)
+                        if (task.isModuleTodo) {
+                          widget.onOpenModule(task);
+                        }
+                      }, () => widget.onTaskToggle(task)),
+                    ),
 
-                  if (tasks.length > 3) ...[
+                  if (widget.tasks.length > 3) ...[
                     const SizedBox(height: 12),
                     Center(
                       child: TextButton.icon(
-                        onPressed: () => onTabChange(1), // Navigate to Modules
-                        icon: const Icon(LucideIcons.moreHorizontal, size: 18),
-                        label: Text('Lihat ${tasks.length - 3} tugas lainnya'),
+                        onPressed: () {
+                          setState(() {
+                            _isExpanded = !_isExpanded;
+                          });
+                        },
+                        icon: Icon(
+                          _isExpanded
+                              ? LucideIcons.chevronUp
+                              : LucideIcons.moreHorizontal,
+                          size: 18,
+                        ),
+                        label: Text(
+                          _isExpanded
+                              ? 'Tutup'
+                              : 'Lihat ${widget.tasks.length - 3} tugas lainnya',
+                        ),
                       ),
                     ),
                   ],
@@ -722,6 +789,33 @@ class DashboardHome extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
+          onLongPress: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Hapus Tugas'),
+                content: const Text(
+                  'Apakah Anda yakin ingin menghapus tugas ini?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Batal'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      widget.onDeleteTask(task);
+                    },
+                    child: const Text(
+                      'Hapus',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.all(12),
@@ -765,26 +859,7 @@ class DashboardHome extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: task.priorityColor,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              task.priority,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: task.priorityTextColor,
-                              ),
-                            ),
-                          ),
                           if (task.moduleName != null) ...[
-                            const SizedBox(width: 8),
                             Icon(
                               LucideIcons.folder,
                               size: 12,
@@ -830,7 +905,7 @@ class DashboardHome extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => _AddTaskSheet(onAddTask: onAddTask),
+      builder: (context) => _AddTaskSheet(onAddTask: widget.onAddTask),
     );
   }
 }
