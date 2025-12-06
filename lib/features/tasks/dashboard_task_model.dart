@@ -6,6 +6,8 @@ class DashboardTask {
   final String priority;
   final Color priorityColor;
   final Color priorityTextColor;
+  final String? moduleId;
+  final bool isModuleTodo;
   final String? moduleName;
   bool isCompleted;
 
@@ -17,6 +19,8 @@ class DashboardTask {
     required this.priorityTextColor,
     this.isCompleted = false,
     this.moduleName,
+    this.moduleId,
+    this.isModuleTodo = false,
   });
 
   factory DashboardTask.fromMap(Map<String, dynamic> map) {
@@ -51,6 +55,8 @@ class DashboardTask {
       priorityTextColor: getPriorityTextColor(map['priority'] ?? 'Sedang'),
       isCompleted: map['is_completed'] ?? false,
       moduleName: map['modules']?['title'], // Assuming join with modules table
+      moduleId: map['module_id'],
+      isModuleTodo: false,
     );
   }
 }

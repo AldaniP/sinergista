@@ -206,16 +206,20 @@ class _FocusScreenState extends State<FocusScreen>
 
     try {
       await _supabaseService.deleteFocusSession(session.id!);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Sesi berhasil dihapus')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Sesi berhasil dihapus')));
+      }
       _loadStats(); // Refresh stats
     } catch (e) {
       // Revert if failed
       _loadRecentSessions();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal menghapus sesi: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal menghapus sesi: $e')));
+      }
     }
   }
 

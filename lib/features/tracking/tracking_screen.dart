@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:percent_indicator/percent_indicator.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:intl/intl.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/services/supabase_service.dart';
 import '../tasks/module_model.dart';
 import '../focus/focus_session_model.dart';
@@ -159,7 +156,6 @@ class _TrackingScreenState extends State<TrackingScreen>
 
   // --- TAB 1: RINGKASAN ---
   Widget _buildSummaryTab() {
-    final totalTasks = _modules.fold(0, (sum, m) => sum + m.taskCount);
     final completedTasks = _modules.fold(0, (sum, m) => sum + m.completedCount);
     final totalMinutes = _weeklySessions.fold(
       0,

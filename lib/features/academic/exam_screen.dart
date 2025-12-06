@@ -346,15 +346,15 @@ class _ExamScreenState extends State<ExamScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
                       Icon(
                         LucideIcons.fileUp,
                         color: AppColors.primary,
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         'Upload Materi PDF',
                         style: TextStyle(
                           fontSize: 16,
@@ -461,15 +461,15 @@ class _ExamScreenState extends State<ExamScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
                       Icon(
                         LucideIcons.listChecks,
                         color: AppColors.primary,
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         'Tipe Soal',
                         style: TextStyle(
                           fontSize: 16,
@@ -530,15 +530,15 @@ class _ExamScreenState extends State<ExamScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
                       Icon(
                         LucideIcons.hash,
                         color: AppColors.primary,
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         'Jumlah Soal',
                         style: TextStyle(
                           fontSize: 16,

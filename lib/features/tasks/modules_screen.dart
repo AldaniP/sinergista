@@ -208,7 +208,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                   hintStyle: TextStyle(
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
                   ),
                 ),
                 style: TextStyle(
@@ -321,7 +321,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                                         .textTheme
                                         .bodyMedium
                                         ?.color
-                                        ?.withOpacity(0.7),
+                                        ?.withValues(alpha: 0.7),
                                   ),
                                 ),
                                 const SizedBox(height: 24),
@@ -335,9 +335,11 @@ class _ModulesScreenState extends State<ModulesScreen> {
                         : Text(
                             'Belum ada modul',
                             style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.color
+                                  ?.withValues(alpha: 0.5),
                             ),
                           ),
                   )
@@ -419,7 +421,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: color),
@@ -544,7 +546,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                                       style: const TextStyle(fontSize: 12),
                                     ),
                                     backgroundColor: (cat['color'] as Color)
-                                        .withOpacity(0.1),
+                                        .withValues(alpha: 0.1),
                                     side: BorderSide.none,
                                     onPressed: () {
                                       setState(() {
@@ -703,7 +705,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
     Color selectedColor,
     Function(Color) onSelect,
   ) {
-    final isSelected = color.value == selectedColor.value;
+    final isSelected = color == selectedColor;
     return GestureDetector(
       onTap: () => onSelect(color),
       child: Container(
@@ -825,7 +827,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
         title: title,
         description: 'Modul $template',
         tagName: category,
-        tagColor: color.value,
+        tagColor: color.toARGB32(),
         dueDate: dueDate,
         content: initialContent,
       );
@@ -883,7 +885,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
           side: BorderSide(
             color: isSelected
                 ? Colors.transparent
-                : Theme.of(context).dividerColor.withOpacity(0.2),
+                : Theme.of(context).dividerColor.withValues(alpha: 0.2),
           ),
         ),
         showCheckmark: false,
@@ -910,7 +912,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
           color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Theme.of(context).dividerColor.withOpacity(0.1),
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
           ),
         ),
         child: Column(
@@ -948,7 +950,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                           fontSize: 14,
                           color: Theme.of(
                             context,
-                          ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -958,7 +960,9 @@ class _ModulesScreenState extends State<ModulesScreen> {
                   icon: Icon(
                     LucideIcons.moreVertical,
                     size: 20,
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                    color: Theme.of(
+                      context,
+                    ).iconTheme.color?.withValues(alpha: 0.5),
                   ),
                   onSelected: (value) async {
                     final currentUserId =
@@ -1254,14 +1258,16 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     fontSize: 12,
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Icon(
                   LucideIcons.users,
                   size: 14,
-                  color: Theme.of(context).iconTheme.color?.withOpacity(0.6),
+                  color: Theme.of(
+                    context,
+                  ).iconTheme.color?.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -1270,7 +1276,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     fontSize: 12,
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                   ),
                 ),
                 if (module.dueDate != null) ...[
@@ -1278,7 +1284,9 @@ class _ModulesScreenState extends State<ModulesScreen> {
                   Icon(
                     LucideIcons.calendar,
                     size: 14,
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.6),
+                    color: Theme.of(
+                      context,
+                    ).iconTheme.color?.withValues(alpha: 0.6),
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -1287,7 +1295,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                       fontSize: 12,
                       color: Theme.of(
                         context,
-                      ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -1298,7 +1306,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: module.tagColor.withOpacity(0.1),
+                color: module.tagColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
