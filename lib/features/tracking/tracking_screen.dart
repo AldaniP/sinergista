@@ -24,7 +24,7 @@ class _TrackingScreenState extends State<TrackingScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _fetchData();
   }
 
@@ -130,7 +130,6 @@ class _TrackingScreenState extends State<TrackingScreen>
               tabs: const [
                 Tab(text: 'Ringkasan'),
                 Tab(text: 'Modul'),
-                Tab(text: 'Pencapaian'),
               ],
             ),
           ),
@@ -142,11 +141,7 @@ class _TrackingScreenState extends State<TrackingScreen>
                 ? const Center(child: CircularProgressIndicator())
                 : TabBarView(
                     controller: _tabController,
-                    children: [
-                      _buildSummaryTab(),
-                      _buildModulesTab(),
-                      _buildAchievementsTab(),
-                    ],
+                    children: [_buildSummaryTab(), _buildModulesTab()],
                   ),
           ),
         ],
@@ -607,160 +602,4 @@ class _TrackingScreenState extends State<TrackingScreen>
       },
     );
   }
-
-  // --- TAB 3: PENCAPAIAN ---
-  Widget _buildAchievementsTab() {
-    // Logic for achievements
-    final completedTasks = _modules.fold(0, (sum, m) => sum + m.completedCount);
-    final totalMinutes = _weeklySessions.fold(
-      0,
-      (sum, s) => sum + s.durationMinutes,
-    );
-    final streak = _weeklySessions.isNotEmpty ? _weeklySessions.length : 0;
-
-    final achievements = [
-      _Achievement(
-        title: 'Streak Master',
-        description: '12 hari berturut-turut', // Mock target
-        isUnlocked: streak >= 12,
-        progress: streak / 12,
-        icon: LucideIcons.flame,
-        color: Colors.orange,
-      ),
-      _Achievement(
-        title: 'Task Warrior',
-        description: 'Selesaikan 50 tugas',
-        isUnlocked: completedTasks >= 50,
-        progress: completedTasks / 50,
-        icon: LucideIcons.medal,
-        color: Colors.blue,
-      ),
-      _Achievement(
-        title: 'Speed Learner',
-        description: '40 jam belajar/minggu',
-        isUnlocked: (totalMinutes / 60) >= 40,
-        progress: (totalMinutes / 60) / 40,
-        icon: LucideIcons.zap,
-        color: Colors.purple,
-      ),
-    ];
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(20),
-      itemCount: achievements.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
-      itemBuilder: (context, index) {
-        final item = achievements[index];
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: item.isUnlocked
-                ? Border.all(color: Colors.black, width: 1.5)
-                : Border.all(color: Colors.grey.shade200),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: item.isUnlocked ? Colors.black : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      item.icon,
-                      color: item.isUnlocked ? Colors.white : Colors.grey[400],
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.title,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: item.isUnlocked
-                                ? Colors.black
-                                : Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item.description,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (item.isUnlocked)
-                    const Icon(LucideIcons.checkCircle2, color: Colors.black),
-                ],
-              ),
-              if (!item.isUnlocked) ...[
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Progress',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                    ),
-                    Text(
-                      '${(item.progress * 100).toInt()}%',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: item.progress.clamp(0.0, 1.0),
-                    backgroundColor: Colors.grey[100],
-                    color: Colors.grey[600],
-                    minHeight: 6,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _Achievement {
-  final String title;
-  final String description;
-  final bool isUnlocked;
-  final double progress;
-  final IconData icon;
-  final Color color;
-
-  _Achievement({
-    required this.title,
-    required this.description,
-    required this.isUnlocked,
-    required this.progress,
-    required this.icon,
-    required this.color,
-  });
 }
