@@ -13,6 +13,7 @@ import 'notification_screen.dart';
 import '../tracking/tracking_screen.dart';
 import 'module_model.dart';
 import 'module_editor_screen.dart';
+import 'custom_calendar_picker.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -25,7 +26,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   final _supabaseService = SupabaseService();
   List<DashboardTask> _tasks = [];
+  List<Module> _modules = [];
   bool _isLoading = true;
+  DateTime? _nearestDeadline;
+  Module? _nearestDeadlineModule;
 
   @override
   void initState() {
@@ -38,18 +42,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final tasks = await _supabaseService.getTasks();
       final moduleTodos = await _supabaseService.getAllModuleTodos();
+      final modules = await _supabaseService.getModules();
 
       if (mounted) {
         setState(() {
           _tasks = [...tasks, ...moduleTodos];
-          // Sort by creation or priority if needed, for now just combined
-          // Maybe sort by completion status (incomplete first)
           _tasks.sort((a, b) {
-            if (a.isCompleted == b.isCompleted) {
-              return 0;
+            // 1. Sort by completion (incomplete first)
+            if (a.isCompleted != b.isCompleted) {
+              return a.isCompleted ? 1 : -1;
             }
-            return a.isCompleted ? 1 : -1;
+            // 2. Sort by Date (Today/Null first, then Future)
+            final aDate = a.dueDate;
+            final bDate = b.dueDate;
+
+            if (aDate == null && bDate == null) return 0;
+            if (aDate == null) return -1; // Treat null as today/priority
+            if (bDate == null) return 1;
+
+            return aDate.compareTo(bDate);
           });
+
+          _modules = modules;
+          _calculateNearestDeadline();
+
           _isLoading = false;
         });
       }
@@ -61,12 +77,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _calculateNearestDeadline() {
+    final now = DateTime.now();
+    // Filter active modules with future deadlines
+    final activeModules = _modules
+        .where(
+          (m) =>
+              !m.isArchived &&
+              m.rawDueDate != null &&
+              m.rawDueDate!.isAfter(now.subtract(const Duration(days: 1))),
+        ) // Include today
+        .toList();
+
+    if (activeModules.isEmpty) {
+      _nearestDeadline = null;
+      _nearestDeadlineModule = null;
+      return;
+    }
+
+    // Sort by date ascending
+    activeModules.sort((a, b) => a.rawDueDate!.compareTo(b.rawDueDate!));
+
+    _nearestDeadline = activeModules.first.rawDueDate;
+    _nearestDeadlineModule = activeModules.first;
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
       DashboardHome(
         onTabChange: (index) => setState(() => _selectedIndex = index),
         tasks: _tasks,
+        nearestDeadline: _nearestDeadline,
+        nearestDeadlineModule: _nearestDeadlineModule,
+        modules: _modules,
         isLoading: _isLoading,
         onTaskToggle: (task) async {
           if (task.id == null) return;
@@ -220,6 +264,8 @@ class DashboardHome extends StatefulWidget {
   final Function(DashboardTask) onDeleteTask;
   final Function(DashboardTask) onOpenModule;
   final bool isLoading;
+  final DateTime? nearestDeadline;
+  final Module? nearestDeadlineModule;
 
   const DashboardHome({
     super.key,
@@ -230,7 +276,12 @@ class DashboardHome extends StatefulWidget {
     required this.onDeleteTask,
     required this.onOpenModule,
     this.isLoading = false,
+    this.nearestDeadline,
+    this.nearestDeadlineModule,
+    this.modules = const [],
   });
+
+  final List<Module> modules;
 
   @override
   State<DashboardHome> createState() => _DashboardHomeState();
@@ -354,10 +405,20 @@ class _DashboardHomeState extends State<DashboardHome> {
                           context,
                           icon: LucideIcons.calendar,
                           title: 'Selanjutnya',
-                          value: 'Lihat →',
-                          subtitle: 'Deadline Terdekat 📅',
+                          value: widget.nearestDeadline != null
+                              ? _getFormattedShortDate(widget.nearestDeadline!)
+                              : 'Lihat →',
+                          subtitle: widget.nearestDeadlineModule != null
+                              ? widget.nearestDeadlineModule!.title
+                              : 'Deadline Terdekat 📅',
                           backgroundColor: AppColors.tagPurple,
                           textColor: AppColors.tagPurpleText,
+                          onTap: () {
+                            _showCalendarDialog(
+                              context,
+                              widget.nearestDeadline ?? DateTime.now(),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -512,14 +573,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                       ),
                     )
                   else
-                    ...displayedTasks.map(
-                      (task) => _buildToDoItem(context, task, () {
-                        // On Tap (Navigate)
-                        if (task.isModuleTodo) {
-                          widget.onOpenModule(task);
-                        }
-                      }, () => widget.onTaskToggle(task)),
-                    ),
+                    ..._buildGroupedTasks(context, displayedTasks),
 
                   if (widget.tasks.length > 3) ...[
                     const SizedBox(height: 12),
@@ -584,49 +638,205 @@ class _DashboardHomeState extends State<DashboardHome> {
     required String subtitle,
     required Color backgroundColor,
     required Color textColor,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: backgroundColor,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: textColor.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: textColor.withValues(alpha: 0.1)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: textColor, size: 16),
-              const SizedBox(width: 4),
+              Row(
+                children: [
+                  Icon(icon, color: textColor, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: textColor.withValues(alpha: 0.8),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               Text(
-                title,
+                value,
                 style: TextStyle(
-                  color: textColor.withValues(alpha: 0.8),
+                  color: textColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: textColor.withValues(alpha: 0.7),
                   fontSize: 12,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              color: textColor.withValues(alpha: 0.7),
-              fontSize: 12,
-            ),
-          ),
-        ],
+        ),
       ),
+    );
+  }
+
+  String _getFormattedShortDate(DateTime date) {
+    final months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    return '${date.day} ${months[date.month]}';
+  }
+
+  void _showCalendarDialog(BuildContext context, DateTime focusDate) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        DateTime selectedDate = focusDate;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final deadlinesOnDate = widget.modules.where((m) {
+              if (m.rawDueDate == null) return false;
+              final d = m.rawDueDate!;
+              return d.year == selectedDate.year &&
+                  d.month == selectedDate.month &&
+                  d.day == selectedDate.day;
+            }).toList();
+
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CustomCalendarPicker(
+                        initialDate: selectedDate,
+                        modules: widget.modules,
+                        onDateChanged: (date) {
+                          setState(() {
+                            selectedDate = date;
+                          });
+                        },
+                      ),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      // Details Section
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Tenggat Waktu: ${_getFormattedShortDate(selectedDate)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      if (deadlinesOnDate.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'Tidak ada deadline',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        )
+                      else
+                        ...deadlinesOnDate.map(
+                          (module) => InkWell(
+                            onTap: () {
+                              Navigator.pop(context); // Close dialog
+                              widget.onOpenModule(
+                                DashboardTask(
+                                  moduleId: module.id,
+                                  title: module.title,
+                                  isCompleted: false,
+                                  isModuleTodo: true,
+                                  priority: 'Medium', // Dummy
+                                  priorityColor: Colors.grey, // Dummy
+                                  priorityTextColor: Colors.black, // Dummy
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: module.tagColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: module.tagColor.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    LucideIcons.clock,
+                                    size: 16,
+                                    color: module.tagColor,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      module.title,
+                                      style: TextStyle(
+                                        color: module.tagColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    LucideIcons.chevronRight,
+                                    size: 16,
+                                    color: module.tagColor.withValues(
+                                      alpha: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -907,6 +1117,57 @@ class _DashboardHomeState extends State<DashboardHome> {
       ),
       builder: (context) => _AddTaskSheet(onAddTask: widget.onAddTask),
     );
+  }
+
+  List<Widget> _buildGroupedTasks(
+    BuildContext context,
+    List<DashboardTask> tasks,
+  ) {
+    if (tasks.isEmpty) return [];
+
+    final List<Widget> widgets = [];
+    DateTime currentDateGroup = DateTime.now();
+
+    for (var task in tasks) {
+      final taskDate = task.dueDate ?? DateTime.now();
+      final isSameDay = DateUtils.isSameDay(taskDate, currentDateGroup);
+
+      if (!isSameDay) {
+        // Add Divider
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                Expanded(child: Divider(color: Colors.grey.shade300)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    _getFormattedShortDate(taskDate),
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(child: Divider(color: Colors.grey.shade300)),
+              ],
+            ),
+          ),
+        );
+        currentDateGroup = taskDate;
+      }
+
+      widgets.add(
+        _buildToDoItem(context, task, () {
+          if (task.isModuleTodo) {
+            widget.onOpenModule(task);
+          }
+        }, () => widget.onTaskToggle(task)),
+      );
+    }
+    return widgets;
   }
 }
 

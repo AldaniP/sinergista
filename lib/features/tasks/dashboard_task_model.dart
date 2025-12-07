@@ -9,6 +9,7 @@ class DashboardTask {
   final String? moduleId;
   final bool isModuleTodo;
   final String? moduleName;
+  final DateTime? dueDate;
   bool isCompleted;
 
   DashboardTask({
@@ -21,6 +22,7 @@ class DashboardTask {
     this.moduleName,
     this.moduleId,
     this.isModuleTodo = false,
+    this.dueDate,
   });
 
   factory DashboardTask.fromMap(Map<String, dynamic> map) {
@@ -57,6 +59,9 @@ class DashboardTask {
       moduleName: map['modules']?['title'], // Assuming join with modules table
       moduleId: map['module_id'],
       isModuleTodo: false,
+      dueDate: map['due_date'] != null
+          ? DateTime.parse(map['due_date']).toLocal()
+          : null,
     );
   }
 }
