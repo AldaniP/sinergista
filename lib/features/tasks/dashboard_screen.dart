@@ -30,6 +30,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoading = true;
   DateTime? _nearestDeadline;
   Module? _nearestDeadlineModule;
+  int _focusStreak = 0;
 
   @override
   void initState() {
@@ -67,6 +68,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _calculateNearestDeadline();
 
           _isLoading = false;
+        });
+
+        // Fetch streak in background (doesn't block main list load)
+        _supabaseService.getUserFocusStreak().then((streak) {
+          if (mounted) {
+            setState(() => _focusStreak = streak);
+          }
         });
       }
     } catch (e) {
@@ -110,6 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         tasks: _tasks,
         nearestDeadline: _nearestDeadline,
         nearestDeadlineModule: _nearestDeadlineModule,
+        focusStreak: _focusStreak,
         modules: _modules,
         isLoading: _isLoading,
         onTaskToggle: (task) async {
@@ -266,6 +275,7 @@ class DashboardHome extends StatefulWidget {
   final bool isLoading;
   final DateTime? nearestDeadline;
   final Module? nearestDeadlineModule;
+  final int focusStreak;
 
   const DashboardHome({
     super.key,
@@ -278,6 +288,7 @@ class DashboardHome extends StatefulWidget {
     this.isLoading = false,
     this.nearestDeadline,
     this.nearestDeadlineModule,
+    this.focusStreak = 0,
     this.modules = const [],
   });
 
@@ -393,7 +404,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                           context,
                           icon: LucideIcons.target,
                           title: 'Sekarang',
-                          value: '0 Hari 🔥',
+                          value: '${widget.focusStreak} Hari 🔥',
                           subtitle: 'Fokus Hari Ini',
                           backgroundColor: AppColors.tagBlue,
                           textColor: AppColors.tagBlueText,

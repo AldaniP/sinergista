@@ -692,6 +692,78 @@ class SupabaseService {
     }
   }
 
+  // Get User Focus Streak
+  Future<int> getUserFocusStreak() async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) return 0;
+
+      final now = DateTime.now();
+      // Fetch sessions from the last 365 days to calculate long streaks
+      final startSearchDate = now.subtract(const Duration(days: 365));
+
+      final response = await _client
+          .from('focus_sessions')
+          .select('start_time')
+          .eq('user_id', userId)
+          .gte('start_time', startSearchDate.toIso8601String())
+          .order('start_time', ascending: false);
+
+      final data = response as List<dynamic>;
+      if (data.isEmpty) return 0;
+
+      // Extract unique dates and sort descending
+      final uniqueDateStrings = <String>{};
+      final sortedDates = <DateTime>[];
+
+      for (var item in data) {
+        // Fix: Parse UTC first, then convert to Local, then extract YYYY-MM-DD
+        final date = DateTime.parse(item['start_time']).toLocal();
+        final dateStr = date.toIso8601String().split('T')[0];
+
+        if (!uniqueDateStrings.contains(dateStr)) {
+          uniqueDateStrings.add(dateStr);
+          sortedDates.add(DateTime.parse(dateStr)); // These are YYYY-MM-DD
+        }
+      }
+
+      // Ensure sorted descending just in case
+      sortedDates.sort((a, b) => b.compareTo(a));
+
+      if (sortedDates.isEmpty) return 0;
+
+      final today = DateTime(now.year, now.month, now.day);
+      final lastSessionDate = sortedDates.first;
+
+      // 1. Check if the most recent session is within the last 7 days (including today)
+      final gapFromToday = today.difference(lastSessionDate).inDays;
+      if (gapFromToday > 7) {
+        return 0; // Streak broken because > 7 days since last activity
+      }
+
+      int streak = 1; // Start with the most recent active day
+
+      // 2. Count backwards checking gaps
+      for (int i = 0; i < sortedDates.length - 1; i++) {
+        final current = sortedDates[i];
+        final previous = sortedDates[i + 1];
+
+        final gap = current.difference(previous).inDays;
+
+        if (gap <= 7) {
+          streak++;
+        } else {
+          break; // Streak broken
+        }
+      }
+
+      return streak;
+    } catch (e) {
+      debugPrint('Error calculating focus streak: $e');
+      return 0;
+    }
+  }
+
   // Search Users
   Future<List<ProfileModel>> searchUsers(String query) async {
     try {
