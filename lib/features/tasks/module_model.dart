@@ -14,6 +14,7 @@ class Module {
   final String tagName;
   final List<dynamic>? content; // JSON content for Notion-like editor
   final bool isArchived;
+  final DateTime? rawDueDate;
 
   Module({
     required this.id,
@@ -29,6 +30,7 @@ class Module {
     required this.tagName,
     this.content,
     this.isArchived = false,
+    this.rawDueDate,
   });
 
   factory Module.fromMap(Map<String, dynamic> json) {
@@ -42,6 +44,9 @@ class Module {
       taskCount: json['task_count'] ?? 0,
       memberCount: json['member_count'] ?? 1,
       dueDate: _formatDate(json['due_date']),
+      rawDueDate: json['due_date'] != null
+          ? DateTime.parse(json['due_date']).toLocal()
+          : null,
       tagColor: json['tag_color'] != null
           ? Color(json['tag_color'])
           : _getCategoryColor(json['tag_name']),

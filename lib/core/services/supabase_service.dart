@@ -42,23 +42,7 @@ class SupabaseService {
       final data = response as List<dynamic>;
       return data.map((json) {
         try {
-          return Module(
-            id: json['id']?.toString() ?? '',
-            userId: json['user_id']?.toString() ?? '',
-            title: json['title'] ?? 'No Title',
-            description: json['description'] ?? '',
-            progress: (json['progress'] ?? 0).toDouble(),
-            completedCount: json['completed_count'] ?? 0,
-            taskCount: json['task_count'] ?? 0,
-            memberCount: json['member_count'] ?? 1,
-            dueDate: _formatDate(json['due_date']),
-            tagColor: json['tag_color'] != null
-                ? Color((json['tag_color'] as num).toInt())
-                : _getCategoryColor(json['tag_name']),
-            tagName: json['tag_name'] ?? 'Personal',
-            content: json['content'],
-            isArchived: json['is_archived'] ?? false,
-          );
+          return Module.fromMap(json);
         } catch (e) {
           debugPrint('Error parsing module ${json['id']}: $e');
           rethrow;
@@ -159,23 +143,7 @@ class SupabaseService {
 
       final data = response as List<dynamic>;
       return data.map((json) {
-        return Module(
-          id: json['id']?.toString() ?? '',
-          userId: json['user_id']?.toString() ?? '',
-          title: json['title'] ?? 'No Title',
-          description: json['description'] ?? '',
-          progress: (json['progress'] ?? 0).toDouble(),
-          completedCount: json['completed_count'] ?? 0,
-          taskCount: json['task_count'] ?? 0,
-          memberCount: json['member_count'] ?? 1,
-          dueDate: _formatDate(json['due_date']),
-          tagColor: json['tag_color'] != null
-              ? Color(json['tag_color'])
-              : _getCategoryColor(json['tag_name']),
-          tagName: json['tag_name'] ?? 'Personal',
-          content: json['content'],
-          isArchived: json['is_archived'] ?? true,
-        );
+        return Module.fromMap(json);
       }).toList();
     } catch (e) {
       debugPrint('Error fetching archived modules: $e');
@@ -308,6 +276,7 @@ class SupabaseService {
                   moduleName: module.title,
                   moduleId: module.id,
                   isModuleTodo: true,
+                  dueDate: module.rawDueDate,
                 ),
               );
             }
@@ -575,31 +544,6 @@ class SupabaseService {
     } catch (e) {
       debugPrint('Error adding module: $e');
       rethrow;
-    }
-  }
-
-  // Helper to format date
-  String? _formatDate(String? dateStr) {
-    if (dateStr == null) return null;
-    try {
-      final date = DateTime.parse(dateStr);
-      final months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'Mei',
-        'Jun',
-        'Jul',
-        'Agu',
-        'Sep',
-        'Okt',
-        'Nov',
-        'Des',
-      ];
-      return '${date.day} ${months[date.month - 1]} ${date.year}';
-    } catch (e) {
-      return dateStr;
     }
   }
 
