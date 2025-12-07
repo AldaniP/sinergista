@@ -112,6 +112,8 @@ class _TrackingScreenState extends State<TrackingScreen>
             ),
             child: TabBar(
               controller: _tabController,
+              indicatorSize: TabBarIndicatorSize
+                  .tab, // Ensure background fills the tab (equal size)
               indicator: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(25),
@@ -128,8 +130,18 @@ class _TrackingScreenState extends State<TrackingScreen>
               labelStyle: const TextStyle(fontWeight: FontWeight.bold),
               dividerColor: Colors.transparent,
               tabs: const [
-                Tab(text: 'Ringkasan'),
-                Tab(text: 'Modul'),
+                Tab(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('Ringkasan'),
+                  ),
+                ),
+                Tab(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('Modul'),
+                  ),
+                ),
               ],
             ),
           ),
