@@ -72,7 +72,10 @@ class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
       }
     } else {
       // Default empty block
-      _addBlock(BlockType.text);
+      _blocks = [];
+      final newBlock = BlockModel(id: const Uuid().v4(), type: BlockType.text);
+      _blocks.add(newBlock);
+      _addFocusListener(newBlock, 0);
     }
   }
 
