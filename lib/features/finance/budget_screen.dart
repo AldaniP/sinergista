@@ -52,8 +52,16 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
       try {
         debugPrint('Fetching data for user ID: ${user.id}');
-        final startDate = DateTime(_selectedMonth.year, _selectedMonth.month, 1);
-        final endDate = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
+        final startDate = DateTime(
+          _selectedMonth.year,
+          _selectedMonth.month,
+          1,
+        );
+        final endDate = DateTime(
+          _selectedMonth.year,
+          _selectedMonth.month + 1,
+          1,
+        );
 
         final List<dynamic> rows = await supabase
             .from('budgets')
@@ -69,7 +77,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
             id: row['id'].toString(),
             amount: (row['amount'] as num?)?.toDouble() ?? 0.0,
             category: (row['category'] ?? 'Lainnya').toString(),
-            date: DateTime.tryParse(row['date']?.toString() ?? '') ?? DateTime.now(),
+            date:
+                DateTime.tryParse(row['date']?.toString() ?? '') ??
+                DateTime.now(),
             type: (row['type'] ?? 'Kebutuhan').toString(),
             createdAt: row['created_at'] != null
                 ? DateTime.tryParse(row['created_at'].toString())
@@ -126,7 +136,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 6),
-              Text("• 50% Kebutuhan\n• 30% Keinginan\n• 20% Tabungan / Investasi"),
+              Text(
+                "• 50% Kebutuhan\n• 30% Keinginan\n• 20% Tabungan / Investasi",
+              ),
               SizedBox(height: 16),
               Text(
                 "💡 Tips Mengelola Keuangan",
@@ -153,7 +165,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
     );
   }
 
-
   // Method untuk menghitung pemasukan dan pengeluaran
   void _calculateStats() {
     _kebutuhan = 0;
@@ -169,17 +180,20 @@ class _BudgetScreenState extends State<BudgetScreen> {
         _tabungan += it.amount;
         _income += it.amount;
         _typeTotals[it.type] = (_typeTotals[it.type] ?? 0) + it.amount;
-        _categoryTotals[it.category] = (_categoryTotals[it.category] ?? 0) + it.amount;
+        _categoryTotals[it.category] =
+            (_categoryTotals[it.category] ?? 0) + it.amount;
       } else if (it.isKebutuhan) {
         _kebutuhan += it.amount;
         _expenses += it.amount;
         _typeTotals[it.type] = (_typeTotals[it.type] ?? 0) + it.amount;
-        _categoryTotals[it.category] = (_categoryTotals[it.category] ?? 0) + it.amount;
+        _categoryTotals[it.category] =
+            (_categoryTotals[it.category] ?? 0) + it.amount;
       } else {
         _keinginan += it.amount;
         _expenses += it.amount;
         _typeTotals[it.type] = (_typeTotals[it.type] ?? 0) + it.amount;
-        _categoryTotals[it.category] = (_categoryTotals[it.category] ?? 0) + it.amount;
+        _categoryTotals[it.category] =
+            (_categoryTotals[it.category] ?? 0) + it.amount;
       }
     }
 
@@ -513,7 +527,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _pickMonth,
                   icon: const Icon(Icons.filter_alt),
-                  label: Text("Filter: ${_selectedMonth.month}/${_selectedMonth.year}"),
+                  label: Text(
+                    "Filter: ${_selectedMonth.month}/${_selectedMonth.year}",
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -661,10 +677,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 children: [
                   Text(
                     'Persentase',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -688,7 +701,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(child: Text(e.key)),
-                Text('Rp ${_format(e.value)} (${(e.value/(_income+_expenses) * 100).toStringAsFixed(2)}%)'),
+                Text(
+                  'Rp ${_format(e.value)} (${(e.value / (_income + _expenses) * 100).toStringAsFixed(2)}%)',
+                ),
               ],
             ),
           );
@@ -804,7 +819,8 @@ class BudgetItem {
   });
 
   bool get isIncome => (type ?? '').toLowerCase() == 'tabungan';
-  bool get isExpense => ['kebutuhan', 'keinginan'].contains((type ?? '').toLowerCase());
+  bool get isExpense =>
+      ['kebutuhan', 'keinginan'].contains((type ?? '').toLowerCase());
   bool get isTabungan => (type ?? '').toLowerCase() == 'tabungan';
   bool get isKebutuhan => (type ?? '').toLowerCase() == 'kebutuhan';
   bool get isKeinginan => (type ?? '').toLowerCase() == 'keinginan';
