@@ -20,8 +20,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   double _income = 0;
   double _expenses = 0;
+  double _kebutuhan = 0;
+  double _keinginan = 0;
+  double _tabungan = 0;
   double _remaining = 0;
 
+  DateTime _selectedMonth = DateTime.now();
+
+  Map<String, double> _typeTotals = {};
   Map<String, double> _categoryTotals = {};
 
   @override
@@ -46,22 +52,25 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
       try {
         debugPrint('Fetching data for user ID: ${user.id}');
+        final startDate = DateTime(_selectedMonth.year, _selectedMonth.month, 1);
+        final endDate = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
+
         final List<dynamic> rows = await supabase
             .from('budgets')
             .select()
             .eq('user_id', user.id)
+            .gte('date', startDate.toIso8601String())
+            .lt('date', endDate.toIso8601String())
             .order('date', ascending: false);
 
         _items = rows.map<BudgetItem>((r) {
           final Map<String, dynamic> row = Map<String, dynamic>.from(r as Map);
           return BudgetItem(
-            id: row['id'] as String,
-            amount: (row['amount'] as num).toDouble(),
+            id: row['id'].toString(),
+            amount: (row['amount'] as num?)?.toDouble() ?? 0.0,
             category: (row['category'] ?? 'Lainnya').toString(),
+            date: DateTime.tryParse(row['date']?.toString() ?? '') ?? DateTime.now(),
             type: (row['type'] ?? 'Kebutuhan').toString(),
-            date:
-                DateTime.tryParse(row['date']?.toString() ?? '') ??
-                DateTime.now(),
             createdAt: row['created_at'] != null
                 ? DateTime.tryParse(row['created_at'].toString())
                 : null,
@@ -78,19 +87,99 @@ class _BudgetScreenState extends State<BudgetScreen> {
     }
   }
 
+  // Method untuk memfilter berdasarkan bulan
+  Future<void> _pickMonth() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedMonth,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      helpText: "Pilih bulan",
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedMonth = DateTime(picked.year, picked.month);
+      });
+      _loadData(); // panggil ulang load data
+    }
+  }
+
+  void _showTips() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            "Tips Keuangan",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "📌 Teori 50 - 30 - 20",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 6),
+              Text("• 50% Kebutuhan\n• 30% Keinginan\n• 20% Tabungan / Investasi"),
+              SizedBox(height: 16),
+              Text(
+                "💡 Tips Mengelola Keuangan",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 6),
+              Text(
+                "• Catat semua pemasukan & pengeluaran.\n"
+                "• Bedakan antara kebutuhan dan keinginan.\n"
+                "• Sisihkan tabungan di awal, bukan di akhir.\n"
+                "• Batasi pengeluaran impulsif.\n"
+                "• Evaluasi keuangan setiap bulan.",
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Tutup"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   // Method untuk menghitung pemasukan dan pengeluaran
   void _calculateStats() {
+    _kebutuhan = 0;
+    _keinginan = 0;
+    _tabungan = 0;
     _income = 0;
     _expenses = 0;
+    _typeTotals = {};
     _categoryTotals = {};
 
     for (final it in _items) {
-      if (it.isIncome) {
+      if (it.isTabungan) {
+        _tabungan += it.amount;
         _income += it.amount;
-      } else {
+        _typeTotals[it.type] = (_typeTotals[it.type] ?? 0) + it.amount;
+        _categoryTotals[it.category] = (_categoryTotals[it.category] ?? 0) + it.amount;
+      } else if (it.isKebutuhan) {
+        _kebutuhan += it.amount;
         _expenses += it.amount;
-        _categoryTotals[it.category] =
-            (_categoryTotals[it.category] ?? 0) + it.amount;
+        _typeTotals[it.type] = (_typeTotals[it.type] ?? 0) + it.amount;
+        _categoryTotals[it.category] = (_categoryTotals[it.category] ?? 0) + it.amount;
+      } else {
+        _keinginan += it.amount;
+        _expenses += it.amount;
+        _typeTotals[it.type] = (_typeTotals[it.type] ?? 0) + it.amount;
+        _categoryTotals[it.category] = (_categoryTotals[it.category] ?? 0) + it.amount;
       }
     }
 
@@ -418,6 +507,24 @@ class _BudgetScreenState extends State<BudgetScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickMonth,
+                  icon: const Icon(Icons.filter_alt),
+                  label: Text("Filter: ${_selectedMonth.month}/${_selectedMonth.year}"),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: _showTips,
+                icon: const Icon(Icons.lightbulb_outline),
+                label: const Text("Tips"),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           _buildOverviewCard(),
           const SizedBox(height: 20),
           Row(
@@ -425,16 +532,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _addOrEditItem(),
-                  icon: const Icon(LucideIcons.plus),
-                  label: const Text('Tambah'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _addOrEditItem(),
                   icon: const Icon(LucideIcons.trendingDown),
-                  label: const Text('Tambah Pengeluaran/Tabungan'),
+                  label: const Text('Tambah Pemasukan/Pengeluaran'),
                 ),
               ),
             ],
@@ -517,10 +616,15 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   // Grafik per kategori
   Widget _buildCategoryChart() {
-    final categories = _categoryTotals.entries.toList();
-    final total = categories.fold<double>(0, (p, e) => p + e.value);
+    final types = _typeTotals.entries.toList();
+    final total = types.fold<double>(0, (p, e) => p + e.value);
+    final Map<String, Color> typeColors = {
+      'Kebutuhan': Colors.blue,
+      'Keinginan': Colors.orange,
+      'Tabungan': Colors.green,
+    };
 
-    if (categories.isEmpty) {
+    if (types.isEmpty) {
       return const SizedBox();
     }
 
@@ -528,7 +632,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Alokasi Pengeluaran',
+          'Alokasi Keuangan',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
@@ -541,10 +645,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 PieChartData(
                   centerSpaceRadius: 50,
                   sectionsSpace: 0,
-                  sections: categories.map((entry) {
-                    final color =
-                        Colors.primaries[entry.key.hashCode %
-                            Colors.primaries.length];
+                  sections: types.map((entry) {
+                    final color = typeColors[entry.key] ?? Colors.grey;
                     return PieChartSectionData(
                       value: entry.value,
                       title: '',
@@ -554,14 +656,13 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   }).toList(),
                 ),
               ),
-              Column(
+              const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Total', style: TextStyle(color: Colors.grey)),
                   Text(
-                    '${(total / 1000000).toStringAsFixed(1)} jt',
-                    style: const TextStyle(
-                      fontSize: 18,
+                    'Persentase',
+                    style: TextStyle(
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -571,9 +672,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        ...categories.map((e) {
-          final color =
-              Colors.primaries[e.key.hashCode % Colors.primaries.length];
+        ...types.map((e) {
+          final color = typeColors[e.key] ?? Colors.grey;
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
@@ -588,7 +688,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(child: Text(e.key)),
-                Text('Rp ${_format(e.value)}'),
+                Text('Rp ${_format(e.value)} (${(e.value/(_income+_expenses) * 100).toStringAsFixed(2)}%)'),
               ],
             ),
           );
@@ -703,8 +803,10 @@ class BudgetItem {
     this.createdAt,
   });
 
-  bool get isIncome => type.toLowerCase() == 'tabungan';
-  bool get isExpense =>
-      type.toLowerCase() == 'kebutuhan' || type.toLowerCase() == 'keinginan';
+  bool get isIncome => (type ?? '').toLowerCase() == 'tabungan';
+  bool get isExpense => ['kebutuhan', 'keinginan'].contains((type ?? '').toLowerCase());
+  bool get isTabungan => (type ?? '').toLowerCase() == 'tabungan';
+  bool get isKebutuhan => (type ?? '').toLowerCase() == 'kebutuhan';
+  bool get isKeinginan => (type ?? '').toLowerCase() == 'keinginan';
   String get group => isIncome ? 'Pemasukan' : 'Pengeluaran';
 }
