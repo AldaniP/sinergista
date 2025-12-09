@@ -89,6 +89,34 @@ class GeminiService {
     }
   }
 
+  /// Generate quiz questions from topic using Gemini AI
+  Future<List<Map<String, dynamic>>> generateQuestionsFromTopic({
+    required String topic,
+    required List<String> questionTypes,
+    required int numberOfQuestions,
+  }) async {
+    try {
+      final prompt = _buildTopicPrompt(topic, questionTypes, numberOfQuestions);
+      debugPrint('Sending topic prompt to Gemini AI...');
+      final response = await _model.generateContent([Content.text(prompt)]);
+
+      if (response.text == null) {
+        throw Exception('No response from Gemini AI');
+      }
+
+      final questions = _parseResponse(response.text!);
+
+      if (questions.length > numberOfQuestions) {
+        return questions.sublist(0, numberOfQuestions);
+      }
+
+      return questions;
+    } catch (e) {
+      debugPrint('Error generating questions from topic: $e');
+      rethrow;
+    }
+  }
+
   /// Check answer using Gemini AI
   Future<Map<String, dynamic>> checkAnswer({
     required String question,
@@ -167,6 +195,84 @@ FORMAT OUTPUT (JSON):
     } catch (e) {
       return {'isCorrect': false, 'feedback': 'Format respons AI tidak valid.'};
     }
+  }
+
+  String _buildTopicPrompt(
+    String topic,
+    List<String> questionTypes,
+    int count,
+  ) {
+    final typesStr = questionTypes.join(', ');
+
+    // Reuse the same JSON examples logic, simplified for brevity here or copied
+    // For simplicity, let's just reuse the structure but strictly for topic
+    // We can actually reuse _buildPrompt logic but replace "Berdasarkan teks berikut" with "Berdasarkan topik berikut"
+    // To avoid duplication, we could refactor _buildPrompt, but for now I will duplicate the relevant parts for safety.
+
+    final List<String> jsonExamples = [];
+
+    if (questionTypes.contains('Pilihan Ganda')) {
+      jsonExamples.add('''
+  {
+    "type": "multiple_choice",
+    "question": "Pertanyaan pilihan ganda tentang topik?",
+    "options": ["A. Opsi 1", "B. Opsi 2", "C. Opsi 3", "D. Opsi 4"],
+    "correctAnswer": 0
+  }''');
+    }
+
+    if (questionTypes.contains('Benar/Salah')) {
+      jsonExamples.add('''
+  {
+    "type": "true_false",
+    "question": "Pertanyaan benar/salah?",
+    "options": ["Benar", "Salah"],
+    "correctAnswer": 0
+  }''');
+    }
+
+    if (questionTypes.contains('Essay')) {
+      jsonExamples.add('''
+  {
+    "type": "essay",
+    "question": "Pertanyaan essay?",
+    "correctAnswer": "Poin-poin kunci jawaban singkat"
+  }''');
+    }
+
+    if (questionTypes.contains('Isian')) {
+      jsonExamples.add('''
+  {
+    "type": "fill_blank",
+    "question": "Pertanyaan isian dengan ___ kosong?",
+    "correctAnswer": "jawaban yang benar"
+  }''');
+    }
+
+    final jsonExampleStr = jsonExamples.join(',\\n');
+
+    return '''
+Buatlah $count soal latihan produktivitas / akademik dalam bahasa Indonesia.
+
+TOPIK: $topic
+
+INSTRUKSI:
+1. Buat soal yang RELEVAN dengan TOPIK di atas.
+2. Tipe soal: $typesStr
+3. TOTAL soal harus TEPAT $count buah.
+4. Distribusikan soal secara merata.
+5. Format output harus STRICT JSON array.
+
+FORMAT OUTPUT (STRICT JSON):
+[
+$jsonExampleStr
+]
+
+PENTING:
+- Berikan HANYA JSON array.
+- correctAnswer adalah INDEX (0-based) untuk multiple_choice dan true_false.
+- correctAnswer adalah STRING untuk fill_blank dan essay.
+''';
   }
 
   String _buildPrompt(String text, List<String> questionTypes, int count) {
