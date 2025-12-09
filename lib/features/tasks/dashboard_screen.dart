@@ -14,6 +14,7 @@ import '../tracking/tracking_screen.dart';
 import 'module_model.dart';
 import 'module_editor_screen.dart';
 import 'custom_calendar_picker.dart';
+import '../productivity/productivity_quiz_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -622,7 +623,14 @@ class _DashboardHomeState extends State<DashboardHome> {
                     context,
                     icon: '💡',
                     title: 'Quiz Produktivitas',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProductivityQuizScreen(),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                   _buildExploreCard(
