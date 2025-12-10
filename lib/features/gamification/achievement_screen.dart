@@ -41,15 +41,20 @@ class _AchievementScreenState extends State<AchievementScreen>
       duration: const Duration(milliseconds: 700),
     );
 
-    _fadeIn = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _fadeIn = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    _scaleIn = Tween<double>(begin: 0.96, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scaleIn = Tween<double>(
+      begin: 0.96,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
-    _heroPageController = PageController(viewportFraction: 0.78, initialPage: 0);
+    _heroPageController = PageController(
+      viewportFraction: 0.78,
+      initialPage: 0,
+    );
 
     _heroPageController.addListener(() {
       final page = _heroPageController.page ?? 0;
@@ -86,13 +91,20 @@ class _AchievementScreenState extends State<AchievementScreen>
 
       int totalSessionCountAllTime = 0;
       try {
-        totalSessionCountAllTime = await _supabaseService.getTotalSessionCount();
+        totalSessionCountAllTime = await _supabaseService
+            .getTotalSessionCount();
       } catch (_) {
         totalSessionCountAllTime = 0;
       }
 
-      int completedTasks = modules.fold<int>(0, (sum, m) => sum + (m.completedCount ?? 0));
-      int totalMinutes = sessions.fold<int>(0, (sum, s) => sum + (s.durationMinutes ?? 0));
+      final int completedTasks = modules.fold<int>(
+        0,
+        (sum, m) => sum + (m.completedCount ?? 0),
+      );
+      final int totalMinutes = sessions.fold<int>(
+        0,
+        (sum, s) => sum + (s.durationMinutes ?? 0),
+      );
 
       xp = (completedTasks * 5) + (totalMinutes ~/ 2);
       level = (xp ~/ 100).clamp(1, 100);
@@ -115,7 +127,10 @@ class _AchievementScreenState extends State<AchievementScreen>
     }
   }
 
-  Future<List<FocusSession>> _supabase_service_getFocusRangeSafe(DateTime start, DateTime end) async {
+  Future<List<FocusSession>> _supabase_service_getFocusRangeSafe(
+    DateTime start,
+    DateTime end,
+  ) async {
     try {
       return await _supabaseService.getFocusSessionsForDateRange(start, end);
     } catch (_) {
@@ -125,11 +140,19 @@ class _AchievementScreenState extends State<AchievementScreen>
 
   @override
   Widget build(BuildContext context) {
-    final completedTasks = _modules.fold<int>(0, (sum, m) => sum + (m.completedCount ?? 0));
-    final totalMinutes = _sessions.fold<int>(0, (sum, s) => sum + (s.durationMinutes ?? 0));
+    final completedTasks = _modules.fold<int>(
+      0,
+      (sum, m) => sum + (m.completedCount ?? 0),
+    );
+    final totalMinutes = _sessions.fold<int>(
+      0,
+      (sum, s) => sum + (s.durationMinutes ?? 0),
+    );
     final streak = _sessions.isNotEmpty ? _sessions.length : 0;
 
-    final bool hasLongSession = _sessions.any((s) => (s.durationMinutes ?? 0) >= 120);
+    final bool hasLongSession = _sessions.any(
+      (s) => (s.durationMinutes ?? 0) >= 120,
+    );
     final int totalSessionsAllTime = _totalSessionCountAllTime;
     final int moduleCount = _modules.length;
 
@@ -154,8 +177,8 @@ class _AchievementScreenState extends State<AchievementScreen>
         isUnlocked: completedTasks >= 50,
         progress: (completedTasks / 50).clamp(0.0, 1.0),
         progressText: '$completedTasks/50',
-        assetName: 'assets/images/star-medal.png', 
-     ),
+        assetName: 'assets/images/star-medal.png',
+      ),
       _AchievementData(
         id: 'century_club',
         title: 'Century Club',
@@ -198,8 +221,8 @@ class _AchievementScreenState extends State<AchievementScreen>
         isUnlocked: moduleCount >= 5,
         progress: (moduleCount / 5).clamp(0.0, 1.0),
         progressText: '$moduleCount/5',
-      assetName: 'assets/images/organizer.png',
-        ),
+        assetName: 'assets/images/organizer.png',
+      ),
 
       _AchievementData(
         id: 'marathoner',
@@ -210,7 +233,7 @@ class _AchievementScreenState extends State<AchievementScreen>
         isUnlocked: hasLongSession,
         progress: hasLongSession ? 1.0 : 0.0,
         progressText: hasLongSession ? '1/1' : '0/1',
-assetName: 'assets/images/marathoner.png',
+        assetName: 'assets/images/marathoner.png',
       ),
       _AchievementData(
         id: 'session_collector',
@@ -221,7 +244,7 @@ assetName: 'assets/images/marathoner.png',
         isUnlocked: totalSessionsAllTime >= 50,
         progress: (totalSessionsAllTime / 50).clamp(0.0, 1.0),
         progressText: '$totalSessionsAllTime/50',
-assetName: 'assets/images/collector.png',
+        assetName: 'assets/images/collector.png',
       ),
       _AchievementData(
         id: 'module_maestro',
@@ -232,7 +255,8 @@ assetName: 'assets/images/collector.png',
         isUnlocked: moduleCount >= 10,
         progress: (moduleCount / 10).clamp(0.0, 1.0),
         progressText: '$moduleCount/10',
-assetName: 'assets/images/maestro.png',      ),
+        assetName: 'assets/images/maestro.png',
+      ),
     ];
 
     final tiers = [
@@ -283,7 +307,9 @@ assetName: 'assets/images/maestro.png',      ),
     final overallProgress = totalCount > 0 ? unlockedCount / totalCount : 0.0;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardShadowColor = isDark ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.12);
+    final cardShadowColor = isDark
+        ? Colors.black.withOpacity(0.6)
+        : Colors.black.withOpacity(0.12);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -294,25 +320,43 @@ assetName: 'assets/images/maestro.png',      ),
           icon: const Icon(LucideIcons.arrowLeft),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Level Akun', style: TextStyle(fontWeight: FontWeight.w600)),
-   
+        title: const Text(
+          'Level Akun',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : FadeTransition(
               opacity: _fadeIn,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
                 child: Column(
                   children: [
-                    _buildHeroBadgeCarousel(level, tiers, cardShadowColor, overallProgress),
+                    _buildHeroBadgeCarousel(
+                      level,
+                      tiers,
+                      cardShadowColor,
+                      overallProgress,
+                    ),
 
                     const SizedBox(height: 18),
 
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(child: ScaleTransition(scale: _scaleIn, child: _buildXPCard(cardShadowColor, overallProgress))),
+                        Expanded(
+                          child: ScaleTransition(
+                            scale: _scaleIn,
+                            child: _buildXPCard(
+                              cardShadowColor,
+                              overallProgress,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
 
@@ -326,13 +370,15 @@ assetName: 'assets/images/maestro.png',      ),
                       crossAxisSpacing: 14,
                       childAspectRatio: 0.74,
                       children: achievements
-                          .map((achievement) => ScaleTransition(
-                                scale: _scaleIn,
-                                child: _buildAchievementCard(
-                                  context,
-                                  data: achievement,
-                                ),
-                              ))
+                          .map(
+                            (achievement) => ScaleTransition(
+                              scale: _scaleIn,
+                              child: _buildAchievementCard(
+                                context,
+                                data: achievement,
+                              ),
+                            ),
+                          )
                           .toList(),
                     ),
 
@@ -344,7 +390,12 @@ assetName: 'assets/images/maestro.png',      ),
     );
   }
 
-  Widget _buildHeroBadgeCarousel(int level, List<_TierData> tiers, Color shadowColor, double overallProgress) {
+  Widget _buildHeroBadgeCarousel(
+    int level,
+    List<_TierData> tiers,
+    Color shadowColor,
+    double overallProgress,
+  ) {
     return SizedBox(
       height: 220,
       child: PageView.builder(
@@ -364,15 +415,33 @@ assetName: 'assets/images/maestro.png',      ),
               opacity: opacity,
               child: GestureDetector(
                 onTap: () {
-                  _heroPageController.animateToPage(index, duration: const Duration(milliseconds: 360), curve: Curves.easeOut);
+                  _heroPageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 360),
+                    curve: Curves.easeOut,
+                  );
                 },
                 child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: shadowColor, blurRadius: isCurrent ? 28 : 12, offset: const Offset(0, 12))],
-                    border: Border.all(color: unlocked ? t.color.withOpacity(0.12) : Colors.transparent, width: isCurrent ? 1.8 : 0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: shadowColor,
+                        blurRadius: isCurrent ? 28 : 12,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: unlocked
+                          ? t.color.withOpacity(0.12)
+                          : Colors.transparent,
+                      width: isCurrent ? 1.8 : 0,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -384,7 +453,10 @@ assetName: 'assets/images/maestro.png',      ),
                             borderRadius: BorderRadius.circular(12),
                             child: ColorFiltered(
                               colorFilter: unlocked
-                                  ? const ColorFilter.mode(Colors.transparent, BlendMode.multiply)
+                                  ? const ColorFilter.mode(
+                                      Colors.transparent,
+                                      BlendMode.multiply,
+                                    )
                                   : const ColorFilter.matrix(<double>[
                                       0.2126, 0.7152, 0.0722, 0, 0, //
                                       0.2126, 0.7152, 0.0722, 0, 0, //
@@ -394,10 +466,19 @@ assetName: 'assets/images/maestro.png',      ),
                               child: Image.asset(
                                 t.assetName,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  color: t.color.withOpacity(0.10),
-                                  child: Center(child: Icon(LucideIcons.award, color: unlocked ? t.color : Colors.grey, size: 48)),
-                                ),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      color: t.color.withOpacity(0.10),
+                                      child: Center(
+                                        child: Icon(
+                                          LucideIcons.award,
+                                          color: unlocked
+                                              ? t.color
+                                              : Colors.grey,
+                                          size: 48,
+                                        ),
+                                      ),
+                                    ),
                               ),
                             ),
                           ),
@@ -407,13 +488,33 @@ assetName: 'assets/images/maestro.png',      ),
                       Expanded(
                         flex: 5,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 18.0,
+                            horizontal: 12,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(t.title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                              Text(
+                                t.title,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.color,
+                                ),
+                              ),
                               const SizedBox(height: 6),
-                              Text(t.subtitle, style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color)),
+                              Text(
+                                t.subtitle,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.color,
+                                ),
+                              ),
                               const Spacer(),
                               Row(
                                 children: [
@@ -423,20 +524,38 @@ assetName: 'assets/images/maestro.png',      ),
                                       child: LinearPercentIndicator(
                                         padding: EdgeInsets.zero,
                                         lineHeight: 8,
-                                        percent: (level >= t.threshold ? 1.0 : (level / (t.threshold + 2)).clamp(0.0, 1.0)),
-                                        backgroundColor: Theme.of(context).dividerColor.withOpacity(0.06),
+                                        percent: (level >= t.threshold
+                                            ? 1.0
+                                            : (level / (t.threshold + 2)).clamp(
+                                                0.0,
+                                                1.0,
+                                              )),
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).dividerColor.withOpacity(0.06),
                                         progressColor: AppColors.tagPurpleText,
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 6,
+                                      horizontal: 10,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: unlocked ? t.color.withOpacity(0.14) : Colors.grey.withOpacity(0.08),
+                                      color: unlocked
+                                          ? t.color.withOpacity(0.14)
+                                          : Colors.grey.withOpacity(0.08),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Text(unlocked ? 'Unlocked' : 'Locked', style: TextStyle(color: unlocked ? t.color : Colors.grey, fontWeight: FontWeight.bold)),
+                                    child: Text(
+                                      unlocked ? 'Unlocked' : 'Locked',
+                                      style: TextStyle(
+                                        color: unlocked ? t.color : Colors.grey,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -456,16 +575,24 @@ assetName: 'assets/images/maestro.png',      ),
   }
 
   Widget _buildXPCard(Color shadowColor, double overallProgress) {
-    int xpNeeded = level * 100;
-    double progress = xpNeeded == 0 ? 0 : (xp % xpNeeded) / xpNeeded;
+    final int xpNeeded = level * 100;
+    final double progress = xpNeeded == 0 ? 0 : (xp % xpNeeded) / xpNeeded;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 420),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [AppColors.primary, AppColors.primaryDark]),
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+        ),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 12, offset: const Offset(0, 6))],
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,7 +605,13 @@ assetName: 'assets/images/maestro.png',      ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Level $level', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Level $level',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
@@ -492,7 +625,13 @@ assetName: 'assets/images/maestro.png',      ),
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Text('$xp / $xpNeeded XP', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text(
+                      '$xp / $xpNeeded XP',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -503,17 +642,31 @@ assetName: 'assets/images/maestro.png',      ),
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.06),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      Icon(LucideIcons.award, size: 18, color: Colors.white70),
+                      const Icon(LucideIcons.award, size: 18, color: Colors.white70),
                       const SizedBox(width: 8),
-                      Expanded(child: Text('Overall Progress', style: TextStyle(color: Colors.white70, fontSize: 12))),
-                      Text('${(overallProgress * 100).toInt()}%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      const Expanded(
+                        child: Text(
+                          'Overall Progress',
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                      ),
+                      Text(
+                        '${(overallProgress * 100).toInt()}%',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -537,25 +690,91 @@ assetName: 'assets/images/maestro.png',      ),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.06)),
-          boxShadow: [BoxShadow(color: data.isUnlocked ? data.color.withOpacity(0.12) : Colors.black12, blurRadius: data.isUnlocked ? 14 : 6, offset: const Offset(0, 6))],
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withOpacity(0.06),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: data.isUnlocked
+                  ? data.color.withOpacity(0.12)
+                  : Colors.black12,
+              blurRadius: data.isUnlocked ? 14 : 6,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _BadgeIllustrationAsset(assetName: data.assetName, size: 56, unlocked: data.isUnlocked, color: data.color, fallbackIcon: data.icon),
+            _BadgeIllustrationAsset(
+              assetName: data.assetName,
+              size: 56,
+              unlocked: data.isUnlocked,
+              color: data.color,
+              fallbackIcon: data.icon,
+            ),
             const SizedBox(height: 10),
-            Text(data.title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            Text(
+              data.title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 6),
-            Text(data.description, textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color), maxLines: 2, overflow: TextOverflow.ellipsis),
+            Text(
+              data.description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
             const SizedBox(height: 10),
             data.isUnlocked
-                ? Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6), decoration: BoxDecoration(color: data.color.withOpacity(0.12), borderRadius: BorderRadius.circular(8)), child: Text("Tercapai", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: data.color)))
-                : Column(children: [
-                    ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearPercentIndicator(padding: EdgeInsets.zero, lineHeight: 6, percent: data.progress, backgroundColor: Theme.of(context).dividerColor.withOpacity(0.08), progressColor: AppColors.tagPurpleText, barRadius: const Radius.circular(8))),
-                    const SizedBox(height: 6),
-                    Text(data.progressText, style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color)),
-                  ]),
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: data.color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      "Tercapai",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: data.color,
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearPercentIndicator(
+                          padding: EdgeInsets.zero,
+                          lineHeight: 6,
+                          percent: data.progress,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).dividerColor.withOpacity(0.08),
+                          progressColor: AppColors.tagPurpleText,
+                          barRadius: const Radius.circular(8),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        data.progressText,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                    ],
+                  ),
           ],
         ),
       ),
@@ -566,40 +785,97 @@ assetName: 'assets/images/maestro.png',      ),
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (context) {
         return Padding(
           padding: const EdgeInsets.all(18.0),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(width: 56, height: 6, decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(4))),
-            const SizedBox(height: 12),
-            Row(children: [
-              Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: data.color, shape: BoxShape.circle), child: _BadgeIllustrationAsset(assetName: data.assetName, size: 36, unlocked: data.isUnlocked, color: data.color)),
-              const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(data.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), const SizedBox(height: 6), Text(data.description)])),
-            ]),
-            const SizedBox(height: 16),
-            if (!data.isUnlocked) ...[
-              ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearPercentIndicator(padding: EdgeInsets.zero, lineHeight: 10, percent: data.progress, backgroundColor: Theme.of(context).dividerColor.withOpacity(0.08), progressColor: AppColors.tagPurpleText, barRadius: const Radius.circular(10))),
-              const SizedBox(height: 8),
-              Text(data.progressText),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Tutup'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).dividerColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
-            ] else ...[
-              const SizedBox(height: 8),
-              const Text('Selamat! Achievement ini sudah tercapai.'),
               const SizedBox(height: 12),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Tutup'),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: data.color,
+                      shape: BoxShape.circle,
+                    ),
+                    child: _BadgeIllustrationAsset(
+                      assetName: data.assetName,
+                      size: 36,
+                      unlocked: data.isUnlocked,
+                      color: data.color,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          data.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(data.description),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ]
-          ]),
+              const SizedBox(height: 16),
+              if (!data.isUnlocked) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearPercentIndicator(
+                    padding: EdgeInsets.zero,
+                    lineHeight: 10,
+                    percent: data.progress,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).dividerColor.withOpacity(0.08),
+                    progressColor: AppColors.tagPurpleText,
+                    barRadius: const Radius.circular(10),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(data.progressText),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Tutup'),
+                ),
+              ] else ...[
+                const SizedBox(height: 8),
+                const Text('Selamat! Achievement ini sudah tercapai.'),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Tutup'),
+                ),
+              ],
+            ],
+          ),
         );
       },
     );
@@ -684,11 +960,27 @@ class _BadgeIllustrationAsset extends StatelessWidget {
     final border = BoxDecoration(
       shape: BoxShape.circle,
       gradient: unlocked
-          ? RadialGradient(colors: [color.withOpacity(0.95), color.withOpacity(0.6)])
-          : RadialGradient(colors: [Colors.grey.shade200, Colors.grey.shade100]),
+          ? RadialGradient(
+              colors: [color.withOpacity(0.95), color.withOpacity(0.6)],
+            )
+          : RadialGradient(
+              colors: [Colors.grey.shade200, Colors.grey.shade100],
+            ),
       boxShadow: unlocked
-          ? [BoxShadow(color: color.withOpacity(0.22), blurRadius: 10, offset: const Offset(0, 8))]
-          : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 4))],
+          ? [
+              BoxShadow(
+                color: color.withOpacity(0.22),
+                blurRadius: 10,
+                offset: const Offset(0, 8),
+              ),
+            ]
+          : [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 4),
+              ),
+            ],
     );
 
     return Container(
@@ -702,7 +994,13 @@ class _BadgeIllustrationAsset extends StatelessWidget {
           height: size,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return Center(child: Icon(fallbackIcon ?? LucideIcons.award, color: unlocked ? Colors.white : Colors.grey, size: size * 0.6));
+            return Center(
+              child: Icon(
+                fallbackIcon ?? LucideIcons.award,
+                color: unlocked ? Colors.white : Colors.grey,
+                size: size * 0.6,
+              ),
+            );
           },
         ),
       ),
@@ -716,15 +1014,27 @@ class _LevelBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badgeColor = level >= 30 ? Colors.purple : level >= 11 ? Colors.amber : AppColors.tagPurpleText;
+    final badgeColor = level >= 30
+        ? Colors.purple
+        : level >= 11
+        ? Colors.amber
+        : AppColors.tagPurpleText;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final shadow = BoxShadow(color: isDark ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.12), blurRadius: 10, offset: const Offset(0, 8));
+    final shadow = BoxShadow(
+      color: isDark
+          ? Colors.black.withOpacity(0.6)
+          : Colors.black.withOpacity(0.12),
+      blurRadius: 10,
+      offset: const Offset(0, 8),
+    );
 
     return Container(
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        gradient: RadialGradient(colors: [badgeColor.withOpacity(0.98), badgeColor.withOpacity(0.65)]),
+        gradient: RadialGradient(
+          colors: [badgeColor.withOpacity(0.98), badgeColor.withOpacity(0.65)],
+        ),
         shape: BoxShape.circle,
         boxShadow: [shadow],
       ),
@@ -732,8 +1042,21 @@ class _LevelBadge extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Lv', style: TextStyle(color: Colors.white.withOpacity(0.95), fontWeight: FontWeight.w700)),
-            Text('$level', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              'Lv',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.95),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              '$level',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ],
         ),
       ),
@@ -744,13 +1067,14 @@ class _LevelBadge extends StatelessWidget {
 class _AnimatedFlame extends StatefulWidget {
   final Color color;
   final bool active;
-  const _AnimatedFlame({required this.color, this.active = true});
+  const _AnimatedFlame({required this.color});
 
   @override
   State<_AnimatedFlame> createState() => _AnimatedFlameState();
 }
 
-class _AnimatedFlameState extends State<_AnimatedFlame> with SingleTickerProviderStateMixin {
+class _AnimatedFlameState extends State<_AnimatedFlame>
+    with SingleTickerProviderStateMixin {
   late AnimationController _flameController;
   late Animation<double> _scale;
   late Animation<double> _alpha;
@@ -758,15 +1082,24 @@ class _AnimatedFlameState extends State<_AnimatedFlame> with SingleTickerProvide
   @override
   void initState() {
     super.initState();
-    _flameController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
-    _scale = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 0.92, end: 1.06), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.06, end: 0.98), weight: 50),
-    ]).animate(CurvedAnimation(parent: _flameController, curve: Curves.easeInOut));
-    _alpha = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 0.7, end: 1.0), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.75), weight: 50),
-    ]).animate(CurvedAnimation(parent: _flameController, curve: Curves.easeInOut));
+    _flameController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _scale =
+        TweenSequence([
+          TweenSequenceItem(tween: Tween(begin: 0.92, end: 1.06), weight: 50),
+          TweenSequenceItem(tween: Tween(begin: 1.06, end: 0.98), weight: 50),
+        ]).animate(
+          CurvedAnimation(parent: _flameController, curve: Curves.easeInOut),
+        );
+    _alpha =
+        TweenSequence([
+          TweenSequenceItem(tween: Tween(begin: 0.7, end: 1.0), weight: 50),
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.75), weight: 50),
+        ]).animate(
+          CurvedAnimation(parent: _flameController, curve: Curves.easeInOut),
+        );
     if (widget.active) _flameController.repeat(reverse: true);
   }
 
@@ -800,10 +1133,23 @@ class _AnimatedFlameState extends State<_AnimatedFlame> with SingleTickerProvide
               height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [widget.color.withOpacity(0.95), widget.color.withOpacity(0.6)]),
-                boxShadow: [BoxShadow(color: widget.color.withOpacity(0.18), blurRadius: 10, offset: const Offset(0, 6))],
+                gradient: RadialGradient(
+                  colors: [
+                    widget.color.withOpacity(0.95),
+                    widget.color.withOpacity(0.6),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.color.withOpacity(0.18),
+                    blurRadius: 10,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              child: Center(child: Icon(LucideIcons.flame, color: Colors.white, size: 22)),
+              child: const Center(
+                child: Icon(LucideIcons.flame, color: Colors.white, size: 22),
+              ),
             ),
           ),
         );
