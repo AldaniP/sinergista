@@ -136,7 +136,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 32),
-
               CustomTextField(
                 label: 'Nama Lengkap',
                 hint: 'John Doe',
@@ -148,7 +147,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
               CustomTextField(
                 label: 'Email',
                 hint: 'nama@gmail.com',
@@ -161,7 +159,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-
               CustomTextField(
                 label: 'Password',
                 hint: 'Minimal 6 karakter',
@@ -174,7 +171,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
               CustomTextField(
                 label: 'Konfirmasi Password',
                 hint: 'Ulangi password',
@@ -186,14 +182,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   color: Colors.grey,
                 ),
               ),
-
               const SizedBox(height: 32),
               CustomButton(
                 text: 'Daftar',
                 onPressed: _handleRegister,
                 isLoading: _isLoading,
               ),
-
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

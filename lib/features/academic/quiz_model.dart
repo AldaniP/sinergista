@@ -101,9 +101,8 @@ class QuizQuestion {
     return QuizQuestion(
       type: type,
       question: map['question'] ?? '',
-      options: map['options'] != null
-          ? List<String>.from(map['options'])
-          : null,
+      options:
+          map['options'] != null ? List<String>.from(map['options']) : null,
       correctAnswer: map['correctAnswer'],
     );
   }

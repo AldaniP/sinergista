@@ -67,16 +67,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        final user =
-            snapshot.data?.session?.user ??
+        final user = snapshot.data?.session?.user ??
             Supabase.instance.client.auth.currentUser;
         final isAnonymous = user?.isAnonymous ?? false;
         final fullName = isAnonymous
             ? 'Tamu'
             : (user?.userMetadata?['full_name'] ?? 'Pengguna');
-        final email = isAnonymous
-            ? 'Mode Tamu'
-            : (user?.email ?? 'email@example.com');
+        final email =
+            isAnonymous ? 'Mode Tamu' : (user?.email ?? 'email@example.com');
 
         return Scaffold(
           body: RefreshIndicator(
@@ -281,9 +279,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           context,
                           icon: LucideIcons.sun,
                           title: 'Mode Gelap',
-                          subtitle: themeProvider.isDarkMode
-                              ? 'Aktif'
-                              : 'Nonaktif',
+                          subtitle:
+                              themeProvider.isDarkMode ? 'Aktif' : 'Nonaktif',
                           trailing: Switch(
                             value: themeProvider.isDarkMode,
                             onChanged: (value) => themeProvider.toggleTheme(),
@@ -386,7 +383,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Text(
                           'Sinergista v1.0.0',
                           style: TextStyle(
-                            color: Theme.of(context).textTheme.bodyMedium?.color
+                            color: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.color
                                 ?.withValues(alpha: 0.5),
                             fontSize: 12,
                           ),

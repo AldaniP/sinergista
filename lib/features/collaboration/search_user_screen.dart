@@ -103,9 +103,8 @@ class _SearchUserScreenState extends State<SearchUserScreen> {
                   onPressed: () => _performSearch(_searchController.text),
                 ),
                 filled: true,
-                fillColor: isDark
-                    ? const Color(0xFF2C2C2C)
-                    : Colors.grey.shade100,
+                fillColor:
+                    isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade100,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -119,101 +118,103 @@ class _SearchUserScreenState extends State<SearchUserScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _searchResults.isEmpty
-                ? Center(
-                    child: Text(
-                      'Ketik nama untuk mencari',
-                      style: TextStyle(color: Colors.grey.shade500),
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _searchResults.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final user = _searchResults[index];
-                      final isSent = _sentRequestIds.contains(user.id);
-
-                      return Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E1E1E)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF333333)
-                                : Colors.grey.shade200,
-                          ),
+                    ? Center(
+                        child: Text(
+                          'Ketik nama untuk mencari',
+                          style: TextStyle(color: Colors.grey.shade500),
                         ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: user.avatarColor,
-                              backgroundImage: user.avatarUrl != null
-                                  ? NetworkImage(user.avatarUrl!)
-                                  : null,
-                              child: user.avatarUrl == null
-                                  ? Text(
-                                      user.initials,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    user.fullName,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.black,
-                                    ),
-                                  ),
-                                  Text(
-                                    '@${user.username}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade500,
-                                    ),
-                                  ),
-                                ],
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _searchResults.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final user = _searchResults[index];
+                          final isSent = _sentRequestIds.contains(user.id);
+
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF1E1E1E)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF333333)
+                                    : Colors.grey.shade200,
                               ),
                             ),
-                            isSent
-                                ? const Chip(
-                                    label: Text(
-                                      'Terkirim',
-                                      style: TextStyle(fontSize: 12),
-                                    ),
-                                    backgroundColor: Colors.grey,
-                                  )
-                                : ElevatedButton.icon(
-                                    onPressed: () => _sendFriendRequest(user),
-                                    icon: const Icon(
-                                      LucideIcons.userPlus,
-                                      size: 16,
-                                    ),
-                                    label: const Text('Tambah'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: user.avatarColor,
+                                  backgroundImage: user.avatarUrl != null
+                                      ? NetworkImage(user.avatarUrl!)
+                                      : null,
+                                  child: user.avatarUrl == null
+                                      ? Text(
+                                          user.initials,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        user.fullName,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.black,
+                                        ),
                                       ),
-                                    ),
+                                      Text(
+                                        '@${user.username}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                                ),
+                                isSent
+                                    ? const Chip(
+                                        label: Text(
+                                          'Terkirim',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                        backgroundColor: Colors.grey,
+                                      )
+                                    : ElevatedButton.icon(
+                                        onPressed: () =>
+                                            _sendFriendRequest(user),
+                                        icon: const Icon(
+                                          LucideIcons.userPlus,
+                                          size: 16,
+                                        ),
+                                        label: const Text('Tambah'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primary,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                          ),
+                                        ),
+                                      ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
           ),
         ],
       ),

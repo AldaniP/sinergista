@@ -12,11 +12,8 @@ class SupabaseService {
   // Fetch Single Module
   Future<Module> getModule(String id) async {
     try {
-      final response = await _client
-          .from('modules')
-          .select()
-          .eq('id', id)
-          .single();
+      final response =
+          await _client.from('modules').select().eq('id', id).single();
 
       return Module.fromMap(response);
     } catch (e) {
@@ -107,15 +104,12 @@ class SupabaseService {
 
       final double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
 
-      await _client
-          .from('modules')
-          .update({
-            'content': content,
-            'task_count': taskCount,
-            'completed_count': completedCount,
-            'progress': progress,
-          })
-          .eq('id', moduleId);
+      await _client.from('modules').update({
+        'content': content,
+        'task_count': taskCount,
+        'completed_count': completedCount,
+        'progress': progress,
+      }).eq('id', moduleId);
     } catch (e) {
       debugPrint('Error updating module content: $e');
       rethrow;
@@ -156,8 +150,7 @@ class SupabaseService {
     try {
       await _client
           .from('modules')
-          .update({'is_archived': true})
-          .eq('id', moduleId);
+          .update({'is_archived': true}).eq('id', moduleId);
     } catch (e) {
       debugPrint('Error archiving module: $e');
       rethrow;
@@ -169,8 +162,7 @@ class SupabaseService {
     try {
       await _client
           .from('modules')
-          .update({'is_archived': false})
-          .eq('id', moduleId);
+          .update({'is_archived': false}).eq('id', moduleId);
     } catch (e) {
       debugPrint('Error restoring module: $e');
       rethrow;
@@ -231,8 +223,7 @@ class SupabaseService {
     try {
       await _client
           .from('tasks')
-          .update({'is_completed': isCompleted})
-          .eq('id', id);
+          .update({'is_completed': isCompleted}).eq('id', id);
     } catch (e) {
       debugPrint('Error updating task: $e');
       rethrow;
@@ -333,19 +324,15 @@ class SupabaseService {
           }
         }
 
-        final double progress = taskCount > 0
-            ? completedCount / taskCount
-            : 0.0;
+        final double progress =
+            taskCount > 0 ? completedCount / taskCount : 0.0;
 
-        await _client
-            .from('modules')
-            .update({
-              'content': content,
-              'task_count': taskCount,
-              'completed_count': completedCount,
-              'progress': progress,
-            })
-            .eq('id', moduleId);
+        await _client.from('modules').update({
+          'content': content,
+          'task_count': taskCount,
+          'completed_count': completedCount,
+          'progress': progress,
+        }).eq('id', moduleId);
       }
     } catch (e) {
       debugPrint('Error deleting module todo: $e');
@@ -416,23 +403,19 @@ class SupabaseService {
           }
         }
 
-        final double progress = taskCount > 0
-            ? completedCount / taskCount
-            : 0.0;
+        final double progress =
+            taskCount > 0 ? completedCount / taskCount : 0.0;
 
         debugPrint(
           'Updating DB with: taskCount=$taskCount, completed=$completedCount, progress=$progress',
         );
 
-        await _client
-            .from('modules')
-            .update({
-              'content': content,
-              'task_count': taskCount,
-              'completed_count': completedCount,
-              'progress': progress,
-            })
-            .eq('id', moduleId);
+        await _client.from('modules').update({
+          'content': content,
+          'task_count': taskCount,
+          'completed_count': completedCount,
+          'progress': progress,
+        }).eq('id', moduleId);
 
         debugPrint('Save complete');
       } else {
@@ -475,10 +458,8 @@ class SupabaseService {
       final newModuleId = newModuleResponse['id'];
 
       // 2. Fetch related tasks
-      final tasksResponse = await _client
-          .from('tasks')
-          .select()
-          .eq('module_id', module.id);
+      final tasksResponse =
+          await _client.from('tasks').select().eq('module_id', module.id);
 
       final tasks = tasksResponse as List<dynamic>;
 
@@ -606,11 +587,8 @@ class SupabaseService {
         data['id'] = session.id;
       }
 
-      final response = await _client
-          .from('focus_sessions')
-          .upsert(data)
-          .select()
-          .single();
+      final response =
+          await _client.from('focus_sessions').upsert(data).select().single();
 
       return FocusSession.fromMap(response);
     } catch (e) {
@@ -819,10 +797,8 @@ class SupabaseService {
       final userIds = membersData.map((m) => m['user_id'] as String).toList();
 
       // 3. Fetch Profiles for these users
-      final profilesResponse = await _client
-          .from('profiles')
-          .select()
-          .inFilter('id', userIds);
+      final profilesResponse =
+          await _client.from('profiles').select().inFilter('id', userIds);
 
       final profilesData = profilesResponse as List<dynamic>;
       final profilesMap = {
@@ -935,15 +911,12 @@ class SupabaseService {
       final double progress = taskCount > 0 ? completedCount / taskCount : 0.0;
 
       // 5. Update Module
-      await _client
-          .from('modules')
-          .update({
-            'content': content,
-            'task_count': taskCount,
-            'completed_count': completedCount,
-            'progress': progress,
-          })
-          .eq('id', moduleId);
+      await _client.from('modules').update({
+        'content': content,
+        'task_count': taskCount,
+        'completed_count': completedCount,
+        'progress': progress,
+      }).eq('id', moduleId);
     } catch (e) {
       debugPrint('Error adding todo to module: $e');
       rethrow;

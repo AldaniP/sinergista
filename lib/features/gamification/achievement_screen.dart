@@ -91,8 +91,8 @@ class _AchievementScreenState extends State<AchievementScreen>
 
       int totalSessionCountAllTime = 0;
       try {
-        totalSessionCountAllTime = await _supabaseService
-            .getTotalSessionCount();
+        totalSessionCountAllTime =
+            await _supabaseService.getTotalSessionCount();
       } catch (_) {
         totalSessionCountAllTime = 0;
       }
@@ -223,7 +223,6 @@ class _AchievementScreenState extends State<AchievementScreen>
         progressText: '$moduleCount/5',
         assetName: 'assets/images/organizer.png',
       ),
-
       _AchievementData(
         id: 'marathoner',
         title: 'Marathoner',
@@ -307,9 +306,8 @@ class _AchievementScreenState extends State<AchievementScreen>
     final overallProgress = totalCount > 0 ? unlockedCount / totalCount : 0.0;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardShadowColor = isDark
-        ? Colors.black.withOpacity(0.6)
-        : Colors.black.withOpacity(0.12);
+    final cardShadowColor =
+        isDark ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.12);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -342,9 +340,7 @@ class _AchievementScreenState extends State<AchievementScreen>
                       cardShadowColor,
                       overallProgress,
                     ),
-
                     const SizedBox(height: 18),
-
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -359,9 +355,7 @@ class _AchievementScreenState extends State<AchievementScreen>
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 18),
-
                     GridView.count(
                       crossAxisCount: 2,
                       shrinkWrap: true,
@@ -381,7 +375,6 @@ class _AchievementScreenState extends State<AchievementScreen>
                           )
                           .toList(),
                     ),
-
                     const SizedBox(height: 28),
                   ],
                 ),
@@ -468,23 +461,20 @@ class _AchievementScreenState extends State<AchievementScreen>
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
                                     Container(
-                                      color: t.color.withOpacity(0.10),
-                                      child: Center(
-                                        child: Icon(
-                                          LucideIcons.award,
-                                          color: unlocked
-                                              ? t.color
-                                              : Colors.grey,
-                                          size: 48,
-                                        ),
-                                      ),
+                                  color: t.color.withOpacity(0.10),
+                                  child: Center(
+                                    child: Icon(
+                                      LucideIcons.award,
+                                      color: unlocked ? t.color : Colors.grey,
+                                      size: 48,
                                     ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-
                       Expanded(
                         flex: 5,
                         child: Padding(
@@ -1021,8 +1011,8 @@ class _LevelBadge extends StatelessWidget {
     final badgeColor = level >= 30
         ? Colors.purple
         : level >= 11
-        ? Colors.amber
-        : AppColors.tagPurpleText;
+            ? Colors.amber
+            : AppColors.tagPurpleText;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final shadow = BoxShadow(
       color: isDark
@@ -1090,20 +1080,18 @@ class _AnimatedFlameState extends State<_AnimatedFlame>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    _scale =
-        TweenSequence([
-          TweenSequenceItem(tween: Tween(begin: 0.92, end: 1.06), weight: 50),
-          TweenSequenceItem(tween: Tween(begin: 1.06, end: 0.98), weight: 50),
-        ]).animate(
-          CurvedAnimation(parent: _flameController, curve: Curves.easeInOut),
-        );
-    _alpha =
-        TweenSequence([
-          TweenSequenceItem(tween: Tween(begin: 0.7, end: 1.0), weight: 50),
-          TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.75), weight: 50),
-        ]).animate(
-          CurvedAnimation(parent: _flameController, curve: Curves.easeInOut),
-        );
+    _scale = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 0.92, end: 1.06), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.06, end: 0.98), weight: 50),
+    ]).animate(
+      CurvedAnimation(parent: _flameController, curve: Curves.easeInOut),
+    );
+    _alpha = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 0.7, end: 1.0), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.75), weight: 50),
+    ]).animate(
+      CurvedAnimation(parent: _flameController, curve: Curves.easeInOut),
+    );
     if (widget.active) _flameController.repeat(reverse: true);
   }
 

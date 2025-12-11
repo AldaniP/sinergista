@@ -64,9 +64,8 @@ class _ModuleEditorScreenState extends State<ModuleEditorScreen> {
 
   void _loadContent() {
     if (_module.content != null) {
-      _blocks = (_module.content as List)
-          .map((e) => BlockModel.fromMap(e))
-          .toList();
+      _blocks =
+          (_module.content as List).map((e) => BlockModel.fromMap(e)).toList();
       for (var i = 0; i < _blocks.length; i++) {
         _addFocusListener(_blocks[i], i);
       }

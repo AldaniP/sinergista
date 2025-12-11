@@ -88,9 +88,8 @@ class _FocusScreenState extends State<FocusScreen>
       Duration(days: _chartDate.weekday - 1),
     );
     final start = DateTime(weekStart.year, weekStart.month, weekStart.day);
-    final end = start
-        .add(const Duration(days: 7))
-        .subtract(const Duration(seconds: 1));
+    final end =
+        start.add(const Duration(days: 7)).subtract(const Duration(seconds: 1));
 
     final sessions = await _supabaseService.getFocusSessionsForDateRange(
       start,
@@ -120,9 +119,8 @@ class _FocusScreenState extends State<FocusScreen>
     final startOfMonth = DateTime(now.year, now.month, 1);
 
     // Find the earliest date we need to fetch
-    final DateTime earliestDate = startOfWeekDay.isBefore(startOfMonth)
-        ? startOfWeekDay
-        : startOfMonth;
+    final DateTime earliestDate =
+        startOfWeekDay.isBefore(startOfMonth) ? startOfWeekDay : startOfMonth;
 
     // Fetch sessions
     final sessions = await _supabaseService.getFocusSessionsForDateRange(
@@ -291,9 +289,8 @@ class _FocusScreenState extends State<FocusScreen>
 
     // Resume from pause
     if (_pauseStartTime != null) {
-      final pauseDuration = DateTime.now()
-          .difference(_pauseStartTime!)
-          .inSeconds;
+      final pauseDuration =
+          DateTime.now().difference(_pauseStartTime!).inSeconds;
       _totalPauseDuration += pauseDuration;
       _pauseStartTime = null;
     }
@@ -489,8 +486,7 @@ class _FocusScreenState extends State<FocusScreen>
       pauseCount: _pauseCount,
       totalPauseDurationSeconds: _totalPauseDuration,
       sessionType: _isPomodoro ? 'Pomodoro' : _timerType,
-      focusCount:
-          _completedFocusSessions +
+      focusCount: _completedFocusSessions +
           (isStop &&
                   _currentPhase == 'Fokus' &&
                   _remainingSeconds < _focusDuration * 60
@@ -571,9 +567,9 @@ class _FocusScreenState extends State<FocusScreen>
   String get _timerString {
     if (!_isPomodoro && _timerType == 'Stopwatch') {
       final minutes = (_stopwatchSeconds / 60).floor().toString().padLeft(
-        2,
-        '0',
-      );
+            2,
+            '0',
+          );
       final seconds = (_stopwatchSeconds % 60).toString().padLeft(2, '0');
       return '$minutes:$seconds';
     }
@@ -810,8 +806,8 @@ class _FocusScreenState extends State<FocusScreen>
                         : Colors.green, // Green for break
                     backgroundColor:
                         Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey.shade800
-                        : Colors.grey.shade100,
+                            ? Colors.grey.shade800
+                            : Colors.grey.shade100,
                     circularStrokeCap: CircularStrokeCap.round,
                     animation: true,
                     animateFromLastPercent: true,
@@ -821,8 +817,8 @@ class _FocusScreenState extends State<FocusScreen>
                         _isPomodoro
                             ? _currentPhase
                             : (_timerType == 'Stopwatch'
-                                  ? 'Stopwatch'
-                                  : 'Countdown'),
+                                ? 'Stopwatch'
+                                : 'Countdown'),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -925,11 +921,11 @@ class _FocusScreenState extends State<FocusScreen>
                             _isRunning
                                 ? 'Jeda Sesi'
                                 : (_stopwatchSeconds > 0 ||
-                                      (_currentPhase == 'Fokus' &&
-                                          _remainingSeconds <
-                                              _focusDuration * 60))
-                                ? 'Lanjutkan'
-                                : 'Mulai Sesi Fokus',
+                                        (_currentPhase == 'Fokus' &&
+                                            _remainingSeconds <
+                                                _focusDuration * 60))
+                                    ? 'Lanjutkan'
+                                    : 'Mulai Sesi Fokus',
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
@@ -1122,7 +1118,8 @@ class _FocusScreenState extends State<FocusScreen>
                                 enabled: true,
                                 touchTooltipData: BarTouchTooltipData(
                                   tooltipBgColor: Colors.grey.shade800,
-                                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                  getTooltipItem:
+                                      (group, groupIndex, rod, rodIndex) {
                                     final weekStart = _chartDate.subtract(
                                       Duration(days: _chartDate.weekday - 1),
                                     );
@@ -1244,8 +1241,7 @@ class _FocusScreenState extends State<FocusScreen>
                                 );
 
                                 final now = DateTime.now();
-                                final isToday =
-                                    currentDate.year == now.year &&
+                                final isToday = currentDate.year == now.year &&
                                     currentDate.month == now.month &&
                                     currentDate.day == now.day;
 
@@ -1270,7 +1266,8 @@ class _FocusScreenState extends State<FocusScreen>
                                           : Colors.grey.shade200,
                                       width: 16,
                                       borderRadius: BorderRadius.circular(4),
-                                      backDrawRodData: BackgroundBarChartRodData(
+                                      backDrawRodData:
+                                          BackgroundBarChartRodData(
                                         show: true,
                                         toY: (value > 10 ? value + 2 : 10)
                                             .toDouble(), // Dynamic max height

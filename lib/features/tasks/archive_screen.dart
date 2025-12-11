@@ -212,9 +212,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     side: BorderSide(
-                      color: isDark
-                          ? Colors.grey.shade700
-                          : Colors.grey.shade300,
+                      color:
+                          isDark ? Colors.grey.shade700 : Colors.grey.shade300,
                     ),
                     foregroundColor: isDark ? Colors.white : Colors.black,
                   ),

@@ -143,8 +143,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
         title: title,
         description: _noteController.text.trim(),
         category: widget.categoryName,
-        dueDate: DateTime.now()
-            .toIso8601String(), // Default to now for simplicity
+        dueDate:
+            DateTime.now().toIso8601String(), // Default to now for simplicity
       );
 
       if (mounted) {

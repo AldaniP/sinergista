@@ -500,10 +500,10 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
           Text(
             'Dibuat: ${_formatDate(card.createdAt)}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(
-                context,
-              ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-            ),
+                  color: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                ),
           ),
         ],
       ),

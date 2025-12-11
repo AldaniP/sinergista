@@ -76,8 +76,8 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
     return _connections
         .where(
           (item) => item.friendProfile.fullName.toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          ),
+                _searchQuery.toLowerCase(),
+              ),
         )
         .toList();
   }
@@ -87,8 +87,8 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
     return _requests
         .where(
           (item) => item.friendProfile.fullName.toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          ),
+                _searchQuery.toLowerCase(),
+              ),
         )
         .toList();
   }
@@ -247,9 +247,8 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
                       )
                     : null,
                 filled: true,
-                fillColor: isDark
-                    ? const Color(0xFF2C2C2C)
-                    : Colors.grey.shade100,
+                fillColor:
+                    isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade100,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -264,9 +263,8 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
             child: TabBar(
               controller: _tabController,
               labelColor: isDark ? Colors.white : Colors.black,
-              unselectedLabelColor: isDark
-                  ? Colors.grey.shade600
-                  : Colors.grey.shade400,
+              unselectedLabelColor:
+                  isDark ? Colors.grey.shade600 : Colors.grey.shade400,
               indicatorColor: AppColors.primary,
               tabs: [
                 Tab(text: 'Koneksi    ${_connections.length}'),
@@ -477,9 +475,8 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
                 onPressed: () => _rejectRequest(item),
                 icon: const Icon(LucideIcons.x, size: 20),
                 style: IconButton.styleFrom(
-                  backgroundColor: isDark
-                      ? const Color(0xFF2C2C2C)
-                      : Colors.grey.shade200,
+                  backgroundColor:
+                      isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200,
                   foregroundColor: isDark ? Colors.white : Colors.black,
                   padding: const EdgeInsets.all(8),
                 ),

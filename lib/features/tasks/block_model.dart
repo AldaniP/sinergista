@@ -17,8 +17,8 @@ class BlockModel {
     this.content = '',
     this.isChecked = false,
     this.url,
-  }) : controller = TextEditingController(text: content),
-       focusNode = FocusNode();
+  })  : controller = TextEditingController(text: content),
+        focusNode = FocusNode();
 
   Map<String, dynamic> toMap() {
     return {

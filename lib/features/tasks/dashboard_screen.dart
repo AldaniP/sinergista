@@ -307,8 +307,7 @@ class _DashboardHomeState extends State<DashboardHome> {
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        final user =
-            snapshot.data?.session?.user ??
+        final user = snapshot.data?.session?.user ??
             Supabase.instance.client.auth.currentUser;
         final userName =
             user?.userMetadata?['full_name']?.split(' ').first ?? 'Pengguna';
@@ -329,9 +328,8 @@ class _DashboardHomeState extends State<DashboardHome> {
           'Desember',
         ];
 
-        final displayedTasks = _isExpanded
-            ? widget.tasks
-            : widget.tasks.take(3).toList();
+        final displayedTasks =
+            _isExpanded ? widget.tasks : widget.tasks.take(3).toList();
 
         return Container(
           color: Theme.of(context).scaffoldBackgroundColor,

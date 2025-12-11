@@ -39,15 +39,11 @@ class ConnectionService {
 
   // 3. Ambil Permintaan Masuk (Incoming Requests)
   Future<List<ConnectionModel>> getIncomingRequests() async {
-    final response = await _client
-        .from('connections')
-        .select('''
+    final response = await _client.from('connections').select('''
           *,
           requester_profile:profiles!requester_id(*), 
           receiver_profile:profiles!receiver_id(*) 
-        ''')
-        .eq('receiver_id', _currentUserId)
-        .eq('status', 'pending');
+        ''').eq('receiver_id', _currentUserId).eq('status', 'pending');
 
     // Note: receiver_profile sebenarnya tidak perlu diload full karena itu saya sendiri,
     // tapi diperlukan agar parsing di Model.fromSupabase tidak error null.
@@ -71,8 +67,7 @@ class ConnectionService {
   Future<void> acceptRequest(String connectionId) async {
     await _client
         .from('connections')
-        .update({'status': 'accepted'})
-        .eq('id', connectionId);
+        .update({'status': 'accepted'}).eq('id', connectionId);
   }
 
   // 6. Tolak / Hapus / Batalkan Permintaan

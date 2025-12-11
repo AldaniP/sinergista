@@ -186,28 +186,30 @@ class _JournalScreenState extends State<JournalScreen> {
                       child: CircularProgressIndicator(),
                     )
                   : _journals.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 40),
-                      child: Text(
-                        "Belum ada jurnal. Mulai nulis yuk!",
-                        style: TextStyle(color: Colors.grey.shade500),
-                      ),
-                    )
-                  : ListView.separated(
-                      shrinkWrap: true, // Penting agar tidak scroll conflict
-                      physics:
-                          const NeverScrollableScrollPhysics(), // Scroll ikut parent
-                      itemCount: _journals.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 16),
-                      itemBuilder: (context, index) {
-                        final journal = _journals[index];
-                        return _buildJournalEntry(
-                          context: context,
-                          journal: journal,
-                          isDark: isDark,
-                        );
-                      },
-                    ),
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 40),
+                          child: Text(
+                            "Belum ada jurnal. Mulai nulis yuk!",
+                            style: TextStyle(color: Colors.grey.shade500),
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap:
+                              true, // Penting agar tidak scroll conflict
+                          physics:
+                              const NeverScrollableScrollPhysics(), // Scroll ikut parent
+                          itemCount: _journals.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final journal = _journals[index];
+                            return _buildJournalEntry(
+                              context: context,
+                              journal: journal,
+                              isDark: isDark,
+                            );
+                          },
+                        ),
 
               // Tambahan padding bawah agar tidak tertutup FAB
               const SizedBox(height: 80),

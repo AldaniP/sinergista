@@ -64,8 +64,9 @@ class _ModulesScreenState extends State<ModulesScreen> {
     final filtered = _modules.where((module) {
       final matchesFilter =
           _selectedFilter == 'Semua' || module.tagName == _selectedFilter;
-      final matchesSearch =
-          module.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesSearch = module.title
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
           module.description.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchesFilter && matchesSearch;
     }).toList();
@@ -295,62 +296,65 @@ class _ModulesScreenState extends State<ModulesScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredModules.isEmpty
-                ? Center(
-                    child: _errorMessage != null
-                        ? Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  LucideIcons.alertTriangle,
-                                  size: 48,
-                                  color: Colors.red,
+                    ? Center(
+                        child: _errorMessage != null
+                            ? Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      LucideIcons.alertTriangle,
+                                      size: 48,
+                                      color: Colors.red,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Terjadi Kesalahan',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _errorMessage!,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color
+                                            ?.withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    ElevatedButton(
+                                      onPressed: _fetchModules,
+                                      child: const Text('Coba Lagi'),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Terjadi Kesalahan',
-                                  style: Theme.of(context).textTheme.titleLarge,
+                              )
+                            : Text(
+                                'Belum ada modul',
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
+                                      ?.withValues(alpha: 0.5),
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _errorMessage!,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.color
-                                        ?.withValues(alpha: 0.7),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                ElevatedButton(
-                                  onPressed: _fetchModules,
-                                  child: const Text('Coba Lagi'),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Text(
-                            'Belum ada modul',
-                            style: TextStyle(
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.color
-                                  ?.withValues(alpha: 0.5),
-                            ),
-                          ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: _filteredModules
-                        .map(
-                          (module) => _buildModuleCard(context, module: module),
-                        )
-                        .toList(),
-                  ),
+                              ),
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.all(20),
+                        children: _filteredModules
+                            .map(
+                              (module) =>
+                                  _buildModuleCard(context, module: module),
+                            )
+                            .toList(),
+                      ),
           ),
         ],
       ),
@@ -512,14 +516,13 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     if (uniqueCategories.isNotEmpty) ...[
                       Builder(
                         builder: (context) {
-                          final filteredCategories = uniqueCategories.values
-                              .where((cat) {
-                                final name = cat['name'] as String;
-                                return name.toLowerCase().contains(
+                          final filteredCategories =
+                              uniqueCategories.values.where((cat) {
+                            final name = cat['name'] as String;
+                            return name.toLowerCase().contains(
                                   categoryController.text.toLowerCase(),
                                 );
-                              })
-                              .toList();
+                          }).toList();
 
                           if (filteredCategories.isEmpty) {
                             return const SizedBox.shrink();
@@ -1211,9 +1214,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
               ],
             ),
             const SizedBox(height: 16),
-
             const SizedBox(height: 16),
-
             if (module.taskCount > 0) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1301,7 +1302,6 @@ class _ModulesScreenState extends State<ModulesScreen> {
                 ],
               ],
             ),
-
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

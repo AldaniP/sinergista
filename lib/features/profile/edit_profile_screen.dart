@@ -131,15 +131,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 image: kIsWeb
                                     ? NetworkImage(_imageFile!.path)
                                     : FileImage(File(_imageFile!.path))
-                                          as ImageProvider,
+                                        as ImageProvider,
                                 fit: BoxFit.cover,
                               )
                             : (_currentAvatarUrl != null
-                                  ? DecorationImage(
-                                      image: NetworkImage(_currentAvatarUrl!),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null),
+                                ? DecorationImage(
+                                    image: NetworkImage(_currentAvatarUrl!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null),
                       ),
                       child: (_imageFile == null && _currentAvatarUrl == null)
                           ? const Icon(

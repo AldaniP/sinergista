@@ -198,9 +198,8 @@ class _ExamScreenState extends State<ExamScreen> {
       }
 
       // Generate questions using Gemini AI
-      final questionTypes = _selectedQuestionTypes
-          .map((type) => type.displayName)
-          .toList();
+      final questionTypes =
+          _selectedQuestionTypes.map((type) => type.displayName).toList();
 
       final questionsData = await _geminiService.generateQuestions(
         text: pdfText,
@@ -364,7 +363,6 @@ class _ExamScreenState extends State<ExamScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-
                   if (_selectedPdfFile != null ||
                       _selectedPdfBytes != null) ...[
                     Container(
@@ -421,7 +419,6 @@ class _ExamScreenState extends State<ExamScreen> {
                     ),
                     const SizedBox(height: 12),
                   ],
-
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -568,8 +565,8 @@ class _ExamScreenState extends State<ExamScreen> {
                                   if (current > 1) {
                                     setState(() {
                                       _numberOfQuestions = current - 1;
-                                      _countController.text = _numberOfQuestions
-                                          .toString();
+                                      _countController.text =
+                                          _numberOfQuestions.toString();
                                     });
                                   }
                                 },
@@ -626,8 +623,8 @@ class _ExamScreenState extends State<ExamScreen> {
                                       int.tryParse(_countController.text) ?? 10;
                                   setState(() {
                                     _numberOfQuestions = current + 1;
-                                    _countController.text = _numberOfQuestions
-                                        .toString();
+                                    _countController.text =
+                                        _numberOfQuestions.toString();
                                   });
                                 },
                           color: AppColors.textPrimary,
@@ -649,8 +646,7 @@ class _ExamScreenState extends State<ExamScreen> {
                 hintText: 'contoh: Matematika, Fisika, dll',
                 prefixIcon: const Icon(LucideIcons.book),
                 filled: true,
-                fillColor:
-                    Theme.of(context).inputDecorationTheme.fillColor ??
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
                     Colors.grey.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -669,8 +665,7 @@ class _ExamScreenState extends State<ExamScreen> {
                 hintText: 'contoh: Integral, Kinematika, dll',
                 prefixIcon: const Icon(LucideIcons.fileText),
                 filled: true,
-                fillColor:
-                    Theme.of(context).inputDecorationTheme.fillColor ??
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
                     Colors.grey.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1041,9 +1036,8 @@ class QuizQuestion {
     return QuizQuestion(
       type: type,
       question: map['question'] ?? '',
-      options: map['options'] != null
-          ? List<String>.from(map['options'])
-          : null,
+      options:
+          map['options'] != null ? List<String>.from(map['options']) : null,
       correctAnswer: map['correctAnswer'],
     );
   }
@@ -1216,7 +1210,6 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
               valueColor: const AlwaysStoppedAnimation(AppColors.primary),
             ),
             const SizedBox(height: 24),
-
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -1240,15 +1233,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
             Text(
               question.question,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
-
             Expanded(child: _buildAnswerWidget(question)),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -1323,9 +1313,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                       height: 24,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isSelected
-                            ? AppColors.primary
-                            : Colors.transparent,
+                        color:
+                            isSelected ? AppColors.primary : Colors.transparent,
                         border: Border.all(
                           color: isSelected
                               ? AppColors.primary
@@ -1350,9 +1339,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                           color: isSelected
                               ? AppColors.primary
                               : Theme.of(context).textTheme.bodyLarge?.color,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.normal,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -1526,8 +1514,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
         question.type == QuestionType.trueFalse) {
       isCorrect = question.userAnswer == question.correctAnswer;
     } else if (question.type == QuestionType.fillBlank) {
-      isCorrect =
-          question.userAnswer.toString().trim().toLowerCase() ==
+      isCorrect = question.userAnswer.toString().trim().toLowerCase() ==
           question.correctAnswer.toString().toLowerCase();
     } else {
       // Essay is manually reviewed or AI checked
@@ -1579,7 +1566,6 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 16),
-
           if (question.type == QuestionType.multipleChoice ||
               question.type == QuestionType.trueFalse)
             ...List.generate(question.options?.length ?? 0, (i) {
@@ -1615,8 +1601,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                       isAnswerCorrect
                           ? LucideIcons.checkCircle
                           : (isSelected
-                                ? LucideIcons.xCircle
-                                : LucideIcons.circle),
+                              ? LucideIcons.xCircle
+                              : LucideIcons.circle),
                       size: 16,
                       color: isAnswerCorrect
                           ? AppColors.success
