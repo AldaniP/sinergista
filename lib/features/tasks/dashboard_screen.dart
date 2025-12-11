@@ -657,6 +657,28 @@ class _DashboardHomeState extends State<DashboardHome> {
     required Color textColor,
     VoidCallback? onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Use dark mode colors if in dark mode
+    Color finalBg = backgroundColor;
+    Color finalText = textColor;
+
+    if (isDark) {
+      if (backgroundColor == AppColors.tagBlue) {
+        finalBg = AppColors.darkTagBlue;
+        finalText = AppColors.darkTagBlueText;
+      } else if (backgroundColor == AppColors.tagPurple) {
+        finalBg = AppColors.darkTagPurple;
+        finalText = AppColors.darkTagPurpleText;
+      } else if (backgroundColor == AppColors.tagGreen) {
+        finalBg = AppColors.darkTagGreen;
+        finalText = AppColors.darkTagGreenText;
+      } else if (backgroundColor == AppColors.tagRed) {
+        finalBg = AppColors.darkTagRed;
+        finalText = AppColors.darkTagRedText;
+      }
+    }
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -665,21 +687,21 @@ class _DashboardHomeState extends State<DashboardHome> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: backgroundColor,
+            color: finalBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: textColor.withValues(alpha: 0.1)),
+            border: Border.all(color: finalText.withValues(alpha: 0.1)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(icon, color: textColor, size: 16),
+                  Icon(icon, color: finalText, size: 16),
                   const SizedBox(width: 4),
                   Text(
                     title,
                     style: TextStyle(
-                      color: textColor.withValues(alpha: 0.8),
+                      color: finalText.withValues(alpha: 0.8),
                       fontSize: 12,
                     ),
                   ),
@@ -689,7 +711,7 @@ class _DashboardHomeState extends State<DashboardHome> {
               Text(
                 value,
                 style: TextStyle(
-                  color: textColor,
+                  color: finalText,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -698,7 +720,7 @@ class _DashboardHomeState extends State<DashboardHome> {
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: textColor.withValues(alpha: 0.7),
+                  color: finalText.withValues(alpha: 0.7),
                   fontSize: 12,
                 ),
               ),
@@ -858,13 +880,18 @@ class _DashboardHomeState extends State<DashboardHome> {
   }
 
   Widget _buildGoalCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkTagGreen : AppColors.tagGreen;
+    final textColor =
+        isDark ? AppColors.darkTagGreenText : AppColors.tagGreenText;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.tagGreen,
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.tagGreenText.withValues(alpha: 0.1),
+          color: textColor.withValues(alpha: 0.1),
         ),
       ),
       child: Row(
@@ -873,12 +900,12 @@ class _DashboardHomeState extends State<DashboardHome> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: AppColors.tagGreenText.withValues(alpha: 0.15),
+              color: textColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               LucideIcons.target,
-              color: AppColors.tagGreenText,
+              color: textColor,
               size: 28,
             ),
           ),
@@ -887,10 +914,10 @@ class _DashboardHomeState extends State<DashboardHome> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Tetapkan tujuan membaca',
                   style: TextStyle(
-                    color: AppColors.tagGreenText,
+                    color: textColor,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -899,7 +926,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                 Text(
                   'Target Tugas Harian 📚 • 1 Hari Check-in',
                   style: TextStyle(
-                    color: AppColors.tagGreenText.withValues(alpha: 0.7),
+                    color: textColor.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -908,7 +935,7 @@ class _DashboardHomeState extends State<DashboardHome> {
           ),
           Icon(
             LucideIcons.chevronRight,
-            color: AppColors.tagGreenText.withValues(alpha: 0.5),
+            color: textColor.withValues(alpha: 0.5),
           ),
         ],
       ),

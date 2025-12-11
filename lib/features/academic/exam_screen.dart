@@ -396,7 +396,10 @@ class _ExamScreenState extends State<ExamScreen> {
                                   _formatFileSize(_pdfFileSize),
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey.shade600,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color,
                                   ),
                                 ),
                               ],
@@ -585,10 +588,10 @@ class _ExamScreenState extends State<ExamScreen> {
                             FilteringTextInputFormatter.digitsOnly,
                           ],
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                           ),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
@@ -718,7 +721,10 @@ class _ExamScreenState extends State<ExamScreen> {
                   ),
                   Text(
                     '${_quizzes.length} quiz',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
@@ -739,7 +745,11 @@ class _ExamScreenState extends State<ExamScreen> {
                       Text(
                         'Belum ada quiz',
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.color
+                              ?.withValues(alpha: 0.6),
                           fontSize: 16,
                         ),
                       ),
@@ -747,7 +757,7 @@ class _ExamScreenState extends State<ExamScreen> {
                       Text(
                         'Upload PDF dan buat quiz pertama Anda',
                         style: TextStyle(
-                          color: Colors.grey.shade500,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
                           fontSize: 14,
                         ),
                       ),
@@ -812,7 +822,8 @@ class _ExamScreenState extends State<ExamScreen> {
                             quiz.topic,
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey.shade600,
+                              color:
+                                  Theme.of(context).textTheme.bodySmall?.color,
                             ),
                           ),
                           if (quiz.sourceFile != null) ...[
@@ -822,7 +833,10 @@ class _ExamScreenState extends State<ExamScreen> {
                                 Icon(
                                   LucideIcons.file,
                                   size: 12,
-                                  color: Colors.grey.shade500,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color,
                                 ),
                                 const SizedBox(width: 4),
                                 Expanded(
@@ -830,7 +844,10 @@ class _ExamScreenState extends State<ExamScreen> {
                                     quiz.sourceFile!,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey.shade500,
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.color,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -902,6 +919,11 @@ class _ExamScreenState extends State<ExamScreen> {
   }
 
   Widget _buildInfoChip(IconData icon, String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark
+        ? Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7)
+        : Colors.grey.shade600;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -913,11 +935,11 @@ class _ExamScreenState extends State<ExamScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.grey.shade600),
+          Icon(icon, size: 14, color: textColor),
           const SizedBox(width: 4),
           Text(
             text,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 12, color: textColor),
           ),
         ],
       ),
