@@ -6,15 +6,20 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 class GeminiService {
-  late final GenerativeModel _model;
+  late final String _apiKey;
+  final List<String> _modelNames = [
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-exp',
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-flash',
+  ];
 
   GeminiService() {
-    final apiKey = dotenv.env['GEMINI_API_KEY'];
-    if (apiKey == null || apiKey.isEmpty) {
+    final key = dotenv.env['GEMINI_API_KEY'];
+    if (key == null || key.isEmpty) {
       throw Exception('GEMINI_API_KEY not found in .env file');
     }
-
-    _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: apiKey);
+    _apiKey = key;
   }
 
   /// Extract text from PDF file
@@ -65,8 +70,9 @@ class GeminiService {
 
       debugPrint('Sending prompt to Gemini AI...');
 
-      // Generate content
-      final response = await _model.generateContent([Content.text(prompt)]);
+      // Generate content with fallback
+      final response =
+          await _generateContentWithFallback([Content.text(prompt)]);
 
       if (response.text == null) {
         throw Exception('No response from Gemini AI');
@@ -98,7 +104,8 @@ class GeminiService {
     try {
       final prompt = _buildTopicPrompt(topic, questionTypes, numberOfQuestions);
       debugPrint('Sending topic prompt to Gemini AI...');
-      final response = await _model.generateContent([Content.text(prompt)]);
+      final response =
+          await _generateContentWithFallback([Content.text(prompt)]);
 
       if (response.text == null) {
         throw Exception('No response from Gemini AI');
@@ -132,7 +139,8 @@ class GeminiService {
         correctAnswer,
       );
 
-      final response = await _model.generateContent([Content.text(prompt)]);
+      final response =
+          await _generateContentWithFallback([Content.text(prompt)]);
 
       if (response.text == null) {
         throw Exception('No response from Gemini AI');
@@ -203,11 +211,6 @@ FORMAT OUTPUT (JSON):
     int count,
   ) {
     final typesStr = questionTypes.join(', ');
-
-    // Reuse the same JSON examples logic, simplified for brevity here or copied
-    // For simplicity, let's just reuse the structure but strictly for topic
-    // We can actually reuse _buildPrompt logic but replace "Berdasarkan teks berikut" with "Berdasarkan topik berikut"
-    // To avoid duplication, we could refactor _buildPrompt, but for now I will duplicate the relevant parts for safety.
 
     final List<String> jsonExamples = [];
 
@@ -319,7 +322,7 @@ PENTING:
   }''');
     }
 
-    final jsonExampleStr = jsonExamples.join(',\n');
+    final jsonExampleStr = jsonExamples.join(',\\n');
 
     return '''
 Berdasarkan teks berikut, buatlah $count soal ujian dalam bahasa Indonesia.
@@ -392,5 +395,39 @@ PENTING:
       debugPrint('Response was: $response');
       rethrow;
     }
+  }
+
+  Future<GenerateContentResponse> _generateContentWithFallback(
+      Iterable<Content> prompt) async {
+    for (final modelName in _modelNames) {
+      int attempts = 0;
+      while (attempts < 2) {
+        try {
+          attempts++;
+          debugPrint('Trying model: $modelName (Attempt $attempts)');
+          final model = GenerativeModel(model: modelName, apiKey: _apiKey);
+          return await model.generateContent(prompt);
+        } catch (e) {
+          debugPrint('Model $modelName failed attempt $attempts: $e');
+
+          final errorStr = e.toString().toLowerCase();
+          // If model is not found, don't retry, just skip to next model immediately
+          if (errorStr.contains('not found') || errorStr.contains('404')) {
+            break;
+          }
+
+          if (attempts >= 2) {
+            // If this was the last model and last attempt, rethrow to notify caller
+            if (modelName == _modelNames.last) {
+              rethrow;
+            }
+            // Otherwise break to try next model
+            break;
+          }
+          await Future.delayed(const Duration(seconds: 1));
+        }
+      }
+    }
+    throw Exception('All models failed');
   }
 }
