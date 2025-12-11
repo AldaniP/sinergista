@@ -652,7 +652,11 @@ class _AchievementScreenState extends State<AchievementScreen>
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.award, size: 18, color: Colors.white70),
+                      const Icon(
+                        LucideIcons.award,
+                        size: 18,
+                        color: Colors.white70,
+                      ),
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
@@ -1067,7 +1071,7 @@ class _LevelBadge extends StatelessWidget {
 class _AnimatedFlame extends StatefulWidget {
   final Color color;
   final bool active;
-  const _AnimatedFlame({required this.color});
+  const _AnimatedFlame({required this.color, this.active = true});
 
   @override
   State<_AnimatedFlame> createState() => _AnimatedFlameState();

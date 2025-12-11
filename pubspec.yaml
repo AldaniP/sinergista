@@ -4,7 +4,7 @@ publish_to: "none"
 version: 0.1.0
 
 environment:
-  sdk: ^3.9.2
+  sdk: '>=3.2.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -21,7 +21,7 @@ dependencies:
   uuid: ^4.5.1
   image_picker: ^1.2.1
   file_picker: ^8.1.4
-  google_generative_ai: ^0.4.6
+  google_generative_ai: ^0.4.7
   syncfusion_flutter_pdf: ^28.1.33
   shared_preferences: ^2.3.3
   url_launcher: ^6.3.2
