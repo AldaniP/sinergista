@@ -163,23 +163,19 @@ class _NotesScreenState extends State<NotesScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
-
             const Text(
               "Buat Catatan Baru",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-
             TextField(
               controller: _titleController,
               decoration: InputDecoration(
                 labelText: "Judul",
                 prefixIcon: const Icon(LucideIcons.type),
                 filled: true,
-                fillColor:
-                    Theme.of(context).inputDecorationTheme.fillColor ??
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
                     Colors.grey.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -187,9 +183,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
-
             TextField(
               controller: _contentController,
               maxLines: 5,
@@ -198,8 +192,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 prefixIcon: const Icon(LucideIcons.fileText),
                 alignLabelWithHint: true,
                 filled: true,
-                fillColor:
-                    Theme.of(context).inputDecorationTheme.fillColor ??
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
                     Colors.grey.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -207,9 +200,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -226,9 +217,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 32),
-
             if (_notes.isNotEmpty) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -244,7 +233,6 @@ class _NotesScreenState extends State<NotesScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-
               ..._notes.map((note) => _buildNoteCard(note)),
             ] else ...[
               const SizedBox(height: 60),

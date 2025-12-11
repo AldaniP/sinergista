@@ -35,9 +35,8 @@ class JournalDetailScreen extends StatelessWidget {
                     Icon(
                       LucideIcons.calendar,
                       size: 16,
-                      color: isDark
-                          ? Colors.grey.shade400
-                          : Colors.grey.shade600,
+                      color:
+                          isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                     ),
                     const SizedBox(width: 8),
                     Text(

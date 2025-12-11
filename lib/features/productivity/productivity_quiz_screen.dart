@@ -50,9 +50,8 @@ class _ProductivityQuizScreenState extends State<ProductivityQuizScreen> {
     FocusScope.of(context).unfocus();
 
     try {
-      final questionTypes = _selectedQuestionTypes
-          .map((type) => type.displayName)
-          .toList();
+      final questionTypes =
+          _selectedQuestionTypes.map((type) => type.displayName).toList();
 
       final questionsData = await _geminiService.generateQuestionsFromTopic(
         topic: _topicController.text,
@@ -60,9 +59,8 @@ class _ProductivityQuizScreenState extends State<ProductivityQuizScreen> {
         numberOfQuestions: _numberOfQuestions,
       );
 
-      final questions = questionsData
-          .map((data) => QuizQuestion.fromMap(data))
-          .toList();
+      final questions =
+          questionsData.map((data) => QuizQuestion.fromMap(data)).toList();
 
       final quiz = Quiz(
         moduleName: 'Productivity Challenge',
@@ -187,10 +185,10 @@ class _ProductivityQuizScreenState extends State<ProductivityQuizScreen> {
                         onPressed: _isGenerating || _numberOfQuestions <= 3
                             ? null
                             : () => setState(() {
-                                _numberOfQuestions--;
-                                _countController.text = _numberOfQuestions
-                                    .toString();
-                              }),
+                                  _numberOfQuestions--;
+                                  _countController.text =
+                                      _numberOfQuestions.toString();
+                                }),
                         icon: const Icon(LucideIcons.minus),
                       ),
                       SizedBox(
@@ -205,10 +203,10 @@ class _ProductivityQuizScreenState extends State<ProductivityQuizScreen> {
                         onPressed: _isGenerating || _numberOfQuestions >= 20
                             ? null
                             : () => setState(() {
-                                _numberOfQuestions++;
-                                _countController.text = _numberOfQuestions
-                                    .toString();
-                              }),
+                                  _numberOfQuestions++;
+                                  _countController.text =
+                                      _numberOfQuestions.toString();
+                                }),
                         icon: const Icon(LucideIcons.plus),
                       ),
                     ],

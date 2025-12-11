@@ -41,8 +41,8 @@ class FocusSession {
       id: map['id']?.toString(),
       title: map['label'] ?? '', // Map label to title
       date: startTime,
-      durationMinutes: (durationSeconds / 60)
-          .ceil(), // Keep for backward compat
+      durationMinutes:
+          (durationSeconds / 60).ceil(), // Keep for backward compat
       durationSeconds: durationSeconds, // Store precise seconds
       category: map['category'] ?? 'Fokus',
       pauseCount: map['pause_count'] ?? 0,
@@ -57,9 +57,8 @@ class FocusSession {
   Map<String, dynamic> toMap() {
     final startTime = date;
     // Use durationSeconds if available, otherwise fallback to minutes * 60
-    final durationSecs = durationSeconds > 0
-        ? durationSeconds
-        : durationMinutes * 60;
+    final durationSecs =
+        durationSeconds > 0 ? durationSeconds : durationMinutes * 60;
     final endTime = startTime.add(Duration(seconds: durationSecs));
 
     return {

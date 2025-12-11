@@ -107,7 +107,6 @@ class TaskListScreen extends StatelessWidget {
                   priorityTextColor: AppColors.tagBlueText,
                   isCompleted: false,
                 ),
-
                 const SizedBox(height: 24),
                 _buildSectionHeader('Minggu Depan'),
                 _buildTaskTile(

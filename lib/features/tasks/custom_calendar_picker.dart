@@ -182,9 +182,8 @@ class _CustomCalendarPickerState extends State<CustomCalendarPicker> {
                           color: isSelected
                               ? Colors.white
                               : (isToday ? AppColors.primary : null),
-                          fontWeight: isSelected || isToday
-                              ? FontWeight.bold
-                              : null,
+                          fontWeight:
+                              isSelected || isToday ? FontWeight.bold : null,
                         ),
                       ),
                       if (hasDot)
@@ -194,9 +193,8 @@ class _CustomCalendarPickerState extends State<CustomCalendarPicker> {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppColors.primary,
+                              color:
+                                  isSelected ? Colors.white : AppColors.primary,
                               shape: BoxShape.circle,
                             ),
                           ),

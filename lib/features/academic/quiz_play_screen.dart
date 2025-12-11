@@ -170,7 +170,6 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
               valueColor: const AlwaysStoppedAnimation(AppColors.primary),
             ),
             const SizedBox(height: 24),
-
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -194,15 +193,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
             Text(
               question.question,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
-
             Expanded(child: _buildAnswerWidget(question)),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -277,9 +273,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                       height: 24,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isSelected
-                            ? AppColors.primary
-                            : Colors.transparent,
+                        color:
+                            isSelected ? AppColors.primary : Colors.transparent,
                         border: Border.all(
                           color: isSelected
                               ? AppColors.primary
@@ -304,9 +299,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                           color: isSelected
                               ? AppColors.primary
                               : Theme.of(context).textTheme.bodyLarge?.color,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.normal,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -480,8 +474,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
         question.type == QuestionType.trueFalse) {
       isCorrect = question.userAnswer == question.correctAnswer;
     } else if (question.type == QuestionType.fillBlank) {
-      isCorrect =
-          question.userAnswer.toString().trim().toLowerCase() ==
+      isCorrect = question.userAnswer.toString().trim().toLowerCase() ==
           question.correctAnswer.toString().toLowerCase();
     } else {
       // Essay is manually reviewed or AI checked
@@ -533,7 +526,6 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 16),
-
           if (question.type == QuestionType.multipleChoice ||
               question.type == QuestionType.trueFalse)
             ...List.generate(question.options?.length ?? 0, (i) {
@@ -569,14 +561,14 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                       isAnswerCorrect
                           ? LucideIcons.check
                           : isSelected
-                          ? LucideIcons.x
-                          : LucideIcons.circle,
+                              ? LucideIcons.x
+                              : LucideIcons.circle,
                       size: 16,
                       color: isAnswerCorrect
                           ? AppColors.success
                           : isSelected
-                          ? AppColors.error
-                          : Colors.grey,
+                              ? AppColors.error
+                              : Colors.grey,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -586,8 +578,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                           color: isAnswerCorrect
                               ? AppColors.success
                               : isSelected
-                              ? AppColors.error
-                              : null,
+                                  ? AppColors.error
+                                  : null,
                           fontWeight: isAnswerCorrect || isSelected
                               ? FontWeight.bold
                               : FontWeight.normal,
@@ -598,7 +590,6 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                 ),
               );
             }),
-
           if (question.type == QuestionType.fillBlank ||
               question.type == QuestionType.essay) ...[
             const Text(

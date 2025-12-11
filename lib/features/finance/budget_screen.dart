@@ -77,8 +77,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
             id: row['id'].toString(),
             amount: (row['amount'] as num?)?.toDouble() ?? 0.0,
             category: (row['category'] ?? 'Lainnya').toString(),
-            date:
-                DateTime.tryParse(row['date']?.toString() ?? '') ??
+            date: DateTime.tryParse(row['date']?.toString() ?? '') ??
                 DateTime.now(),
             type: (row['type'] ?? 'Kebutuhan').toString(),
             createdAt: row['created_at'] != null
@@ -322,9 +321,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              final textAmount = amountCtrl.text
-                                  .replaceAll('.', '')
-                                  .trim();
+                              final textAmount =
+                                  amountCtrl.text.replaceAll('.', '').trim();
                               final textCategory = categoryCtrl.text.trim();
 
                               if (textAmount.isEmpty || textCategory.isEmpty) {

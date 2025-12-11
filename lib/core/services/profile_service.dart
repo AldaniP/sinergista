@@ -79,9 +79,7 @@ class ProfileService {
 
       try {
         // Upload file
-        await _client.storage
-            .from('avatars')
-            .uploadBinary(
+        await _client.storage.from('avatars').uploadBinary(
               filePath,
               bytes,
               fileOptions: const FileOptions(
@@ -99,9 +97,7 @@ class ProfileService {
             );
 
             // Retry upload
-            await _client.storage
-                .from('avatars')
-                .uploadBinary(
+            await _client.storage.from('avatars').uploadBinary(
                   filePath,
                   bytes,
                   fileOptions: const FileOptions(

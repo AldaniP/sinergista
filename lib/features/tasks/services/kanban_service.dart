@@ -35,8 +35,7 @@ class KanbanService {
   Future<void> updateTaskStatus(String id, String newStatus) async {
     await _client
         .from('kanban_tasks')
-        .update({'status': newStatus})
-        .eq('id', id);
+        .update({'status': newStatus}).eq('id', id);
   }
 
   Future<void> updateTaskTitle(String id, String newTitle) async {
