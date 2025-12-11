@@ -32,6 +32,19 @@ class AppColors {
   static const Color tagRed = Color(0xFFFEE2E2);
   static const Color tagRedText = Color(0xFFDC2626);
 
+  // Dark Mode Tag Colors - Muted variants for better contrast
+  static const Color darkTagBlue = Color(0xFF2A2F4F);
+  static const Color darkTagBlueText = Color(0xFF8B9FE6);
+
+  static const Color darkTagPurple = Color(0xFF2D2642);
+  static const Color darkTagPurpleText = Color(0xFFB19FED);
+
+  static const Color darkTagGreen = Color(0xFF1F3A2F);
+  static const Color darkTagGreenText = Color(0xFF6FD99E);
+
+  static const Color darkTagRed = Color(0xFF3A2525);
+  static const Color darkTagRedText = Color(0xFFFF9999);
+
   // Feature specific
   static const Color pomodoroOrange = Color(0xFFF97316);
 }
