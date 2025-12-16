@@ -36,4 +36,17 @@ class TaskService {
   Future<void> deleteTask(String taskId) async {
     await _supabase.from('tasks').delete().eq('id', taskId);
   }
+
+  Future<int> getCompletedTaskCount() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return 0;
+
+    final res = await _supabase
+        .from('tasks')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_completed', true);
+
+    return (res as List).length;
+  }
 }
