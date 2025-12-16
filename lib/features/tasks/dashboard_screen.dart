@@ -9,6 +9,7 @@ import 'dashboard_task_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/services/supabase_service.dart';
 import '../academic/exam_screen.dart';
+import 'requirement_screen.dart';
 import 'notification_screen.dart';
 import '../tracking/tracking_screen.dart';
 import 'module_model.dart';
@@ -494,6 +495,21 @@ class _DashboardHomeState extends State<DashboardHome> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const TrackingScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 20),
+
+                        _buildFeatureItem(
+                          context,
+                          'Kebutuhan',
+                          LucideIcons.clipboardList,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RequirementScreen(),
                               ),
                             );
                           },
