@@ -56,4 +56,4 @@ app.*.map.json
 .env
 .env.*
 *.pem
-android/key.properties
+android/key.propertiesandroid/build/
