@@ -833,6 +833,47 @@ class _ExamScreenState extends State<ExamScreen> {
                         ],
                       ),
                     ),
+                    IconButton(
+                      icon: const Icon(LucideIcons.trash2, size: 20),
+                      color: Colors.red,
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Hapus Quiz?'),
+                            content: Text(
+                              'Quiz "${quiz.moduleName} - ${quiz.topic}" akan dihapus dari daftar.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Batal'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                ),
+                                child: const Text('Hapus'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          setState(() {
+                            _quizzes.remove(quiz);
+                          });
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Quiz dihapus dari daftar'),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
                     const Icon(LucideIcons.chevronRight, color: Colors.grey),
                   ],
                 ),

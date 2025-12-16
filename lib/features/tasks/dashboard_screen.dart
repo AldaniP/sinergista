@@ -16,6 +16,8 @@ import 'module_model.dart';
 import 'module_editor_screen.dart';
 import 'custom_calendar_picker.dart';
 import '../productivity/productivity_quiz_screen.dart';
+import '../knowledge/knowledge_screen.dart';
+import '../knowledge/knowledge_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -302,6 +304,24 @@ class DashboardHome extends StatefulWidget {
 
 class _DashboardHomeState extends State<DashboardHome> {
   bool _isExpanded = false;
+  final _knowledgeService = KnowledgeService();
+
+  @override
+  void initState() {
+    super.initState();
+    _knowledgeService.addListener(_onKnowledgeUpdate);
+    _knowledgeService.loadItems();
+  }
+
+  @override
+  void dispose() {
+    _knowledgeService.removeListener(_onKnowledgeUpdate);
+    super.dispose();
+  }
+
+  void _onKnowledgeUpdate() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -360,15 +380,30 @@ class _DashboardHomeState extends State<DashboardHome> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Text(
-                            '${now.day} ${months[now.month]}',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyLarge?.color,
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Halo, $userName! 👋',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.color,
+                                ),
+                              ),
+                              Text(
+                                '${now.day} ${months[now.month]}',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.color,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -651,7 +686,14 @@ class _DashboardHomeState extends State<DashboardHome> {
                     icon: '🙏',
                     title:
                         'Tingkatkan pengetahuanmu\ndengan mengikuti Tips Produktivitas\nkami hari ini',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const KnowledgeScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -896,63 +938,88 @@ class _DashboardHomeState extends State<DashboardHome> {
 
   Widget _buildGoalCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkTagGreen : AppColors.tagGreen;
-    final textColor =
-        isDark ? AppColors.darkTagGreenText : AppColors.tagGreenText;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: textColor.withValues(alpha: 0.1),
+    // Check if we have a module to study
+    final targetModule = widget.nearestDeadlineModule;
+    final hasModule = targetModule != null;
+
+    final bgColor = isDark ? AppColors.darkTagBlue : AppColors.tagBlue;
+    final textColor =
+        isDark ? AppColors.darkTagBlueText : AppColors.tagBlueText;
+
+    return GestureDetector(
+      onTap: () {
+        if (hasModule) {
+          widget.onOpenModule(DashboardTask(
+            moduleId: targetModule.id,
+            title: targetModule.title,
+            isCompleted: false,
+            isModuleTodo: true, // Treat as module access
+            priority: 'High',
+            priorityColor: Colors.red,
+            priorityTextColor: Colors.white,
+          ));
+        } else {
+          // If no module, maybe go to Modules tab (index 1)
+          widget.onTabChange(1);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: textColor.withValues(alpha: 0.1),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: textColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: textColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                LucideIcons.bookOpen,
+                color: textColor,
+                size: 28,
+              ),
             ),
-            child: Icon(
-              LucideIcons.target,
-              color: textColor,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Tetapkan tujuan membaca',
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    hasModule ? 'Lanjutkan Belajar' : 'Mulai Belajar',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Target Tugas Harian 📚 • 1 Hari Check-in',
-                  style: TextStyle(
-                    color: textColor.withValues(alpha: 0.7),
-                    fontSize: 12,
+                  const SizedBox(height: 4),
+                  Text(
+                    hasModule
+                        ? 'Cicil materi "${targetModule.title}" sekarang! 📚'
+                        : 'Pilih modul untuk mulai belajar',
+                    style: TextStyle(
+                      color: textColor.withValues(alpha: 0.7),
+                      fontSize: 12,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Icon(
-            LucideIcons.chevronRight,
-            color: textColor.withValues(alpha: 0.5),
-          ),
-        ],
+            Icon(
+              LucideIcons.chevronRight,
+              color: textColor.withValues(alpha: 0.5),
+            ),
+          ],
+        ),
       ),
     );
   }

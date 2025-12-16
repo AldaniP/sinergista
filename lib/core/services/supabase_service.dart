@@ -924,7 +924,7 @@ class SupabaseService {
   }
 
   // History Feature
-  Future<void> saveAssessmentHistory({
+  Future<String> saveAssessmentHistory({
     required String title,
     required String type,
     required num score,
@@ -936,19 +936,25 @@ class SupabaseService {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) throw Exception('User not logged in');
 
-      await _client.from('assessment_history').insert({
-        'user_id': userId,
-        'title': title,
-        'type': type,
-        'score': score,
-        'total_questions': totalQuestions,
-        'correct_answers': correctAnswers,
-        'details': details,
-        'created_at': DateTime.now().toIso8601String(),
-      });
+      final response = await _client
+          .from('assessment_history')
+          .insert({
+            'user_id': userId,
+            'title': title,
+            'type': type,
+            'score': score,
+            'total_questions': totalQuestions,
+            'correct_answers': correctAnswers,
+            'details': details,
+            'created_at': DateTime.now().toIso8601String(),
+          })
+          .select()
+          .single();
 
       // Auto-cleanup old history (lazy deletion)
       await cleanupOldHistory();
+
+      return response['id'] as String;
     } catch (e) {
       debugPrint('Error saving assessment history: $e');
       rethrow;
