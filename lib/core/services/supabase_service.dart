@@ -922,4 +922,84 @@ class SupabaseService {
       rethrow;
     }
   }
+
+  // History Feature
+  Future<void> saveAssessmentHistory({
+    required String title,
+    required String type,
+    required num score,
+    required int totalQuestions,
+    required int correctAnswers,
+    Map<String, dynamic>? details,
+  }) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not logged in');
+
+      await _client.from('assessment_history').insert({
+        'user_id': userId,
+        'title': title,
+        'type': type,
+        'score': score,
+        'total_questions': totalQuestions,
+        'correct_answers': correctAnswers,
+        'details': details,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      // Auto-cleanup old history (lazy deletion)
+      await cleanupOldHistory();
+    } catch (e) {
+      debugPrint('Error saving assessment history: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getAssessmentHistory(
+      {String? type}) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) return [];
+
+      var query =
+          _client.from('assessment_history').select().eq('user_id', userId);
+
+      if (type != null) {
+        query = query.eq('type', type);
+      }
+
+      final response = await query.order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('Error fetching history: $e');
+      return [];
+    }
+  }
+
+  Future<void> deleteAssessmentHistory(String id) async {
+    try {
+      await _client.from('assessment_history').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('Error deleting history: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> cleanupOldHistory() async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
+
+      await _client
+          .from('assessment_history')
+          .delete()
+          .eq('user_id', userId)
+          .lt('created_at', thirtyDaysAgo.toIso8601String());
+    } catch (e) {
+      debugPrint('Error cleaning up old history: $e');
+      // Don't rethrow, this is a background task
+    }
+  }
 }
