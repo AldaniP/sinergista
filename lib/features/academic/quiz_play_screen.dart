@@ -3,11 +3,17 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/gemini_service.dart';
 import 'quiz_model.dart';
+import '../../core/services/supabase_service.dart';
 
 class QuizPlayScreen extends StatefulWidget {
   final Quiz quiz;
+  final String assessmentType;
 
-  const QuizPlayScreen({super.key, required this.quiz});
+  const QuizPlayScreen({
+    super.key,
+    required this.quiz,
+    this.assessmentType = 'exam',
+  });
 
   @override
   State<QuizPlayScreen> createState() => _QuizPlayScreenState();
@@ -129,6 +135,21 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
         _textController.clear();
       });
     } else {
+      // Save history
+      final service = SupabaseService();
+      // Calculate score (0-100)
+      final scoreVal = (widget.quiz.questions.isEmpty)
+          ? 0.0
+          : (_score / widget.quiz.questions.length) * 100;
+
+      service.saveAssessmentHistory(
+        title: '${widget.quiz.moduleName} - ${widget.quiz.topic}',
+        type: widget.assessmentType,
+        score: scoreVal,
+        totalQuestions: widget.quiz.questions.length,
+        correctAnswers: _score,
+      );
+
       setState(() => _quizCompleted = true);
     }
   }
