@@ -29,8 +29,7 @@ class TaskService {
   }) async {
     await _supabase
         .from('tasks')
-        .update({'is_completed': isCompleted})
-        .eq('id', taskId);
+        .update({'is_completed': isCompleted}).eq('id', taskId);
   }
 
   /// DELETE (optional, nanti)

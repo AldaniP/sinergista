@@ -500,7 +500,6 @@ class _DashboardHomeState extends State<DashboardHome> {
                           },
                         ),
                         const SizedBox(width: 20),
-
                         _buildFeatureItem(
                           context,
                           'Kebutuhan',

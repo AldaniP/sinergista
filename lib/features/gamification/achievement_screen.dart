@@ -1061,7 +1061,7 @@ class _LevelBadge extends StatelessWidget {
 class _AnimatedFlame extends StatefulWidget {
   final Color color;
   final bool active;
-  const _AnimatedFlame({required this.color, this.active = true});
+  const _AnimatedFlame({required this.color});
 
   @override
   State<_AnimatedFlame> createState() => _AnimatedFlameState();

@@ -27,8 +27,7 @@ class TaskModel {
       title: map['title'],
       priority: map['priority'],
       isCompleted: map['is_completed'],
-      dueDate:
-          map['due_date'] != null ? DateTime.parse(map['due_date']) : null,
+      dueDate: map['due_date'] != null ? DateTime.parse(map['due_date']) : null,
       createdAt: DateTime.parse(map['created_at']),
     );
   }

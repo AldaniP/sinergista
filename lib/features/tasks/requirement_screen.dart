@@ -19,7 +19,6 @@ class _RequirementScreenState extends State<RequirementScreen> {
   final _linkController = TextEditingController();
   String _priority = 'Sedang';
 
-
   bool _isLoading = true;
   List<Map<String, dynamic>> _tasks = [];
 
@@ -108,8 +107,7 @@ class _RequirementScreenState extends State<RequirementScreen> {
           Checkbox(
             value: task['is_completed'] ?? false,
             activeColor: AppColors.primary,
-            onChanged: (value) =>
-                _toggleComplete(task['id'], value ?? false),
+            onChanged: (value) => _toggleComplete(task['id'], value ?? false),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -126,18 +124,18 @@ class _RequirementScreenState extends State<RequirementScreen> {
                         : null,
                   ),
                 ),
-                    if (task['file_link'] != null && task['file_link'] != '')
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: SelectableText(
-                          task['file_link'],
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.blue,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
+                if (task['file_link'] != null && task['file_link'] != '')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: SelectableText(
+                      task['file_link'],
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.blue,
+                        decoration: TextDecoration.underline,
                       ),
+                    ),
+                  ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -155,8 +153,7 @@ class _RequirementScreenState extends State<RequirementScreen> {
                         task['priority'] ?? 'Sedang',
                         style: TextStyle(
                           fontSize: 12,
-                          color:
-                              _priorityColor(task['priority'] ?? 'Sedang'),
+                          color: _priorityColor(task['priority'] ?? 'Sedang'),
                         ),
                       ),
                     ),
@@ -212,113 +209,110 @@ class _RequirementScreenState extends State<RequirementScreen> {
     );
   }
 
-void _showAddTaskDialog() {
-  DateTime? dueDate;
+  void _showAddTaskDialog() {
+    DateTime? dueDate;
 
-  showDialog(
-    context: context,
-    builder: (_) => StatefulBuilder(
-      builder: (context, setDialogState) => AlertDialog(
-        title: const Text('Tambah Kebutuhan Tugas'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Judul
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Judul Tugas',
+    showDialog(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Tambah Kebutuhan Tugas'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Judul
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Judul Tugas',
+                ),
               ),
-            ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // Link File
-            TextField(
-              controller: _linkController,
-              keyboardType: TextInputType.url,
-              decoration: const InputDecoration(
-                labelText: 'Link File (opsional)',
-                hintText: 'https://drive.google.com/...',
-                prefixIcon: Icon(LucideIcons.link),
+              // Link File
+              TextField(
+                controller: _linkController,
+                keyboardType: TextInputType.url,
+                decoration: const InputDecoration(
+                  labelText: 'Link File (opsional)',
+                  hintText: 'https://drive.google.com/...',
+                  prefixIcon: Icon(LucideIcons.link),
+                ),
               ),
-            ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // Priority
-            DropdownButtonFormField<String>(
-              value: _priority,
-              items: const [
-                DropdownMenuItem(value: 'Tinggi', child: Text('Tinggi')),
-                DropdownMenuItem(value: 'Sedang', child: Text('Sedang')),
-                DropdownMenuItem(value: 'Rendah', child: Text('Rendah')),
-              ],
-              onChanged: (v) => _priority = v!,
-              decoration: const InputDecoration(labelText: 'Prioritas'),
-            ),
-
-            const SizedBox(height: 12),
-
-            // DEADLINE
-            OutlinedButton.icon(
-              icon: const Icon(LucideIcons.calendar),
-              label: Text(
-                dueDate == null
-                    ? 'Pilih Deadline'
-                    : 'Deadline: ${dueDate!.toLocal().toString().substring(0, 10)}',
+              // Priority
+              DropdownButtonFormField<String>(
+                initialValue: _priority,
+                items: const [
+                  DropdownMenuItem(value: 'Tinggi', child: Text('Tinggi')),
+                  DropdownMenuItem(value: 'Sedang', child: Text('Sedang')),
+                  DropdownMenuItem(value: 'Rendah', child: Text('Rendah')),
+                ],
+                onChanged: (v) => _priority = v!,
+                decoration: const InputDecoration(labelText: 'Prioritas'),
               ),
-              onPressed: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime(2100),
-                );
 
-                if (picked != null) {
-                  setDialogState(() {
-                    dueDate = picked;
-                  });
-                }
-              },
+              const SizedBox(height: 12),
+
+              // DEADLINE
+              OutlinedButton.icon(
+                icon: const Icon(LucideIcons.calendar),
+                label: Text(
+                  dueDate == null
+                      ? 'Pilih Deadline'
+                      : 'Deadline: ${dueDate!.toLocal().toString().substring(0, 10)}',
+                ),
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime(2100),
+                  );
+
+                  if (picked != null) {
+                    setDialogState(() {
+                      dueDate = picked;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => _addTask(dueDate),
+              child: const Text('Simpan'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () => _addTask(dueDate),
-            child: const Text('Simpan'),
-          ),
-        ],
       ),
-    ),
-  );
-}
+    );
+  }
 
-Future<void> _addTask(DateTime? dueDate) async {
-  final user = _supabase.auth.currentUser;
-  if (user == null) return;
+  Future<void> _addTask(DateTime? dueDate) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
 
-  await _supabase.from('tasks').insert({
-    'title': _titleController.text,
-    'priority': _priority,
-    'user_id': user.id,
-    'due_date': dueDate?.toIso8601String(),
-  });
+    await _supabase.from('tasks').insert({
+      'title': _titleController.text,
+      'priority': _priority,
+      'user_id': user.id,
+      'due_date': dueDate?.toIso8601String(),
+    });
 
-  _titleController.clear();
-  _linkController.clear();
-  _priority = 'Sedang';
+    _titleController.clear();
+    _linkController.clear();
+    _priority = 'Sedang';
 
-  Navigator.pop(context);
-  _fetchTasks();
-}
-
-
-
+    Navigator.pop(context);
+    _fetchTasks();
+  }
 }
