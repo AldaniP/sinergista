@@ -81,8 +81,7 @@ class _AchievementScreenState extends State<AchievementScreen>
     setState(() => _isLoading = true);
     try {
       final modules = await _supabaseService.getModules();
-        final completedTasks =
-        await _taskService.getCompletedTaskCount();
+      final completedTasks = await _taskService.getCompletedTaskCount();
       final now = DateTime.now();
       final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
       final endOfWeek = startOfWeek.add(const Duration(days: 6));
@@ -100,7 +99,6 @@ class _AchievementScreenState extends State<AchievementScreen>
         totalSessionCountAllTime = 0;
       }
 
-   
       final int totalMinutes = sessions.fold<int>(
         0,
         (sum, s) => sum + (s.durationMinutes ?? 0),
@@ -111,7 +109,7 @@ class _AchievementScreenState extends State<AchievementScreen>
 
       if (mounted) {
         setState(() {
-              _completedTaskCount = completedTasks;
+          _completedTaskCount = completedTasks;
 
           _modules = modules;
           _sessions = sessions;
