@@ -861,6 +861,34 @@ class SupabaseService {
     }
   }
 
+  // Get Current User Profile
+  Future<ProfileModel?> getCurrentUserProfile() async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) return null;
+
+      return await getProfile(userId);
+    } catch (e) {
+      debugPrint('Error fetching current user profile: $e');
+      return null;
+    }
+  }
+
+  // Update Username (allows duplicates, no validation)
+  Future<void> updateUsername(String username) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not logged in');
+
+      await _client.from('profiles').update({
+        'username': username,
+      }).eq('id', userId);
+    } catch (e) {
+      debugPrint('Error updating username: $e');
+      rethrow;
+    }
+  }
+
   // Add Todo to Module Content
   Future<void> addTodoToModule(String moduleId, String contentText) async {
     try {

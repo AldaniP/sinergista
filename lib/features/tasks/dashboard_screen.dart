@@ -960,8 +960,8 @@ class _DashboardHomeState extends State<DashboardHome> {
             priorityTextColor: Colors.white,
           ));
         } else {
-          // If no module, maybe go to Modules tab (index 1)
-          widget.onTabChange(1);
+          // If no module, go to Focus tab (index 2)
+          widget.onTabChange(2);
         }
       },
       child: Container(
