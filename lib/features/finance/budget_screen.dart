@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:month_picker_dialog/month_picker_dialog.dart';
 
 // Layar Budget
 class BudgetScreen extends StatefulWidget {
@@ -98,19 +99,18 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   // Method untuk memfilter berdasarkan bulan
   Future<void> _pickMonth() async {
-    final picked = await showDatePicker(
+    final picked = await showMonthPicker(
       context: context,
       initialDate: _selectedMonth,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
-      helpText: "Pilih bulan",
     );
 
     if (picked != null) {
       setState(() {
         _selectedMonth = DateTime(picked.year, picked.month);
       });
-      _loadData(); // panggil ulang load data
+      _loadData();
     }
   }
 
@@ -515,7 +515,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
   // Dashboard yang ditampilkan kepada pengguna
   Widget _buildDashboard() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.only(
+      left: 20,
+      right: 20,
+      top: 20,
+      bottom: 100, 
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
