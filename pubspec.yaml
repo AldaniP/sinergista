@@ -25,6 +25,7 @@ dependencies:
   syncfusion_flutter_pdf: ^28.1.33
   shared_preferences: ^2.3.3
   url_launcher: ^6.3.2
+  month_picker_dialog: ^4.0.0
 
 dev_dependencies:
   flutter_test:
