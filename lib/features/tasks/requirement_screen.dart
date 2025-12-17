@@ -47,16 +47,14 @@ class _RequirementScreenState extends State<RequirementScreen> {
       final user = _supabase.auth.currentUser;
       if (user == null) return;
 
-      var query = _supabase
-          .from('tasks')
-          .select()
-          .eq('user_id', user.id);
+      var query = _supabase.from('tasks').select().eq('user_id', user.id);
 
       if (_filterCategory != 'Semua') {
         query = query.eq('category', _filterCategory);
       }
 
-      final response = await query.order(_sortBy, ascending: _sortBy == 'due_date');
+      final response =
+          await query.order(_sortBy, ascending: _sortBy == 'due_date');
 
       setState(() {
         _tasks = List<Map<String, dynamic>>.from(response);
@@ -71,7 +69,7 @@ class _RequirementScreenState extends State<RequirementScreen> {
   List<String> _getSmartSuggestions() {
     final Map<String, int> categoryCount = {};
     final Map<String, int> priorityCount = {};
-    
+
     for (var task in _tasks) {
       final cat = task['category'] ?? 'Tugas';
       final pri = task['priority'] ?? 'Sedang';
@@ -80,11 +78,13 @@ class _RequirementScreenState extends State<RequirementScreen> {
     }
 
     List<String> suggestions = [];
-    
+
     // Suggest based on incomplete tasks
-    final incompleteTasks = _tasks.where((t) => t['is_completed'] != true).length;
+    final incompleteTasks =
+        _tasks.where((t) => t['is_completed'] != true).length;
     if (incompleteTasks > 5) {
-      suggestions.add('💡 Anda punya $incompleteTasks tugas belum selesai. Fokus pada prioritas tinggi!');
+      suggestions.add(
+          '💡 Anda punya $incompleteTasks tugas belum selesai. Fokus pada prioritas tinggi!');
     }
 
     // Suggest based on overdue tasks
@@ -94,15 +94,18 @@ class _RequirementScreenState extends State<RequirementScreen> {
       final dueDate = DateTime.tryParse(t['due_date'].toString());
       return dueDate != null && dueDate.isBefore(now);
     }).length;
-    
+
     if (overdue > 0) {
-      suggestions.add('⚠️ $overdue tugas melewati deadline. Perlu segera diselesaikan!');
+      suggestions.add(
+          '⚠️ $overdue tugas melewati deadline. Perlu segera diselesaikan!');
     }
 
     // Suggest most productive category
     if (categoryCount.isNotEmpty) {
-      final topCat = categoryCount.entries.reduce((a, b) => a.value > b.value ? a : b);
-      suggestions.add('📊 Kategori tersibuk: ${topCat.key} (${topCat.value} tugas)');
+      final topCat =
+          categoryCount.entries.reduce((a, b) => a.value > b.value ? a : b);
+      suggestions
+          .add('📊 Kategori tersibuk: ${topCat.key} (${topCat.value} tugas)');
     }
 
     return suggestions;
@@ -111,14 +114,15 @@ class _RequirementScreenState extends State<RequirementScreen> {
   // Calculate productivity score
   Map<String, dynamic> _calculateProductivityScore() {
     final total = _tasks.length;
-    if (total == 0) return {'score': 0, 'message': 'Mulai tambahkan tugas!', 'emoji': '🎯'};
+    if (total == 0)
+      return {'score': 0, 'message': 'Mulai tambahkan tugas!', 'emoji': '🎯'};
 
     final completed = _tasks.where((t) => t['is_completed'] == true).length;
     final percentage = (completed / total * 100).round();
 
     String message;
     String emoji;
-    
+
     if (percentage >= 80) {
       message = 'Produktivitas Luar Biasa!';
       emoji = '🔥';
@@ -133,7 +137,13 @@ class _RequirementScreenState extends State<RequirementScreen> {
       emoji = '🚀';
     }
 
-    return {'score': percentage, 'message': message, 'emoji': emoji, 'completed': completed, 'total': total};
+    return {
+      'score': percentage,
+      'message': message,
+      'emoji': emoji,
+      'completed': completed,
+      'total': total
+    };
   }
 
   Color _priorityColor(String priority) {
@@ -167,7 +177,7 @@ class _RequirementScreenState extends State<RequirementScreen> {
   Future<void> _toggleComplete(String id, bool value) async {
     await _taskService.updateCompletion(taskId: id, isCompleted: value);
     _fetchTasks();
-    
+
     if (value && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -195,7 +205,7 @@ class _RequirementScreenState extends State<RequirementScreen> {
       });
 
       await _fetchTasks();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('✨ Tugas berhasil diduplikasi')),
@@ -235,7 +245,7 @@ class _RequirementScreenState extends State<RequirementScreen> {
     _titleController.text = task['title'] ?? '';
     _linkController.text = task['file_link'] ?? '';
     _notesController.text = task['notes'] ?? '';
-    
+
     _showTaskDialog(isEdit: true, taskId: task['id'], existingTask: task);
   }
 
@@ -248,16 +258,13 @@ class _RequirementScreenState extends State<RequirementScreen> {
     if (isEdit && existingTask?['due_date'] != null) {
       dueDate = DateTime.tryParse(existingTask!['due_date'].toString());
     }
-    
-    String priority = isEdit 
-        ? (existingTask?['priority'] ?? 'Sedang') 
-        : _priority;
-    
-    String category = isEdit 
-        ? (existingTask?['category'] ?? 'Tugas') 
-        : _category;
-    
-    
+
+    String priority =
+        isEdit ? (existingTask?['priority'] ?? 'Sedang') : _priority;
+
+    String category =
+        isEdit ? (existingTask?['category'] ?? 'Tugas') : _category;
+
     final parentContext = context;
 
     showDialog(
@@ -301,10 +308,14 @@ class _RequirementScreenState extends State<RequirementScreen> {
                   value: category,
                   items: const [
                     DropdownMenuItem(value: 'Tugas', child: Text('📝 Tugas')),
-                    DropdownMenuItem(value: 'Project', child: Text('🎯 Project')),
-                    DropdownMenuItem(value: 'Meeting', child: Text('👥 Meeting')),
-                    DropdownMenuItem(value: 'Belajar', child: Text('📚 Belajar')),
-                    DropdownMenuItem(value: 'Personal', child: Text('🏠 Personal')),
+                    DropdownMenuItem(
+                        value: 'Project', child: Text('🎯 Project')),
+                    DropdownMenuItem(
+                        value: 'Meeting', child: Text('👥 Meeting')),
+                    DropdownMenuItem(
+                        value: 'Belajar', child: Text('📚 Belajar')),
+                    DropdownMenuItem(
+                        value: 'Personal', child: Text('🏠 Personal')),
                   ],
                   onChanged: (v) {
                     if (v != null) {
@@ -355,8 +366,6 @@ class _RequirementScreenState extends State<RequirementScreen> {
                     }
                   },
                 ),
-                const SizedBox(height: 12),
-                
               ],
             ),
           ),
@@ -380,15 +389,14 @@ class _RequirementScreenState extends State<RequirementScreen> {
                 try {
                   final taskData = {
                     'title': _titleController.text,
-                    'file_link': _linkController.text.isNotEmpty 
-                        ? _linkController.text 
+                    'file_link': _linkController.text.isNotEmpty
+                        ? _linkController.text
                         : null,
-                    'notes': _notesController.text.isNotEmpty 
-                        ? _notesController.text 
+                    'notes': _notesController.text.isNotEmpty
+                        ? _notesController.text
                         : null,
                     'priority': priority,
                     'category': category,
-        
                     'due_date': dueDate?.toIso8601String(),
                   };
 
@@ -409,19 +417,18 @@ class _RequirementScreenState extends State<RequirementScreen> {
                   _notesController.clear();
                   _priority = 'Sedang';
                   _category = 'Tugas';
-                  
 
                   if (dialogContext.mounted) {
                     Navigator.pop(dialogContext);
                   }
-                  
+
                   await _fetchTasks();
-                  
+
                   if (parentContext.mounted) {
                     ScaffoldMessenger.of(parentContext).showSnackBar(
                       SnackBar(
-                        content: Text(isEdit 
-                            ? '✅ Tugas berhasil diupdate' 
+                        content: Text(isEdit
+                            ? '✅ Tugas berhasil diupdate'
                             : '✨ Tugas berhasil ditambahkan'),
                       ),
                     );
@@ -469,7 +476,7 @@ class _RequirementScreenState extends State<RequirementScreen> {
       try {
         await _supabase.from('tasks').delete().eq('id', taskId);
         await _fetchTasks();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('🗑️ Tugas berhasil dihapus')),
@@ -544,13 +551,16 @@ class _RequirementScreenState extends State<RequirementScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              _detailRow(LucideIcons.tag, 'Kategori', task['category'] ?? 'Tugas'),
-              _detailRow(LucideIcons.alertCircle, 'Prioritas', task['priority'] ?? 'Sedang'),
+              _detailRow(
+                  LucideIcons.tag, 'Kategori', task['category'] ?? 'Tugas'),
+              _detailRow(LucideIcons.alertCircle, 'Prioritas',
+                  task['priority'] ?? 'Sedang'),
               _detailRow(LucideIcons.calendar, 'Deadline', dueDateText),
-              
-              if (task['notes'] != null && task['notes'].toString().isNotEmpty) ...[
+              if (task['notes'] != null &&
+                  task['notes'].toString().isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text('Catatan:', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text('Catatan:',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -561,7 +571,8 @@ class _RequirementScreenState extends State<RequirementScreen> {
                   child: Text(task['notes']),
                 ),
               ],
-              if (task['file_link'] != null && task['file_link'].toString().isNotEmpty) ...[
+              if (task['file_link'] != null &&
+                  task['file_link'].toString().isNotEmpty) ...[
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   icon: const Icon(LucideIcons.externalLink),
@@ -593,7 +604,7 @@ class _RequirementScreenState extends State<RequirementScreen> {
 
   Widget _productivityCard() {
     final stats = _calculateProductivityScore();
-    
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -659,7 +670,7 @@ class _RequirementScreenState extends State<RequirementScreen> {
 
   Widget _smartSuggestionsCard() {
     final suggestions = _getSmartSuggestions();
-    
+
     if (suggestions.isEmpty) return const SizedBox.shrink();
 
     return Container(
@@ -688,9 +699,9 @@ class _RequirementScreenState extends State<RequirementScreen> {
           ),
           const SizedBox(height: 12),
           ...suggestions.map((s) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(s, style: const TextStyle(fontSize: 13)),
-          )),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(s, style: const TextStyle(fontSize: 13)),
+              )),
         ],
       ),
     );
@@ -700,18 +711,18 @@ class _RequirementScreenState extends State<RequirementScreen> {
     String dueDateText = '-';
     final dueDateRaw = task['due_date'];
     bool isOverdue = false;
-    
+
     if (dueDateRaw != null && dueDateRaw.toString().isNotEmpty) {
       final parsed = DateTime.tryParse(dueDateRaw.toString());
       if (parsed != null) {
         dueDateText = parsed.toLocal().toIso8601String().substring(0, 10);
-        isOverdue = parsed.isBefore(DateTime.now()) && task['is_completed'] != true;
+        isOverdue =
+            parsed.isBefore(DateTime.now()) && task['is_completed'] != true;
       }
     }
 
-    final hasLink = task['file_link'] != null && 
-                    task['file_link'].toString().isNotEmpty;
-    
+    final hasLink =
+        task['file_link'] != null && task['file_link'].toString().isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -753,7 +764,8 @@ class _RequirementScreenState extends State<RequirementScreen> {
                                 : null,
                           ),
                         ),
-                        if (task['notes'] != null && task['notes'].toString().isNotEmpty)
+                        if (task['notes'] != null &&
+                            task['notes'].toString().isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
@@ -828,7 +840,8 @@ class _RequirementScreenState extends State<RequirementScreen> {
                       PopupMenuItem(
                         child: const Row(
                           children: [
-                            Icon(LucideIcons.trash2, size: 16, color: Colors.red),
+                            Icon(LucideIcons.trash2,
+                                size: 16, color: Colors.red),
                             SizedBox(width: 8),
                             Text('Hapus', style: TextStyle(color: Colors.red)),
                           ],
@@ -846,7 +859,8 @@ class _RequirementScreenState extends State<RequirementScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _categoryColor(task['category'] ?? 'Tugas')
                           .withOpacity(0.15),
@@ -863,7 +877,8 @@ class _RequirementScreenState extends State<RequirementScreen> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _priorityColor(task['priority'] ?? 'Sedang')
                           .withOpacity(0.15),
@@ -890,13 +905,13 @@ class _RequirementScreenState extends State<RequirementScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         color: isOverdue ? Colors.red : Colors.grey,
-                        fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isOverdue ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ],
                 ],
               ),
-              
             ],
           ),
         ),
@@ -944,11 +959,19 @@ class _RequirementScreenState extends State<RequirementScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Kategori:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Kategori:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
-              children: ['Semua', 'Tugas', 'Project', 'Meeting', 'Belajar', 'Personal']
+              children: [
+                'Semua',
+                'Tugas',
+                'Project',
+                'Meeting',
+                'Belajar',
+                'Personal'
+              ]
                   .map((cat) => FilterChip(
                         label: Text(cat),
                         selected: _filterCategory == cat,
@@ -963,13 +986,14 @@ class _RequirementScreenState extends State<RequirementScreen> {
                   .toList(),
             ),
             const SizedBox(height: 16),
-            const Text('Urutkan:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Urutkan:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             ...['created_at', 'due_date', 'priority'].map((sort) {
-              String label = sort == 'created_at' 
-                  ? 'Terbaru' 
-                  : sort == 'due_date' 
-                      ? 'Deadline' 
+              String label = sort == 'created_at'
+                  ? 'Terbaru'
+                  : sort == 'due_date'
+                      ? 'Deadline'
                       : 'Prioritas';
               return RadioListTile<String>(
                 title: Text(label),

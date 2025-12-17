@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
+import 'package:sinergista/features/tasks/services/task_service.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/supabase_service.dart';
 import '../tasks/module_model.dart';
@@ -19,7 +20,8 @@ class _AchievementScreenState extends State<AchievementScreen>
   bool _isLoading = true;
   List<Module> _modules = [];
   List<FocusSession> _sessions = [];
-
+  final _taskService = TaskService();
+  int _completedTaskCount = 0;
   int xp = 0;
   int level = 1;
 
@@ -79,7 +81,7 @@ class _AchievementScreenState extends State<AchievementScreen>
     setState(() => _isLoading = true);
     try {
       final modules = await _supabaseService.getModules();
-
+      final completedTasks = await _taskService.getCompletedTaskCount();
       final now = DateTime.now();
       final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
       final endOfWeek = startOfWeek.add(const Duration(days: 6));
@@ -97,10 +99,6 @@ class _AchievementScreenState extends State<AchievementScreen>
         totalSessionCountAllTime = 0;
       }
 
-      final int completedTasks = modules.fold<int>(
-        0,
-        (sum, m) => sum + (m.completedCount ?? 0),
-      );
       final int totalMinutes = sessions.fold<int>(
         0,
         (sum, s) => sum + (s.durationMinutes ?? 0),
@@ -111,6 +109,8 @@ class _AchievementScreenState extends State<AchievementScreen>
 
       if (mounted) {
         setState(() {
+          _completedTaskCount = completedTasks;
+
           _modules = modules;
           _sessions = sessions;
           _totalSessionCountAllTime = totalSessionCountAllTime;
@@ -140,10 +140,8 @@ class _AchievementScreenState extends State<AchievementScreen>
 
   @override
   Widget build(BuildContext context) {
-    final completedTasks = _modules.fold<int>(
-      0,
-      (sum, m) => sum + (m.completedCount ?? 0),
-    );
+    final completedTasks = _completedTaskCount;
+
     final totalMinutes = _sessions.fold<int>(
       0,
       (sum, s) => sum + (s.durationMinutes ?? 0),
@@ -1061,7 +1059,11 @@ class _LevelBadge extends StatelessWidget {
 class _AnimatedFlame extends StatefulWidget {
   final Color color;
   final bool active;
-  const _AnimatedFlame({required this.color, this.active = true});
+
+  const _AnimatedFlame({
+    required this.color,
+    required this.active,
+  });
 
   @override
   State<_AnimatedFlame> createState() => _AnimatedFlameState();

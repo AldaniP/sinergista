@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/gemini_service.dart';
 import '../academic/quiz_model.dart';
 import '../academic/quiz_play_screen.dart';
+import '../academic/history_screen.dart';
 
 class ProductivityQuizScreen extends StatefulWidget {
   const ProductivityQuizScreen({super.key});
@@ -74,7 +75,11 @@ class _ProductivityQuizScreenState extends State<ProductivityQuizScreen> {
         setState(() => _isGenerating = false);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => QuizPlayScreen(quiz: quiz)),
+          MaterialPageRoute(
+              builder: (context) => QuizPlayScreen(
+                    quiz: quiz,
+                    assessmentType: 'productivity_quiz',
+                  )),
         );
       }
     } catch (e) {
@@ -93,7 +98,26 @@ class _ProductivityQuizScreenState extends State<ProductivityQuizScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Quiz Produktivitas'), elevation: 0),
+      appBar: AppBar(
+        title: const Text('Quiz Produktivitas'),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.history),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HistoryScreen(
+                    initialFilterType: 'productivity_quiz',
+                    lockFilter: true,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(

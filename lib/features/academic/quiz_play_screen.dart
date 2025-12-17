@@ -3,11 +3,17 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/gemini_service.dart';
 import 'quiz_model.dart';
+import '../../core/services/supabase_service.dart';
 
 class QuizPlayScreen extends StatefulWidget {
   final Quiz quiz;
+  final String assessmentType;
 
-  const QuizPlayScreen({super.key, required this.quiz});
+  const QuizPlayScreen({
+    super.key,
+    required this.quiz,
+    this.assessmentType = 'exam',
+  });
 
   @override
   State<QuizPlayScreen> createState() => _QuizPlayScreenState();
@@ -22,6 +28,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
   bool _isChecking = false;
   final List<String> _essayAnswers = [];
   final _textController = TextEditingController();
+  String? _historyId;
 
   @override
   void dispose() {
@@ -98,10 +105,10 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
     }
   }
 
-  void _proceedToNextQuestion({
+  Future<void> _proceedToNextQuestion({
     bool isCorrect = false,
     bool saveEssay = false,
-  }) {
+  }) async {
     final question = widget.quiz.questions[_currentQuestionIndex];
 
     // Save answer if not already saved (for AI check flow)
@@ -129,7 +136,25 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
         _textController.clear();
       });
     } else {
-      setState(() => _quizCompleted = true);
+      // Save history
+      final service = SupabaseService();
+      // Calculate score (0-100)
+      final scoreVal = (widget.quiz.questions.isEmpty)
+          ? 0.0
+          : (_score / widget.quiz.questions.length) * 100;
+
+      final historyId = await service.saveAssessmentHistory(
+        title: '${widget.quiz.moduleName} - ${widget.quiz.topic}',
+        type: widget.assessmentType,
+        score: scoreVal,
+        totalQuestions: widget.quiz.questions.length,
+        correctAnswers: _score,
+      );
+
+      setState(() {
+        _historyId = historyId;
+        _quizCompleted = true;
+      });
     }
   }
 
@@ -368,6 +393,55 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
           icon: const Icon(LucideIcons.x),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          if (_historyId != null)
+            IconButton(
+              icon: const Icon(LucideIcons.trash2, color: Colors.red),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Hapus Riwayat?'),
+                    content: const Text(
+                      'Hasil quiz ini akan dihapus secara permanen.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Batal'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Hapus'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true && mounted) {
+                  try {
+                    await SupabaseService()
+                        .deleteAssessmentHistory(_historyId!);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Riwayat dihapus')),
+                      );
+                      Navigator.pop(context);
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Gagal menghapus: $e')),
+                      );
+                    }
+                  }
+                }
+              },
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(32.0),

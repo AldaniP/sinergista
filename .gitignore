@@ -56,4 +56,8 @@ app.*.map.json
 .env
 .env.*
 *.pem
-android/key.propertiesandroid/build/
+android/key.properties
+.vscode/templates
+
+# FVM Version Cache
+.fvm/android/build/
