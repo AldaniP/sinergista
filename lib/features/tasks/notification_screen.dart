@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/services/connection_service.dart';
-import '../tasks/services/task_service.dart';
+import '../../core/services/task_service.dart';
 import '../../core/models/connection_model.dart';
 
 class NotificationScreen extends StatefulWidget {

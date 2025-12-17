@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
-import 'package:sinergista/features/tasks/services/task_service.dart';
+import '../../core/services/task_service.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/supabase_service.dart';
 import '../tasks/module_model.dart';
