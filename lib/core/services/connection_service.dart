@@ -13,7 +13,7 @@ class ConnectionService {
     final response = await _client
         .from('profiles')
         .select()
-        .ilike('full_name', '%$query%') // Case insensitive search
+        .or('username.ilike.%$query%,full_name.ilike.%$query%') // Search by username OR full_name
         .neq('id', _currentUserId) // Jangan tampilkan diri sendiri
         .limit(10);
 
