@@ -118,7 +118,7 @@ class _RequirementScreenState extends State<RequirementScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: priority,
+                  initialValue: priority,
                   items: const [
                     DropdownMenuItem(value: 'Tinggi', child: Text('Tinggi')),
                     DropdownMenuItem(value: 'Sedang', child: Text('Sedang')),

@@ -515,11 +515,11 @@ class _BudgetScreenState extends State<BudgetScreen> {
   // Dashboard yang ditampilkan kepada pengguna
   Widget _buildDashboard() {
     return SingleChildScrollView(
-      padding: EdgeInsets.only(
-      left: 20,
-      right: 20,
-      top: 20,
-      bottom: 100, 
+      padding: const EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: 100,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

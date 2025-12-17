@@ -504,6 +504,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  month_picker_dialog:
+    dependency: "direct main"
+    description:
+      name: month_picker_dialog
+      sha256: "009628b6b8536f5f8e9625019659281698e64509f290536f65088e304c33d2c7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.1"
   nested:
     dependency: transitive
     description:
