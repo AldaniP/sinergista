@@ -503,7 +503,7 @@ class _DashboardHomeState extends State<DashboardHome> {
 
                         _buildFeatureItem(
                           context,
-                          'Kebutuhan',
+                          'Keperluan',
                           LucideIcons.clipboardList,
                           () {
                             Navigator.push(
