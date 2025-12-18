@@ -30,6 +30,7 @@ class _NotesScreenState extends State<NotesScreen> {
     }
 
     final newNote = Note(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: _titleController.text,
       content: _contentController.text,
       createdAt: DateTime.now(),
@@ -54,13 +55,59 @@ class _NotesScreenState extends State<NotesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(note.title),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                note.title,
+                style: const TextStyle(fontSize: 18),
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(LucideIcons.edit, size: 20),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showEditDialog(note);
+                  },
+                  tooltip: 'Edit',
+                ),
+                IconButton(
+                  icon: const Icon(LucideIcons.trash2, size: 20),
+                  color: Colors.red,
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _confirmDelete(note);
+                  },
+                  tooltip: 'Hapus',
+                ),
+              ],
+            ),
+          ],
+        ),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 400),
           child: SingleChildScrollView(
-            child: Text(
-              note.content,
-              style: const TextStyle(fontSize: 15, height: 1.4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  note.content,
+                  style: const TextStyle(fontSize: 15, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Dibuat: ${_formatDate(note.createdAt)}',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -70,6 +117,168 @@ class _NotesScreenState extends State<NotesScreen> {
             child: const Text("Tutup"),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditDialog(Note note) {
+    final editTitleController = TextEditingController(text: note.title);
+    final editContentController = TextEditingController(text: note.content);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(LucideIcons.edit, color: AppColors.primary),
+            SizedBox(width: 12),
+            Text("Edit Catatan"),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: editTitleController,
+                decoration: InputDecoration(
+                  labelText: "Judul",
+                  prefixIcon: const Icon(LucideIcons.type),
+                  filled: true,
+                  fillColor: Colors.grey.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: editContentController,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  labelText: "Isi Catatan",
+                  prefixIcon: const Icon(LucideIcons.fileText),
+                  alignLabelWithHint: true,
+                  filled: true,
+                  fillColor: Colors.grey.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              editTitleController.dispose();
+              editContentController.dispose();
+              Navigator.pop(context);
+            },
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (editTitleController.text.isEmpty ||
+                  editContentController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Mohon isi judul dan isi catatan'),
+                  ),
+                );
+                return;
+              }
+
+              _updateNote(
+                note,
+                editTitleController.text,
+                editContentController.text,
+              );
+
+              editTitleController.dispose();
+              editContentController.dispose();
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Simpan"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updateNote(Note note, String newTitle, String newContent) {
+    setState(() {
+      final index = _notes.indexWhere((n) => n.id == note.id);
+      if (index != -1) {
+        _notes[index] = Note(
+          id: note.id,
+          title: newTitle,
+          content: newContent,
+          createdAt: note.createdAt,
+          updatedAt: DateTime.now(),
+        );
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Catatan berhasil diperbarui! ✨'),
+        backgroundColor: AppColors.success,
+      ),
+    );
+  }
+
+  void _confirmDelete(Note note) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(LucideIcons.alertTriangle, color: Colors.red),
+            SizedBox(width: 12),
+            Text("Hapus Catatan?"),
+          ],
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin menghapus catatan "${note.title}"? Tindakan ini tidak dapat dibatalkan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _deleteNote(note);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Hapus"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteNote(Note note) {
+    setState(() {
+      _notes.removeWhere((n) => n.id == note.id);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Catatan berhasil dihapus'),
+        backgroundColor: Colors.red.shade600,
       ),
     );
   }
@@ -86,7 +295,7 @@ class _NotesScreenState extends State<NotesScreen> {
           ],
         ),
         content: const Text(
-          "Fitur Notes memungkinkan Anda menyimpan catatan penting, rangkuman materi, dan ide.",
+          "Fitur Notes memungkinkan Anda menyimpan catatan penting, rangkuman materi, dan ide. Anda dapat menambah, membaca, mengedit, dan menghapus catatan kapan saja.",
         ),
         actions: [
           TextButton(
@@ -265,7 +474,6 @@ class _NotesScreenState extends State<NotesScreen> {
   Widget _buildNoteCard(Note note) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
@@ -276,42 +484,81 @@ class _NotesScreenState extends State<NotesScreen> {
       child: InkWell(
         onTap: () => _showNoteDetail(note),
         borderRadius: BorderRadius.circular(12),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  LucideIcons.stickyNote,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
               ),
-              child: const Icon(
-                LucideIcons.stickyNote,
-                color: AppColors.primary,
-                size: 24,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      note.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      note.updatedAt != null
+                          ? 'Diperbarui ${_formatDate(note.updatedAt!)}'
+                          : _formatDate(note.createdAt),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    note.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+              PopupMenuButton<String>(
+                icon: const Icon(LucideIcons.moreVertical),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _showEditDialog(note);
+                  } else if (value == 'delete') {
+                    _confirmDelete(note);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.edit, size: 18),
+                        SizedBox(width: 12),
+                        Text('Edit'),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatDate(note.createdAt),
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.trash2, size: 18, color: Colors.red),
+                        SizedBox(width: 12),
+                        Text('Hapus', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-            const Icon(LucideIcons.chevronRight),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -319,9 +566,17 @@ class _NotesScreenState extends State<NotesScreen> {
 }
 
 class Note {
+  final String id;
   final String title;
   final String content;
   final DateTime createdAt;
+  final DateTime? updatedAt;
 
-  Note({required this.title, required this.content, required this.createdAt});
+  Note({
+    required this.id,
+    required this.title,
+    required this.content,
+    required this.createdAt,
+    this.updatedAt,
+  });
 }
