@@ -6,6 +6,7 @@ import '../../core/services/supabase_service.dart';
 import '../../core/services/connection_service.dart';
 import '../../core/services/task_service.dart';
 import '../../core/models/connection_model.dart';
+import 'package:intl/intl.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -27,8 +28,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
     _fetchNotifications();
   }
 
+  // Helper to check if two dates are on the same day, ignoring time
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   Future<void> _fetchNotifications() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
+
     try {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
@@ -37,92 +45,118 @@ class _NotificationScreenState extends State<NotificationScreen> {
       _notifications.clear();
 
       // 1. Friend Requests
-      final friendRequests = await _connectionService.getIncomingRequests();
-      for (var request in friendRequests) {
-        _notifications.add(NotificationItem(
-          icon: LucideIcons.userPlus,
-          iconColor: AppColors.primary,
-          iconBgColor: AppColors.tagBlue,
-          title: 'Permintaan Pertemanan',
-          message:
-              '${request.friendProfile.fullName} ingin berteman dengan Anda',
-          time: 'Baru saja',
-          isRead: false,
-          type: NotificationType.friendRequest,
-          actionData: request,
-        ));
+      try {
+        final friendRequests = await _connectionService.getIncomingRequests();
+        for (var request in friendRequests) {
+          _notifications.add(NotificationItem(
+            icon: LucideIcons.userPlus,
+            iconColor: AppColors.primary,
+            iconBgColor: AppColors.tagBlue,
+            title: 'Permintaan Pertemanan',
+            message:
+                '${request.friendProfile.fullName} ingin berteman dengan Anda',
+            time: 'Baru saja',
+            isRead: false,
+            type: NotificationType.friendRequest,
+            actionData: request,
+          ));
+        }
+      } catch (e) {
+        debugPrint('Error fetching friend requests: $e');
       }
 
       // 2. Module Deadlines
-      final modules = await _supabaseService.getModules();
-      for (var module in modules) {
-        if (module.rawDueDate != null) {
-          final due = module.rawDueDate!;
-          final dueDay = DateTime(due.year, due.month, due.day);
+      try {
+        final modules = await _supabaseService.getModules();
+        for (var module in modules) {
+          if (module.rawDueDate != null) {
+            final due = module.rawDueDate!;
+            // Using helper to avoid robust time comparison issues
 
-          if (dueDay.isAtSameMomentAs(today)) {
-            _notifications.add(NotificationItem(
-              icon: LucideIcons.alertCircle,
-              iconColor: AppColors.error,
-              iconBgColor: AppColors.tagRed,
-              title: 'Deadline Hari Ini!',
-              message: 'Modul "${module.title}" harus selesai hari ini.',
-              time: 'Hari ini',
-              isRead: false,
-              type: NotificationType.deadline,
-            ));
-          } else if (dueDay.isAtSameMomentAs(tomorrow)) {
-            _notifications.add(NotificationItem(
-              icon: LucideIcons.clock,
-              iconColor: AppColors.warning,
-              iconBgColor: AppColors.tagPurple,
-              title: 'Deadline Besok',
-              message: 'Persiapkan diri untuk "${module.title}".',
-              time: 'Besok',
-              isRead: false,
-              type: NotificationType.deadline,
-            ));
+            if (_isSameDay(due, today)) {
+              _notifications.add(NotificationItem(
+                icon: LucideIcons.alertCircle,
+                iconColor: AppColors.error,
+                iconBgColor: AppColors.tagRed,
+                title: 'Deadline Hari Ini!',
+                message: 'Modul "${module.title}" harus selesai hari ini.',
+                time: 'Hari ini',
+                isRead: false,
+                type: NotificationType.deadline,
+              ));
+            } else if (_isSameDay(due, tomorrow)) {
+              _notifications.add(NotificationItem(
+                icon: LucideIcons.clock,
+                iconColor: AppColors.warning,
+                iconBgColor: AppColors.tagPurple,
+                title: 'Deadline Besok',
+                message: 'Persiapkan diri untuk "${module.title}".',
+                time: 'Besok',
+                isRead: false,
+                type: NotificationType.deadline,
+              ));
+            } else if (due.isBefore(today)) {
+              // Optional: Show overdue items if desired, or skip
+              // Adding overdue items helps users not miss things
+              _notifications.add(NotificationItem(
+                icon: LucideIcons.alertTriangle,
+                iconColor: AppColors.error,
+                iconBgColor: AppColors.tagRed,
+                title: 'Deadline Terlewat',
+                message: 'Modul "${module.title}" sudah lewat deadline.',
+                time: DateFormat('dd MMM').format(due),
+                isRead: false,
+                type: NotificationType.deadline,
+              ));
+            }
           }
         }
+      } catch (e) {
+        debugPrint('Error fetching module deadlines: $e');
       }
 
       // 3. Task Deadlines
-      final tasks = await _supabaseService.getTasks();
-      for (var task in tasks) {
-        if (task.dueDate != null && !task.isCompleted) {
-          final due = task.dueDate!;
-          final dueDay = DateTime(due.year, due.month, due.day);
+      try {
+        final tasks = await _supabaseService.getTasks();
+        for (var task in tasks) {
+          if (task.dueDate != null && !task.isCompleted) {
+            final due = task.dueDate!;
 
-          if (dueDay.isAtSameMomentAs(today)) {
-            _notifications.add(NotificationItem(
-              icon: LucideIcons.checkSquare,
-              iconColor: AppColors.error,
-              iconBgColor: AppColors.tagRed,
-              title: 'Task Deadline Hari Ini!',
-              message: 'Task "${task.title}" harus diselesaikan hari ini.',
-              time: 'Hari ini',
-              isRead: false,
-              type: NotificationType.deadline,
-            ));
-          } else if (dueDay.isAtSameMomentAs(tomorrow)) {
-            _notifications.add(NotificationItem(
-              icon: LucideIcons.checkSquare,
-              iconColor: AppColors.warning,
-              iconBgColor: AppColors.tagPurple,
-              title: 'Task Deadline Besok',
-              message: 'Jangan lupa "${task.title}".',
-              time: 'Besok',
-              isRead: false,
-              type: NotificationType.deadline,
-            ));
+            if (_isSameDay(due, today)) {
+              _notifications.add(NotificationItem(
+                icon: LucideIcons.checkSquare,
+                iconColor: AppColors.error,
+                iconBgColor: AppColors.tagRed,
+                title: 'Task Deadline Hari Ini!',
+                message: 'Task "${task.title}" harus diselesaikan hari ini.',
+                time: 'Hari ini',
+                isRead: false,
+                type: NotificationType.deadline,
+              ));
+            } else if (_isSameDay(due, tomorrow)) {
+              _notifications.add(NotificationItem(
+                icon: LucideIcons.checkSquare,
+                iconColor: AppColors.warning,
+                iconBgColor: AppColors.tagPurple,
+                title: 'Task Deadline Besok',
+                message: 'Jangan lupa "${task.title}".',
+                time: 'Besok',
+                isRead: false,
+                type: NotificationType.deadline,
+              ));
+            }
+            // Similar catch for overdue tasks (optional, keeping minimal for now to match user request)
           }
         }
+      } catch (e) {
+        debugPrint('Error fetching task deadlines: $e');
       }
 
       // 4. Achievements
       await _checkAchievements();
 
-      // 5. Welcome message (only if no other notifications)
+      // 5. Welcome message (only if NO REAL notifications)
+      // Filter out system welcome messages if checking count
       if (_notifications.isEmpty) {
         _notifications.add(NotificationItem(
           icon: LucideIcons.checkCircle,
@@ -131,9 +165,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
           title: 'Selamat Datang',
           message: 'Anda tidak memiliki notifikasi baru.',
           time: 'Baru saja',
-          isRead: true,
+          isRead: true, // Auto-read
           type: NotificationType.system,
         ));
+      } else {
+        // Sort: Unread first, then type?
+        _notifications.sort((a, b) {
+          if (a.isRead != b.isRead) {
+            return a.isRead ? 1 : -1;
+          }
+          return 0;
+        });
       }
 
       if (mounted) {
@@ -277,7 +319,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final unreadCount = _notifications.where((n) => !n.isRead).length;
+    // Filter out system messages for unread count
+    final unreadCount = _notifications
+        .where((n) => !n.isRead && n.type != NotificationType.system)
+        .length;
 
     return Scaffold(
       appBar: AppBar(
@@ -299,8 +344,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _notifications.isEmpty
-              ? const Center(child: Text('Tidak ada notifikasi'))
+          : _notifications
+                      .where((n) => n.type != NotificationType.system)
+                      .isEmpty &&
+                  _notifications.any((n) => n.type == NotificationType.system)
+              ? _buildEmptyState() // Use improved empty state visual if only system message exists
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: _notifications.length,
@@ -309,6 +357,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     return _buildNotificationItem(notification);
                   },
                 ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    // Return the Welcome Card as the "Empty State" or a nicer UI
+    // The user showed a screenshot where "Welcome" was a card.
+    // Let's keep the card but maybe style it better or just return it as item
+    // Actually, if system message is there, the ListView will render it.
+    // So I will revert the "Empty State" check in build to just rely on list
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _notifications.length,
+      itemBuilder: (context, index) {
+        final notification = _notifications[index];
+        return _buildNotificationItem(notification);
+      },
     );
   }
 
