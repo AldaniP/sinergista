@@ -39,7 +39,9 @@ lib/
 │   ├── finance/           # Fitur 14 (Budget Planner)
 │   ├── focus/             # Fitur 2, 4 (Timer & Deadline)
 │   ├── gamification/      # Fitur 11 (Achievement)
+│   ├── knowledge/         # Artikel & Tips Produktivitas
 │   ├── onboarding/        # Halaman Pengenalan Aplikasi
+│   ├── productivity/      # Quiz & Challenge (AI Powered)
 │   ├── profile/           # Halaman Profil User
 │   ├── settings/          # Fitur 16 (Pengaturan Tema)
 │   ├── tasks/             # Fitur 1, 9, 10, 13 (Manajemen Tugas, Modul, Arsip)
@@ -58,6 +60,22 @@ Ikuti langkah ini agar environment lokal sama dengan tim:
 ```bash
 git clone https://github.com/AldaniP/sinergista.git
 cd sinergista
+```
+
+### Konfigurasi Environment
+
+Duplikat file `.env.example` menjadi `.env` dan isi variabel yang dibutuhkan:
+
+```bash
+cp .env.example .env
+```
+
+Isi file `.env` dengan kredensial Anda:
+
+```text
+SUPABASE_URL=your_supabase_url_here
+SUPABASE_ANON_KEY=your_supabase_anon_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 ### Install Dependencies
@@ -261,6 +279,8 @@ Aplikasi ini terdiri dari 16 fitur inti yang dikelompokkan berdasarkan fungsinya
 
 - **Fitur 2:** Pengingat Deadline (Notifikasi H-1, H-3 Jam).
 - **Fitur 4:** Timer (Stopwatch & Pomodoro Focus).
+- **Fitur Knowledge:** Artikel & Tips Produktivitas.
+- **Fitur Quiz:** Challenge Produktivitas (AI Gemini).
 
 ### 🔹 Akademik & Catatan
 

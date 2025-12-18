@@ -55,6 +55,7 @@ app.*.map.json
 # Security & Environment variables
 .env
 .env.*
+!.env.example
 *.pem
 android/key.properties
 .vscode/templates
